@@ -1,103 +1,31 @@
 #include "common.hpp"
 
 struct ServerConfig {
-    std::string host, gameStartedURI, searchURI, queryingURI, moveValidationURI, findSideURI;
+    std::string host;
+    std::string gameStartedURI;
+    std::string searchURI;
+    std::string queryingURI;
+    std::string moveValidationURI;
+    std::string findSideURI;
 } networkConfig;
 
 struct ClientConfig {
     std::string dataFolderPath;
 } mainConfig;
 
-int validateMove(const std::string &client_id, sf::Vector2i from, sf::Vector2i to) {
-    std::unique_ptr<sf::Http> http(new sf::Http());
-    http->setHost(networkConfig.host);
-
-    std::unique_ptr<sf::Http::Request> request(new sf::Http::Request);
-    request->setMethod(sf::Http::Request::Post);
-    request->setUri(networkConfig.moveValidationURI);
-
-    std::string message = "client=" +
-        client_id +
-        "&from=" +
-        std::to_string(static_cast<int>('a') + from.x) +
-        std::to_string(from.y + 1) +
-        "&to=" +
-        std::to_string(static_cast<int>('a') + to.x) +
-        std::to_string(to.y + 1);
-
-    request->setBody(message);
-    request->setHttpVersion(1, 0);
-
-    std::unique_ptr<sf::Http::Response> response = std::make_unique<sf::Http::Response>(http->sendRequest(*request));
-    int result = -1;
-
-    if (response->getStatus() == 200) {
-        /*
-         * Response reference:
-         *
-         * 0 - invalid move
-         * 1 - usual move - move figure from [from] cell to the [to] one
-         * 4 - castling (swap rook and king for 2 cells)
-         * 8 - en passant (remove neighbour pawn and place player's one as it captured other when it moves one cell less)
-         * 16 - promote pawn to queen
-         * 17 - promote pawn to bishop
-         * 18 - promote pawn to knight
-         * 19 - promote pawn to rook
-         * 32 - check to whites
-         * 64 - checkmate
-         */
-
-        sscanf(response->getBody().c_str(), "%d", &result);
+class BadResponse : public std::exception {
+public:
+    BadResponse(int status) {
+        this->mStatus = status;
     }
 
-    return result;
-}
-
-int queryServer(const std::string &client_id, sf::Vector2i *from, sf::Vector2i *to) {
-    sf::Http http;
-    http.setHost(networkConfig.host);
-
-    sf::Http::Request request;
-    request.setMethod(sf::Http::Request::Post);
-    request.setUri(networkConfig.queryingURI);
-    request.setBody("client=" + client_id);
-    request.setHttpVersion(1, 0);
-
-    sf::Http::Response response = http.sendRequest(request);
-
-    int result = -1;
-
-    if (response.getStatus() == 200) {
-        /*
-         * Response reference:
-         *
-         * 0 - no new moves or no response
-         * 1 - opponent's turn
-         * 2 - user's turn
-         * 3 - opponent's check
-         * 4 - opponent's checkmate
-         * 5 - user's ckeck
-         * 6 - user's checkmate
-         * 7 - opponent's castling
-         * 12 - set up game with whites on the top
-         * 17 - set up game with whites on the bottom
-         */
-
-        sscanf(response.getBody().c_str(), "%d", &result);
-
-        if (result == 2 || result == 7) {
-            int y1 = -1, y2 = -1;
-            char x1 = 0, x2 = 0;
-
-            sscanf(response.getBody().c_str(), "%d %c%d %c%d", &result, &x1, &y1, &x2, &y2);
-
-            *from = sf::Vector2i((int) (x1 - 'a'), y1 - 1);
-            *to = sf::Vector2i((int) (x2 - 'a'), y2 - 1);
-        }
+    virtual const char* what() const throw() {
+        return ("Bad HTTP response status: " + std::to_string(this->mStatus)).c_str();
     }
 
-    return result;
-}
+protected:
+    int mStatus;
+};
 
 void loadPaths() {
     mainConfig.dataFolderPath.clear();
@@ -107,35 +35,35 @@ void loadPaths() {
     networkConfig.queryingURI.clear();
     networkConfig.gameStartedURI.clear();
 
-    FILE *f = fopen("game.cfg", "r");
+    std::ifstream ifs;
 
-    char *s = new char[500];
+    ifs.open("game.cfg", std::ifstream::in);
 
-    fscanf(f, "%s", s); // data path
-    mainConfig.dataFolderPath = std::string(s);
+    // data path
+    ifs >> mainConfig.dataFolderPath;
 
-    fscanf(f, "%s", s); // server host
-    networkConfig.host = std::string(s);
+    // server host
+    ifs >> networkConfig.host;
 
-    fscanf(f, "%s", s); // find side uri
-    networkConfig.findSideURI = std::string(s);
+    // find side uri
+    ifs >> networkConfig.findSideURI;
 
-    fscanf(f, "%s", s); // find opponent uri
-    networkConfig.searchURI = std::string(s);
+    // find opponent uri
+    ifs >> networkConfig.searchURI;
 
-    fscanf(f, "%s", s); // server move validation uri
-    networkConfig.moveValidationURI = std::string(s);
+    // server move validation uri
+    ifs >> networkConfig.moveValidationURI;
 
-    fscanf(f, "%s", s); // server querying uri
-    networkConfig.queryingURI = std::string(s);
+    // server querying uri
+    ifs >> networkConfig.queryingURI;
 
-    fscanf(f, "%s", s); // game start test uri
-    networkConfig.gameStartedURI = std::string(s);
+    // game start test uri
+    ifs >> networkConfig.gameStartedURI;
 
-    fclose(f);
+    ifs.close();
 }
 
-int loadFigures(std::vector<sf::Texture> *figures, sf::Texture *boardImg) {
+int loadFigures(std::shared_ptr<std::vector<std::shared_ptr<sf::Sprite>>> figuresSprites, std::shared_ptr<sf::Sprite> boardSprite) {
     std::vector<std::string> figureFiles = {
         "w_pawn.png",
         "w_rook.png",
@@ -152,61 +80,137 @@ int loadFigures(std::vector<sf::Texture> *figures, sf::Texture *boardImg) {
     };
 
     for (auto it = figureFiles.begin(); it != figureFiles.end(); ++it) {
-        sf::Texture texture;
+        auto texture = std::make_unique<sf::Texture>();
         std::string path = mainConfig.dataFolderPath + "/" + *it;
 
-        if (!texture.loadFromFile(path)) {
-            printf("Could not load image %s\n", path.c_str());
+        if (!texture->loadFromFile(path)) {
+            std::cout << "Could not load image " << path << "\n";
 
             return 1;
         }
 
-        figures->push_back(texture);
+        figuresSprites->push_back(std::make_shared<sf::Sprite>(*texture));
     }
 
     {
+        auto texture = std::make_unique<sf::Texture>();
         std::string path = mainConfig.dataFolderPath + "/" + "board.png";
 
-        if (!boardImg->loadFromFile(path)) {
-            printf("Could not load board from %s\n", path.c_str());
+        if (!texture->loadFromFile(path)) {
+            std::cout << "Could not load board from " << path << "\n";
 
             return 1;
-
         }
+
+        boardSprite->setTexture(*texture);
     }
 
     return 0;
 }
 
+std::string sendRequest(std::string url, std::string body) {
+    std::unique_ptr<sf::Http> http(new sf::Http());
+    http->setHost(networkConfig.host);
+
+    std::unique_ptr<sf::Http::Request> request(new sf::Http::Request);
+    request->setMethod(sf::Http::Request::Post);
+    request->setUri(url);
+
+    request->setBody(body);
+    request->setHttpVersion(1, 0);
+
+    auto response = std::make_unique<sf::Http::Response>(http->sendRequest(*request));
+
+    if (response->getStatus() != 200) {
+        throw BadResponse(response->getStatus());
+    }
+
+    return response->getBody();
+}
+
+int validateMove(const std::string &client_id, sf::Vector2i from, sf::Vector2i to) {
+    std::string message = "client=" +
+        client_id +
+        "&from=" +
+        std::to_string(static_cast<int>('a') + from.x) +
+        std::to_string(from.y + 1) +
+        "&to=" +
+        std::to_string(static_cast<int>('a') + to.x) +
+        std::to_string(to.y + 1);
+
+    std::string response = sendRequest(networkConfig.moveValidationURI, message);
+
+    int result = -1;
+
+    /*
+     * Response reference:
+     *
+     * 0 - invalid move
+     * 1 - usual move - move figure from [from] cell to the [to] one
+     * 4 - castling (swap rook and king for 2 cells)
+     * 8 - en passant (remove neighbour pawn and place player's one as it captured other when it moves one cell less)
+     * 16 - promote pawn to queen
+     * 17 - promote pawn to bishop
+     * 18 - promote pawn to knight
+     * 19 - promote pawn to rook
+     * 32 - check to whites
+     * 64 - checkmate
+     */
+
+    std::istringstream(response) >> result;
+
+    return result;
+}
+
+int queryServer(const std::string &client_id, sf::Vector2i *from, sf::Vector2i *to) {
+    std::string message = "client=" + client_id;
+    std::string response = sendRequest(networkConfig.queryingURI, message);
+
+    int result = -1;
+
+    /*
+     * Response reference:
+     *
+     * 0 - no new moves or no response
+     * 1 - opponent's turn
+     * 2 - user's turn
+     * 3 - opponent's check
+     * 4 - opponent's checkmate
+     * 5 - user's ckeck
+     * 6 - user's checkmate
+     * 7 - opponent's castling
+     * 12 - set up game with whites on the top
+     * 17 - set up game with whites on the bottom
+     */
+
+    std::istringstream(response) >> result;
+
+    if (result == 2 || result == 7) {
+        int y1 = -1, y2 = -1;
+        char x1 = 0, x2 = 0;
+
+        std::istringstream(response) >> result >> x1 >> y1 >> x2 >> y2;
+
+        *from = sf::Vector2i((int) (x1 - 'a'), y1 - 1);
+        *to = sf::Vector2i((int) (x2 - 'a'), y2 - 1);
+    }
+
+    return result;
+}
+
 int findSide(std::string *side) {
-    sf::Http http;
-    http.setHost(networkConfig.host);
+    std::string response = sendRequest(networkConfig.findSideURI, "");
 
-    sf::Http::Request request;
-    request.setMethod(sf::Http::Request::Post);
-    request.setUri(networkConfig.findSideURI);
-    request.setHttpVersion(1, 0);
+    int s_side = -1;
 
-    sf::Http::Response response = http.sendRequest(request);
+    std::istringstream(response) >> s_side;
 
-    if (response.getStatus() == 200) {
-        int s_side = -1;
-
-        sscanf(response.getBody().c_str(), "%d", &s_side);
-
-        if (s_side == 2) {
-            *side = "white";
-        } else if (s_side == 7) {
-            *side = "black";
-        } else {
-            printf("Server error while choosing your side\n");
-
-            return 1;
-        }
+    if (s_side == 2) {
+        *side = "white";
+    } else if (s_side == 7) {
+        *side = "black";
     } else {
-        printf("Response error status: %d\n", response.getStatus());
-        printf("Response error body: %s\n", response.getBody().c_str());
-        printf("Response error URI: %s\n", networkConfig.searchURI.c_str());
+        std::cout << "Server error while choosing your side\n";
 
         return 1;
     }
@@ -215,53 +219,25 @@ int findSide(std::string *side) {
 }
 
 int promoteSelf(const std::string &side, std::string *client_id) {
-    sf::Http http;
-    http.setHost(networkConfig.host);
+    std::string message = "side=" + side;
+    std::string response = sendRequest(networkConfig.searchURI, message);
 
-    sf::Http::Request request;
-    request.setMethod(sf::Http::Request::Post);
-    request.setUri(networkConfig.searchURI);
-    request.setBody("side=" + side);
-    request.setHttpVersion(1, 0);
+    *client_id = response.substr(1, response.length() - 1);
 
-    sf::Http::Response response = http.sendRequest(request);
-
-    if (response.getStatus() == 200) {
-        *client_id = response.getBody().substr(1, response.getBody().length() - 1);
-
-        if (response.getBody()[0] == '!')
-            return 1; else
-                return 0;
-    } else {
-        printf("Response error status: %d\n", response.getStatus());
-        printf("Response error body: %s\n", response.getBody().c_str());
-        printf("Response error URI: %s\n", networkConfig.searchURI.c_str());
-    }
-
-    return -1;
+    if (response[0] == '!')
+        return 1; else
+            return 0;
 }
 
 int waitForOpponent(const std::string &client_id) {
-    sf::Http http;
-    http.setHost(networkConfig.host);
+    std::string message = "client=" + client_id;
+    std::string response = sendRequest(networkConfig.gameStartedURI, message);
 
-    sf::Http::Request request;
-    request.setMethod(sf::Http::Request::Post);
-    request.setUri(networkConfig.gameStartedURI);
-    request.setBody("client=" + client_id);
-    request.setHttpVersion(1, 0);
+    int result = -1;
 
-    sf::Http::Response response = http.sendRequest(request);
+    std::istringstream(response) >> result;
 
-    if (response.getStatus() == 200) {
-        int result = -1;
-
-        sscanf(response.getBody().c_str(), "%d", &result);
-
-        return (result == 1);
-    } else {
-        return -1;
-    }
+    return (result == 1);
 }
 
 int** setupBoard(int whitesDown = 1) {
@@ -317,23 +293,37 @@ int mainLoop(const std::string &client_id, int firstTurnPrivilege = 0) {
     int k = (windowSize.x < windowSize.y) ? windowSize.x : windowSize.y;
     int cSize = k / 10;
 
-    sf::Vector2i cursor(4, 6), offset(windowSize.x / 5, windowSize.y / 10);
+    sf::Vector2i cursor(4, 6);
+    sf::Vector2i offset(windowSize.x / 5, windowSize.y / 10);
     sf::Vector2i selected(-1, -1);
+    sf::Vector2f cellSize(cSize, cSize);
 
-    std::vector<sf::Texture> figures;
-    sf::Texture boardImg;
+    auto selectionColor = std::make_unique<sf::Color>(200, 200, 0);
+    auto cursorColor = std::make_unique<sf::Color>(200, 100, 100);
 
-    if (loadFigures(&figures, &boardImg)) {
+    auto figuresSprites = std::make_shared<std::vector<std::shared_ptr<sf::Sprite>>>();
+    auto boardSprite = std::make_shared<sf::Sprite>();
+
+    auto cursorRect = std::make_unique<sf::RectangleShape>(cellSize);
+    auto selectionRect = std::make_unique<sf::RectangleShape>(cellSize);
+
+    cursorRect->setFillColor(sf::Color::Transparent);
+    cursorRect->setOutlineColor(*cursorColor);
+    cursorRect->setOutlineThickness(2);
+
+    selectionRect->setFillColor(sf::Color::Transparent);
+    selectionRect->setOutlineColor(*selectionColor);
+    selectionRect->setOutlineThickness(2);
+
+    if (loadFigures(figuresSprites, boardSprite)) {
         return 1;
     }
 
-    sf::Sprite boardSprite;
-    boardSprite.setTexture(boardImg);
-
     board = setupBoard(firstTurnPrivilege);
 
-    sf::Clock timer;
-    timer.restart();
+    auto timer = std::make_unique<sf::Clock>();
+
+    timer->restart();
 
     while (appWindow.isOpen()) {
         sf::Event event;
@@ -428,7 +418,7 @@ int mainLoop(const std::string &client_id, int firstTurnPrivilege = 0) {
             }
         }
 
-        float timeSinceLastUpdate = timer.getElapsedTime().asSeconds();
+        float timeSinceLastUpdate = timer->getElapsedTime().asSeconds();
 
         if (timeSinceLastUpdate > 3.f) {
             if (gameStatus < 1) {
@@ -479,75 +469,82 @@ int mainLoop(const std::string &client_id, int firstTurnPrivilege = 0) {
                 }
             }
 
-            timer.restart();
+            timer->restart();
         }
 
         appWindow.clear();
 
-        boardSprite.setPosition(offset.x, offset.y);
-        appWindow.draw(boardSprite);
+        boardSprite->setPosition(offset.x, offset.y);
+        appWindow.draw(*boardSprite);
 
         for (int i = 0; i < 8; i++) {
             for (int t = 0; t < 8; t++) {
                 if (board[i][t]) {
                     int n = (board[i][t] > 10) ? (board[i][t] - 1 - 10 + 6) : board[i][t] - 1;
-                    sf::Sprite s(figures[n]);
-                    s.setScale((float) cSize / s.getLocalBounds().width, (float) cSize / s.getLocalBounds().height);
-                    s.setPosition((int) offset.x + (t * cSize), (int) offset.y + (i * cSize));
-                    appWindow.draw(s);
+                    auto sprite = figuresSprites->at(n);
+
+                    sprite->setScale(
+                        static_cast<float>(cSize / sprite->getLocalBounds().width),
+                        static_cast<float>(cSize / sprite->getLocalBounds().height)
+                    );
+
+                    sprite->setPosition(
+                        static_cast<int>(offset.x + (t * cSize)),
+                        static_cast<int>(offset.y + (i * cSize))
+                    );
+
+                    appWindow.draw(*sprite);
                 }
             }
         }
 
         if (gameStatus > 0) {
             {
-                sf::Color cursorColor = sf::Color(200, 100, 100);
-
-                sf::RectangleShape cursorRect(sf::Vector2f(cSize, cSize));
-
                 sf::Vector2f positionFloat(offset + (cursor * cSize));
-                cursorRect.setPosition(positionFloat.x, positionFloat.y);
+                cursorRect->setPosition(positionFloat);
 
-                cursorRect.setFillColor(sf::Color::Transparent);
-                cursorRect.setOutlineColor(cursorColor);
-                cursorRect.setOutlineThickness(2);
-                appWindow.draw(cursorRect);
+                appWindow.draw(*cursorRect);
             }
 
             if (selected.x > -1 && selected.y > -1) {
-                sf::Color selectionColor = sf::Color(200, 200, 0);
-
-                sf::RectangleShape selectionRect(sf::Vector2f(cSize, cSize));
-
                 sf::Vector2f positionFloat(offset + (selected * cSize));
-                selectionRect.setPosition(positionFloat.x, positionFloat.y);
+                selectionRect->setPosition(positionFloat);
 
-                selectionRect.setFillColor(sf::Color::Transparent);
-                selectionRect.setOutlineColor(selectionColor);
-                selectionRect.setOutlineThickness(2);
-
-                appWindow.draw(selectionRect);
+                appWindow.draw(*selectionRect);
             }
         }
 
-        sf::Text statusMessage;
+        {
+            auto statusMessage = std::make_unique<sf::Text>();
 
-        if (gameStatus == 0) {
-            statusMessage.setString(sf::String("Please, stand by..."));
-        } else if (gameStatus == 1) {
-            statusMessage.setString(sf::String("Now it's your time!"));
-        } else if (gameStatus == 2) {
-            statusMessage.setString(sf::String("Whoops... You were checked..."));
-        } else if (gameStatus == 4) {
-            statusMessage.setString(sf::String("Crap... You were checkmated... "));
+            switch (gameStatus) {
+                case 0:
+                    statusMessage->setString("Please, stand by...");
+                break;
+
+                case 1:
+                    statusMessage->setString("Now it's your time!");
+                break;
+
+                case 2:
+                    statusMessage->setString("Whoops... You were checked...");
+                break;
+
+                case 4:
+                    statusMessage->setString("Crap... You were checkmated...");
+                break;
+
+                default:
+                    statusMessage->setString("Da heck is going on?! O_o");
+            }
+
+            statusMessage->setPosition(sf::Vector2f(
+                (windowSize.x / 2.f) - (statusMessage->getLocalBounds().width / 2.f),
+                statusMessage->getLocalBounds().height / 2.f)
+            );
+
+            appWindow.draw(*statusMessage);
         }
-
-        statusMessage.setPosition(sf::Vector2f(
-            (windowSize.x / 2.f) - (statusMessage.getLocalBounds().width / 2.f),
-            statusMessage.getLocalBounds().height / 2.f)
-        );
-
-        appWindow.draw(statusMessage);
 
         appWindow.display();
     }
@@ -556,23 +553,23 @@ int mainLoop(const std::string &client_id, int firstTurnPrivilege = 0) {
 }
 
 void showHelp(char** argv) {
-    printf("Usage: %s [ARGS]\n\n", argv[0]);
-    printf("Possible argument values:\n");
-    printf("\t(white | black | random) - find an opponent for a game with me as [side]\n");
-    printf("\t(--version | -v) - show version string\n");
-    printf("\t(--help | -h) - show this message\n\n");
+    std::cout << "Usage: " << argv[0] << " [ARGS]\n\n";
+    std::cout << "Possible argument values:\n";
+    std::cout << "\t(white | black | random) - find an opponent for a game with me as [side]\n";
+    std::cout << "\t(--version | -v) - show version string\n";
+    std::cout << "\t(--help | -h) - show this message\n\n";
 }
 
 void showNoArgsError() {
-    printf("You have not specified any of these options => shutting down.\n\n");
+    std::cout << "You have not specified any of these options => shutting down.\n\n";
 }
 
 void showInvalidArgError() {
-    printf("You have not specified any of known options => shutting down.\n\n");
+    std::cout << "You have not specified any of known options => shutting down.\n\n";
 }
 
 void showVersionString() {
-    printf("This is a mooChess client, version 0.2 [ALPHA]\n\n");
+    std::cout << "This is a mooChess client, version 0.2 [ALPHA]\n\n";
 }
 
 int main(int argc, char** argv) {
@@ -607,21 +604,22 @@ int main(int argc, char** argv) {
         int res = promoteSelf(side, &client_id);
 
         if (res < 0) {
-            printf("Promotion error - shutting down\n\n");
+            std::cout << "Promotion error - shutting down\n\n";
 
             return 1;
         } else if (res > 0) {
             // start game
         } else {
-            sf::Clock timer;
-            timer.restart();
+            auto timer = std::make_unique<sf::Clock>();
+
+            timer->restart();
 
             while (1) {
-                if (timer.getElapsedTime().asSeconds() > 3.f) {
+                if (timer->getElapsedTime().asSeconds() > 3.f) {
                     int res = waitForOpponent(client_id);
 
                     if (res < 0) {
-                        printf("Waiting for opponent error - shutting down\n\n");
+                        std::cout << "Waiting for opponent error - shutting down\n\n";
 
                         return 1;
                     } else if (res > 0) {
@@ -629,7 +627,7 @@ int main(int argc, char** argv) {
                         break;
                     }
 
-                    timer.restart();
+                    timer->restart();
                 }
             }
         }
