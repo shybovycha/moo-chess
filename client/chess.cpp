@@ -1,31 +1,4 @@
-#include <string>
-#include <vector>
-
-#include <SFML/Graphics.hpp>
-#include <SFML/Network.hpp>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-using std::string;
-using std::vector;
-
-#define mooAbs(X) (X < 0) ? (X * -1) : X
-
-#ifdef WIN32
-    #ifdef _DEBUG
-        #pragma comment(lib, "sfml-graphics-d.lib")
-        #pragma comment(lib, "sfml-window-d.lib")
-        #pragma comment(lib, "sfml-network-d.lib")
-        #pragma comment(lib, "sfml-system-d.lib")
-    #else
-        #pragma comment(lib, "sfml-graphics.lib")
-        #pragma comment(lib, "sfml-window.lib")
-        #pragma comment(lib, "sfml-network.lib")
-        #pragma comment(lib, "sfml-system.lib")
-    #endif
-#endif
+#include "common.hpp"
 
 struct ServerConfig {
     std::string host, gameStartedURI, searchURI, queryingURI, moveValidationURI, findSideURI;
@@ -36,23 +9,29 @@ struct ClientConfig {
 } mainConfig;
 
 int validateMove(const std::string &client_id, sf::Vector2i from, sf::Vector2i to) {
-    sf::Http Http;
-    Http.setHost(networkConfig.host);
+    std::unique_ptr<sf::Http> http(new sf::Http());
+    http->setHost(networkConfig.host);
 
-    sf::Http::Request request;
-    request.setMethod(sf::Http::Request::Post);
-    request.setUri(networkConfig.moveValidationURI);
+    std::unique_ptr<sf::Http::Request> request(new sf::Http::Request);
+    request->setMethod(sf::Http::Request::Post);
+    request->setUri(networkConfig.moveValidationURI);
 
-    char* s = (char*) malloc(255 * sizeof(char));
-    sprintf(s, "client=%s&from=%c%d&to=%c%d", client_id.c_str(), (int) 'a' + from.x, from.y + 1, (int) 'a' + to.x, to.y + 1);
+    std::string message = "client=" +
+        client_id +
+        "&from=" +
+        std::to_string(static_cast<int>('a') + from.x) +
+        std::to_string(from.y + 1) +
+        "&to=" +
+        std::to_string(static_cast<int>('a') + to.x) +
+        std::to_string(to.y + 1);
 
-    request.setBody(s);
-    request.setHttpVersion(1, 0);
+    request->setBody(message);
+    request->setHttpVersion(1, 0);
 
-    sf::Http::Response response = Http.sendRequest(request);
+    std::unique_ptr<sf::Http::Response> response = std::make_unique<sf::Http::Response>(http->sendRequest(*request));
     int result = -1;
 
-    if (response.getStatus() == 200) {
+    if (response->getStatus() == 200) {
         /*
          * Response reference:
          *
@@ -68,27 +47,27 @@ int validateMove(const std::string &client_id, sf::Vector2i from, sf::Vector2i t
          * 64 - checkmate
          */
 
-        sscanf(response.getBody().c_str(), "%d", &result);
+        sscanf(response->getBody().c_str(), "%d", &result);
     }
 
     return result;
 }
 
 int queryServer(const std::string &client_id, sf::Vector2i *from, sf::Vector2i *to) {
-    sf::Http Http;
-    Http.setHost(networkConfig.host);
+    sf::Http http;
+    http.setHost(networkConfig.host);
 
-    sf::Http::Request Request;
-    Request.setMethod(sf::Http::Request::Post);
-    Request.setUri(networkConfig.queryingURI);
-    Request.setBody("client=" + client_id);
-    Request.setHttpVersion(1, 0);
+    sf::Http::Request request;
+    request.setMethod(sf::Http::Request::Post);
+    request.setUri(networkConfig.queryingURI);
+    request.setBody("client=" + client_id);
+    request.setHttpVersion(1, 0);
 
-    sf::Http::Response Response = Http.sendRequest(Request);
+    sf::Http::Response response = http.sendRequest(request);
 
     int result = -1;
 
-    if (Response.getStatus() == 200) {
+    if (response.getStatus() == 200) {
         /*
          * Response reference:
          *
@@ -104,13 +83,13 @@ int queryServer(const std::string &client_id, sf::Vector2i *from, sf::Vector2i *
          * 17 - set up game with whites on the bottom
          */
 
-        sscanf(Response.getBody().c_str(), "%d", &result);
+        sscanf(response.getBody().c_str(), "%d", &result);
 
         if (result == 2 || result == 7) {
             int y1 = -1, y2 = -1;
             char x1 = 0, x2 = 0;
 
-            sscanf(Response.getBody().c_str(), "%d %c%d %c%d", &result, &x1, &y1, &x2, &y2);
+            sscanf(response.getBody().c_str(), "%d %c%d %c%d", &result, &x1, &y1, &x2, &y2);
 
             *from = sf::Vector2i((int) (x1 - 'a'), y1 - 1);
             *to = sf::Vector2i((int) (x2 - 'a'), y2 - 1);
@@ -156,29 +135,40 @@ void loadPaths() {
     fclose(f);
 }
 
-int loadFigures(vector<sf::Texture> *figures, sf::Texture *boardImg) {
-    string figureFiles[] = { "w_pawn.png", "w_rook.png", "w_knight.png", "w_bishop.png", "w_queen.png", "w_king.png", "b_pawn.png", "b_rook.png", "b_knight.png", "b_bishop.png", "b_queen.png", "b_king.png" };
+int loadFigures(std::vector<sf::Texture> *figures, sf::Texture *boardImg) {
+    std::vector<std::string> figureFiles = {
+        "w_pawn.png",
+        "w_rook.png",
+        "w_knight.png",
+        "w_bishop.png",
+        "w_queen.png",
+        "w_king.png",
+        "b_pawn.png",
+        "b_rook.png",
+        "b_knight.png",
+        "b_bishop.png",
+        "b_queen.png",
+        "b_king.png"
+    };
 
-    for (int i = 0; i < 12; i++) {
-        sf::Texture f;
-        char* s = (char*) malloc(255 * sizeof(char));
-        sprintf(s, "%s/%s", mainConfig.dataFolderPath.c_str(), figureFiles[i].c_str());
+    for (auto it = figureFiles.begin(); it != figureFiles.end(); ++it) {
+        sf::Texture texture;
+        std::string path = mainConfig.dataFolderPath + "/" + *it;
 
-        if (!f.loadFromFile(s)) {
-            printf("Could not load image %s.\n", s);
+        if (!texture.loadFromFile(path)) {
+            printf("Could not load image %s\n", path.c_str());
 
             return 1;
         }
 
-        figures->push_back(f);
+        figures->push_back(texture);
     }
 
     {
-        char *s = (char*) malloc(255 * sizeof(char));
-        sprintf(s, "%s/board.png", mainConfig.dataFolderPath.c_str());
+        std::string path = mainConfig.dataFolderPath + "/" + "board.png";
 
-        if (!boardImg->loadFromFile(s)) {
-            printf("Could not load board from %s\n", s);
+        if (!boardImg->loadFromFile(path)) {
+            printf("Could not load board from %s\n", path.c_str());
 
             return 1;
 
@@ -189,20 +179,20 @@ int loadFigures(vector<sf::Texture> *figures, sf::Texture *boardImg) {
 }
 
 int findSide(std::string *side) {
-    sf::Http Http;
-    Http.setHost(networkConfig.host);
+    sf::Http http;
+    http.setHost(networkConfig.host);
 
-    sf::Http::Request Request;
-    Request.setMethod(sf::Http::Request::Post);
-    Request.setUri(networkConfig.findSideURI);
-    Request.setHttpVersion(1, 0);
+    sf::Http::Request request;
+    request.setMethod(sf::Http::Request::Post);
+    request.setUri(networkConfig.findSideURI);
+    request.setHttpVersion(1, 0);
 
-    sf::Http::Response Response = Http.sendRequest(Request);
+    sf::Http::Response response = http.sendRequest(request);
 
-    if (Response.getStatus() == 200) {
+    if (response.getStatus() == 200) {
         int s_side = -1;
 
-        sscanf(Response.getBody().c_str(), "%d", &s_side);
+        sscanf(response.getBody().c_str(), "%d", &s_side);
 
         if (s_side == 2) {
             *side = "white";
@@ -214,8 +204,8 @@ int findSide(std::string *side) {
             return 1;
         }
     } else {
-        printf("Response error status: %d\n", Response.getStatus());
-        printf("Response error body: %s\n", Response.getBody().c_str());
+        printf("Response error status: %d\n", response.getStatus());
+        printf("Response error body: %s\n", response.getBody().c_str());
         printf("Response error URI: %s\n", networkConfig.searchURI.c_str());
 
         return 1;
@@ -225,26 +215,26 @@ int findSide(std::string *side) {
 }
 
 int promoteSelf(const std::string &side, std::string *client_id) {
-    sf::Http Http;
-    Http.setHost(networkConfig.host);
+    sf::Http http;
+    http.setHost(networkConfig.host);
 
-    sf::Http::Request Request;
-    Request.setMethod(sf::Http::Request::Post);
-    Request.setUri(networkConfig.searchURI);
-    Request.setBody("side=" + side);
-    Request.setHttpVersion(1, 0);
+    sf::Http::Request request;
+    request.setMethod(sf::Http::Request::Post);
+    request.setUri(networkConfig.searchURI);
+    request.setBody("side=" + side);
+    request.setHttpVersion(1, 0);
 
-    sf::Http::Response Response = Http.sendRequest(Request);
+    sf::Http::Response response = http.sendRequest(request);
 
-    if (Response.getStatus() == 200) {
-        *client_id = Response.getBody().substr(1, Response.getBody().length() - 1);
+    if (response.getStatus() == 200) {
+        *client_id = response.getBody().substr(1, response.getBody().length() - 1);
 
-        if (Response.getBody()[0] == '!')
+        if (response.getBody()[0] == '!')
             return 1; else
                 return 0;
     } else {
-        printf("Response error status: %d\n", Response.getStatus());
-        printf("Response error body: %s\n", Response.getBody().c_str());
+        printf("Response error status: %d\n", response.getStatus());
+        printf("Response error body: %s\n", response.getBody().c_str());
         printf("Response error URI: %s\n", networkConfig.searchURI.c_str());
     }
 
@@ -252,21 +242,21 @@ int promoteSelf(const std::string &side, std::string *client_id) {
 }
 
 int waitForOpponent(const std::string &client_id) {
-    sf::Http Http;
-    Http.setHost(networkConfig.host);
+    sf::Http http;
+    http.setHost(networkConfig.host);
 
-    sf::Http::Request Request;
-    Request.setMethod(sf::Http::Request::Post);
-    Request.setUri(networkConfig.gameStartedURI);
-    Request.setBody("client=" + client_id);
-    Request.setHttpVersion(1, 0);
+    sf::Http::Request request;
+    request.setMethod(sf::Http::Request::Post);
+    request.setUri(networkConfig.gameStartedURI);
+    request.setBody("client=" + client_id);
+    request.setHttpVersion(1, 0);
 
-    sf::Http::Response Response = Http.sendRequest(Request);
+    sf::Http::Response response = http.sendRequest(request);
 
-    if (Response.getStatus() == 200) {
+    if (response.getStatus() == 200) {
         int result = -1;
 
-        sscanf(Response.getBody().c_str(), "%d", &result);
+        sscanf(response.getBody().c_str(), "%d", &result);
 
         return (result == 1);
     } else {
@@ -275,7 +265,10 @@ int waitForOpponent(const std::string &client_id) {
 }
 
 int** setupBoard(int whitesDown = 1) {
-    int row1w[] = { 1, 1, 1, 1, 1, 1, 1, 1 }, row2w[] = { 2, 3, 4, 5, 6, 4, 3, 2 }, row1b[] = { 11, 11, 11, 11, 11, 11, 11, 11 }, row2b[] = { 12, 13, 14, 16, 15, 14, 13, 12 };
+    int row1w[] = { 1, 1, 1, 1, 1, 1, 1, 1 };
+    int row2w[] = { 2, 3, 4, 5, 6, 4, 3, 2 };
+    int row1b[] = { 11, 11, 11, 11, 11, 11, 11, 11 };
+    int row2b[] = { 12, 13, 14, 16, 15, 14, 13, 12 };
 
     int** board = (int**) malloc(8 * sizeof(int*));
 
@@ -305,7 +298,7 @@ int** setupBoard(int whitesDown = 1) {
 }
 
 int mainLoop(const std::string &client_id, int firstTurnPrivilege = 0) {
-    sf::RenderWindow App(sf::VideoMode(800, 600, 32), "mooChess");
+    sf::RenderWindow appWindow(sf::VideoMode(800, 600, 32), "mooChess");
 
     /*
      * Game status reference:
@@ -316,9 +309,10 @@ int mainLoop(const std::string &client_id, int firstTurnPrivilege = 0) {
      * 4 - check for my opponent
      */
 
-    int **board = 0, gameStatus = firstTurnPrivilege;
+    int **board = 0;
+    int gameStatus = firstTurnPrivilege;
 
-    sf::Vector2u windowSize = App.getSize();
+    sf::Vector2u windowSize = appWindow.getSize();
 
     int k = (windowSize.x < windowSize.y) ? windowSize.x : windowSize.y;
     int cSize = k / 10;
@@ -326,7 +320,7 @@ int mainLoop(const std::string &client_id, int firstTurnPrivilege = 0) {
     sf::Vector2i cursor(4, 6), offset(windowSize.x / 5, windowSize.y / 10);
     sf::Vector2i selected(-1, -1);
 
-    vector<sf::Texture> figures;
+    std::vector<sf::Texture> figures;
     sf::Texture boardImg;
 
     if (loadFigures(&figures, &boardImg)) {
@@ -338,19 +332,19 @@ int mainLoop(const std::string &client_id, int firstTurnPrivilege = 0) {
 
     board = setupBoard(firstTurnPrivilege);
 
-    sf::Clock Timer;
-    Timer.restart();
+    sf::Clock timer;
+    timer.restart();
 
-    while (App.isOpen()) {
-        sf::Event Event;
+    while (appWindow.isOpen()) {
+        sf::Event event;
 
-        while (App.pollEvent(Event)) {
-            if (Event.type == sf::Event::Closed) {
-                App.close();
+        while (appWindow.pollEvent(event)) {
+            if (event.type == sf::Event::Closed) {
+                appWindow.close();
             }
 
-            if (Event.type == sf::Event::KeyPressed && gameStatus > 0) {
-                switch (Event.key.code) {
+            if (event.type == sf::Event::KeyPressed && gameStatus > 0) {
+                switch (event.key.code) {
                     case (sf::Keyboard::Up):
                         cursor.y = (8 + --cursor.y) % 8;
                     break;
@@ -427,11 +421,14 @@ int mainLoop(const std::string &client_id, int firstTurnPrivilege = 0) {
                             selected.y = cursor.y;
                         }
                     break;
+
+                    default:
+                    break;
                 }
             }
         }
 
-        float timeSinceLastUpdate = Timer.getElapsedTime().asSeconds();
+        float timeSinceLastUpdate = timer.getElapsedTime().asSeconds();
 
         if (timeSinceLastUpdate > 3.f) {
             if (gameStatus < 1) {
@@ -482,13 +479,13 @@ int mainLoop(const std::string &client_id, int firstTurnPrivilege = 0) {
                 }
             }
 
-            Timer.restart();
+            timer.restart();
         }
 
-        App.clear();
+        appWindow.clear();
 
         boardSprite.setPosition(offset.x, offset.y);
-        App.draw(boardSprite);
+        appWindow.draw(boardSprite);
 
         for (int i = 0; i < 8; i++) {
             for (int t = 0; t < 8; t++) {
@@ -497,7 +494,7 @@ int mainLoop(const std::string &client_id, int firstTurnPrivilege = 0) {
                     sf::Sprite s(figures[n]);
                     s.setScale((float) cSize / s.getLocalBounds().width, (float) cSize / s.getLocalBounds().height);
                     s.setPosition((int) offset.x + (t * cSize), (int) offset.y + (i * cSize));
-                    App.draw(s);
+                    appWindow.draw(s);
                 }
             }
         }
@@ -514,7 +511,7 @@ int mainLoop(const std::string &client_id, int firstTurnPrivilege = 0) {
                 cursorRect.setFillColor(sf::Color::Transparent);
                 cursorRect.setOutlineColor(cursorColor);
                 cursorRect.setOutlineThickness(2);
-                App.draw(cursorRect);
+                appWindow.draw(cursorRect);
             }
 
             if (selected.x > -1 && selected.y > -1) {
@@ -529,7 +526,7 @@ int mainLoop(const std::string &client_id, int firstTurnPrivilege = 0) {
                 selectionRect.setOutlineColor(selectionColor);
                 selectionRect.setOutlineThickness(2);
 
-                App.draw(selectionRect);
+                appWindow.draw(selectionRect);
             }
         }
 
@@ -550,9 +547,9 @@ int mainLoop(const std::string &client_id, int firstTurnPrivilege = 0) {
             statusMessage.getLocalBounds().height / 2.f)
         );
 
-        App.draw(statusMessage);
+        appWindow.draw(statusMessage);
 
-        App.display();
+        appWindow.display();
     }
 
     return 0;
@@ -616,11 +613,11 @@ int main(int argc, char** argv) {
         } else if (res > 0) {
             // start game
         } else {
-            sf::Clock Timer;
-            Timer.restart();
+            sf::Clock timer;
+            timer.restart();
 
             while (1) {
-                if (Timer.getElapsedTime().asSeconds() > 3.f) {
+                if (timer.getElapsedTime().asSeconds() > 3.f) {
                     int res = waitForOpponent(client_id);
 
                     if (res < 0) {
@@ -632,7 +629,7 @@ int main(int argc, char** argv) {
                         break;
                     }
 
-                    Timer.restart();
+                    timer.restart();
                 }
             }
         }

@@ -7,7 +7,8 @@
 
 ## Building
 
-To build client, run `cd client && make`.
+Client is now built with [Buck](https://buckbuild.com/).
+To build client, run `buck build //client` from the project root directory.
 
 ## Configuration
 
@@ -34,6 +35,6 @@ Then you will need to create database structure - you can easily achieve this by
 
 ## Running
 
-To run client, run it with the side you want to play as (`white`, `black` or `random`): `./client random`.
+To run client, run it with the side you want to play as (`white`, `black` or `random`): `buck run //client random`.
 
 To run server, use the `server.php` file.

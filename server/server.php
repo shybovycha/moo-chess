@@ -940,7 +940,7 @@
 			echo '0';
 		}
 
-		public function  validate_move()
+		public function validate_move()
 		{
 			/*
 			 * Response reference:
