@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.16)
 project(moo-chess-client LANGUAGES CXX)
 
 set(EXECUTABLE_NAME moo-chess-client)
-set(SOURCES "src/chess.cpp" "src/common.hpp")
+set(SOURCES "src/chess.cpp" "src/common.hpp" "src/ChessClient.cpp" "src/ChessClient.hpp" "src/Config.hpp")
 
 add_executable(${EXECUTABLE_NAME} ${SOURCES})
 
