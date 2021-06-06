@@ -1,2 +1,5 @@
 buck-out
 .buckd
+.vs
+.vscode
+.xmake

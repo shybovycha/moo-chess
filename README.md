@@ -7,8 +7,8 @@
 
 ## Building
 
-Client is now built with [Buck](https://buckbuild.com/).
-To build client, run `buck build //client` from the project root directory.
+Client is now built with CMake.
+To build client, run `cmake -B build -H .` from the `client` directory.
 
 ## Configuration
 
