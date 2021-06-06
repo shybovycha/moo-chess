@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<config>
+    <game>
+        <media-path>./data</media-path>
+    </game>
+
+    <server>
+        <host>localhost</host>
+        
+        <endpoints>
+            <find-side>index.php?find_side</find-side>
+            <search>index.php?find_opponent</search>
+            <validate-move>index.php?validate_move</validate-move>
+            <query>index.php?update_client</query>
+            <start-game>index.php?is_game_started</start-game>
+        </endpoints>
+    </server>
+</config>

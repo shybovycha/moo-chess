@@ -11,3 +11,5 @@
 
 #include <SFML/Graphics.hpp>
 #include <SFML/Network.hpp>
+
+#include <tinyxml2.h>

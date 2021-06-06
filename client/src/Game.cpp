@@ -3,7 +3,7 @@
 Game::Game() {}
 
 void Game::init() {
-    config = readConfig("game.cfg");
+    config = readConfig("config.xml");
     client = std::make_shared<ChessClient>(config);
 }
 
@@ -30,19 +30,45 @@ void Game::start(const std::string &initialSide) {
 ApplicationConfig Game::readConfig(const std::string& configFilename) {
     ApplicationConfig config;
 
-    std::ifstream ifs(configFilename, std::ifstream::in);
+    auto xml = new tinyxml2::XMLDocument();
 
-    // data path
-    ifs >> config.game.dataFolderPath;
+    tinyxml2::XMLError xmlError = xml->LoadFile(configFilename.c_str());
 
-    ifs >> config.server.host;
-    ifs >> config.server.findSideURI;
-    ifs >> config.server.searchURI;
-    ifs >> config.server.moveValidationURI;
-    ifs >> config.server.queryingURI;
-    ifs >> config.server.gameStartedURI;
+    if (xmlError != tinyxml2::XML_SUCCESS) {
+        std::cerr << "Can not load game configuration file\n";
+        return config;
+    }
 
-    ifs.close();
+    auto rootNode = xml->FirstChildElement("config");
+
+    auto gameConfigNode = rootNode->FirstChildElement("game");
+    auto serverConfigNode = rootNode->FirstChildElement("server");
+
+    if (gameConfigNode == nullptr || serverConfigNode == nullptr) {
+        std::cerr << "Invalid game configuration file\n";
+        return config;
+    }
+
+    auto dataPathNode = gameConfigNode->FirstChildElement("media-path");
+
+    auto hostNode = serverConfigNode->FirstChildElement("host");
+
+    auto urlsNode = serverConfigNode->FirstChildElement("endpoints");
+
+    auto findSideURINode = urlsNode->FirstChildElement("find-side");
+    auto searchURINode = urlsNode->FirstChildElement("search");
+    auto moveValidationURINode = urlsNode->FirstChildElement("validate-move");
+    auto queryingURINode = urlsNode->FirstChildElement("query");
+    auto gameStartedURINode = urlsNode->FirstChildElement("start-game");
+
+    config.game.dataFolderPath = dataPathNode->GetText();
+
+    config.server.host = hostNode->GetText();
+    config.server.findSideURI = findSideURINode->GetText();
+    config.server.searchURI = searchURINode->GetText();
+    config.server.moveValidationURI = moveValidationURINode->GetText();
+    config.server.queryingURI = queryingURINode->GetText();
+    config.server.gameStartedURI = gameStartedURINode->GetText();
 
     return config;
 }
