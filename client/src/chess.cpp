@@ -32,6 +32,226 @@ protected:
     int mStatus;
 };
 
+enum class PieceColor {
+    BLACK,
+    WHITE
+};
+
+class PromoteResponse {
+public:
+    static PromoteResponse black(std::string clientId) {
+        return PromoteResponse(clientId, PieceColor::BLACK);
+    }
+
+    static PromoteResponse white(std::string clientId) {
+        return PromoteResponse(clientId, PieceColor::WHITE);
+    }
+
+    std::string getClientId() const {
+        return clientId;
+    }
+
+    PieceColor getColor() const {
+        return color;
+    }
+
+private:
+    PromoteResponse(std::string clientId, PieceColor color) : clientId(clientId), color(color) {}
+
+    std::string clientId;
+    PieceColor color;
+};
+
+
+enum class MoveValidationResult {
+    UNKNOWN = -1,
+    INVALID_MOVE = 0, // invalid move
+    NORMAL_MOVE = 1, // normal move - move piece from [from] squasre to the [to] square
+    CASTLING_KING_SIDE = 4, // castling (swap rook and king for 3 squares)
+    CASTLING_QUEEN_SIDE = 5, // castling (swap rook and king for 2 squares)
+    EN_PASSANT = 8, // en passant (remove neighbour pawn and place player's one as it captured other when it moves one square less)
+    PROMOTE_PAWN_TO_QUEEN = 16, // promote pawn to queen
+    PROMOTE_PAWN_TO_BISHOP = 17, // promote pawn to bishop
+    PROMOTE_PAWN_TO_KNIGHT = 18, // promote pawn to knight
+    PROMOTE_PAWN_TO_ROOK = 19, // promote pawn to rook
+    CHECK = 32, // check
+    CHECKMATE = 64 // checkmate
+};
+
+enum class StatusResponse {
+    UNKNOWN = -1,
+    NO_UPDATES = 0, // no new moves or no response
+    WAITING_FOR_OPPONENT = 1, // opponent's turn
+    PLAYING_TURN = 2, // user's turn
+    UNDER_CHECK = 3, // opponent's check
+    UNDER_CHECKMATE = 4, // opponent's checkmate
+    CHECK = 5, // user's ckeck
+    CHECKMATE = 6, // user's checkmate
+    OPPONENT_CASTLING_KING_SIDE = 7, // opponent's castling short side
+    OPPONENT_CASTLING_QUEEN_SIDE = 8, // opponent's castling long side
+    START_AS_BLACK = 12, // set up game with whites on the top
+    START_AS_WHITE = 17 // set up game with whites on the bottom
+};
+
+enum class FindSideResponse {
+    UNKNOWN = -1,
+    WHITE = 2,
+    BLACK = 7
+};
+
+enum class GameState {
+    WAITING_FOR_OPPONENT = 0, // opponent's turn or any other lock mode
+    MAKING_TURN = 1, // my turn
+    UNDER_CHECK = 2, // check for me
+    UNDER_CHECKMATE = 4 // checkmate for me
+};
+
+class ChessClient {
+public:
+    ChessClient(const ApplicationConfig& config) : config(config) {}
+
+    MoveValidationResult validateMove(const std::string& clientId, const sf::Vector2i& from, const sf::Vector2i& to) {
+        std::map<std::string, std::string> params = {
+            { "client", clientId },
+            { "from", std::to_string(static_cast<int>('a') + from.x) + std::to_string(from.y + 1) },
+            { "to", std::to_string(static_cast<int>('a') + to.x) + std::to_string(to.y + 1) }
+        };
+
+        std::string response = sendRequest(config.server.moveValidationURI, params);
+
+        int result = -1;
+
+        std::istringstream(response) >> result;
+
+        return static_cast<MoveValidationResult>(result);
+    }
+
+    StatusResponse queryServer(const std::string& clientId, sf::Vector2i* from, sf::Vector2i* to) {
+        std::map<std::string, std::string> params = {
+            { "client", clientId }
+        };
+
+        std::string response = sendRequest(config.server.queryingURI, params);
+
+        auto stream = std::istringstream(response);
+        int tmp = static_cast<int>(StatusResponse::UNKNOWN);
+
+        stream >> tmp;
+
+        StatusResponse result{ tmp };
+
+        if (result == StatusResponse::PLAYING_TURN || result == StatusResponse::OPPONENT_CASTLING_KING_SIDE) {
+            int y1 = -1, y2 = -1;
+            char x1 = 0, x2 = 0;
+
+            stream >> x1 >> y1 >> x2 >> y2;
+
+            *from = sf::Vector2i((x1 - static_cast<int>('a')), y1 - 1);
+            *to = sf::Vector2i((x2 - static_cast<int>('a')), y2 - 1);
+        }
+
+        return static_cast<StatusResponse>(result);
+    }
+
+    FindSideResponse findSide() {
+        std::string response = sendRequest(config.server.findSideURI);
+
+        int tmp = static_cast<int>(FindSideResponse::UNKNOWN);
+
+        std::istringstream(response) >> tmp;
+
+        return static_cast<FindSideResponse>(tmp);
+
+        /*if (tmp == static_cast<int>(FindSideResponse::WHITE)) {
+            return PieceColor::WHITE;
+        }
+        else if (tmp == static_cast<int>(FindSideResponse::BLACK)) {
+            return PieceColor::BLACK;
+        }
+        else {
+            std::cerr << "Server error while choosing your side\n";
+
+            return PieceColor::BLACK;
+        }*/
+    }
+
+    PromoteResponse promoteSelf(const std::string& side) {
+        std::map<std::string, std::string> params = {
+            { "side", side }
+        };
+
+        auto response = sendRequest(config.server.searchURI, params);
+        auto clientId = response.substr(1, response.length() - 1);
+
+        if (response[0] == '!') {
+            return PromoteResponse::black(clientId);
+        }
+        else {
+            return PromoteResponse::white(clientId);
+        }
+    }
+
+    bool waitForOpponent(const std::string& clientId) {
+        std::map<std::string, std::string> params = {
+            { "client", clientId }
+        };
+
+        std::string response = sendRequest(config.server.gameStartedURI, params);
+
+        int result = -1;
+
+        std::istringstream(response) >> result;
+
+        return (result == 1);
+    }
+
+private:
+    std::string formatQueryString(std::map<std::string, std::string> params) {
+        std::string result;
+
+        for (auto const& [key, value] : params) {
+            if (!result.empty()) {
+                result += "&";
+            }
+
+            result += key + "=" + value;
+        }
+
+        return result;
+    }
+
+    std::string sendRequest(std::string url) {
+        return sendRequest(url, "");
+    }
+
+    std::string sendRequest(std::string url, std::map<std::string, std::string> params) {
+        return sendRequest(url, formatQueryString(params));
+    }
+
+    std::string sendRequest(std::string url, std::string body) {
+        std::unique_ptr<sf::Http> http(new sf::Http());
+        http->setHost(config.server.host);
+
+        std::unique_ptr<sf::Http::Request> request(new sf::Http::Request);
+        request->setMethod(sf::Http::Request::Post);
+        request->setUri(url);
+
+        request->setBody(body);
+        request->setHttpVersion(1, 0);
+
+        auto response = std::make_unique<sf::Http::Response>(http->sendRequest(*request));
+
+        if (response->getStatus() != sf::Http::Response::Status::Ok) {
+            throw BadResponse(response->getStatus());
+        }
+
+        return response->getBody();
+    }
+
+private:
+    ApplicationConfig config;
+};
+
 ApplicationConfig readConfig(const std::string &configFilename) {
     ApplicationConfig config;
 
@@ -88,170 +308,6 @@ std::map<std::string, std::shared_ptr<sf::Sprite>> loadResources(const Applicati
     return resources;
 }
 
-std::string sendRequest(const ApplicationConfig &config, std::string url, std::string body) {
-    std::unique_ptr<sf::Http> http(new sf::Http());
-    http->setHost(config.server.host);
-
-    std::unique_ptr<sf::Http::Request> request(new sf::Http::Request);
-    request->setMethod(sf::Http::Request::Post);
-    request->setUri(url);
-
-    request->setBody(body);
-    request->setHttpVersion(1, 0);
-
-    auto response = std::make_unique<sf::Http::Response>(http->sendRequest(*request));
-
-    if (response->getStatus() != sf::Http::Response::Status::Ok) {
-        throw BadResponse(response->getStatus());
-    }
-
-    return response->getBody();
-}
-
-std::string formatQueryString(std::map<std::string, std::string> params) {
-    std::string result;
-
-    for (auto const & [key, value] : params) {
-        if (!result.empty()) {
-            result += "&";
-        }
-
-        result += key + "=" + value;
-    }
-
-    return result;
-}
-
-enum MoveValidationResult {
-    UNKNOWN = -1,
-    INVALID_MOVE = 0, // invalid move
-    NORMAL_MOVE = 1, // normal move - move piece from [from] squasre to the [to] square
-    CASTLING_KING_SIDE = 4, // castling (swap rook and king for 3 squares)
-    CASTLING_QUEEN_SIDE = 5, // castling (swap rook and king for 2 squares)
-    EN_PASSANT = 8, // en passant (remove neighbour pawn and place player's one as it captured other when it moves one square less)
-    PROMOTE_PAWN_TO_QUEEN = 16, // promote pawn to queen
-    PROMOTE_PAWN_TO_BISHOP = 17, // promote pawn to bishop
-    PROMOTE_PAWN_TO_KNIGHT = 18, // promote pawn to knight
-    PROMOTE_PAWN_TO_ROOK = 19, // promote pawn to rook
-    CHECK = 32, // check
-    CHECKMATE = 64 // checkmate
-};
-
-MoveValidationResult validateMove(const ApplicationConfig &config, const std::string &clientId, const sf::Vector2i &from, const sf::Vector2i &to) {
-    std::map<std::string, std::string> params = {
-        { "client", clientId },
-        { "from", std::to_string(static_cast<int>('a') + from.x) + std::to_string(from.y + 1) },
-        { "to", std::to_string(static_cast<int>('a') + to.x) + std::to_string(to.y + 1) }
-    };
-
-    std::string requestBody = formatQueryString(params);
-
-    std::string response = sendRequest(config, config.server.moveValidationURI, requestBody);
-
-    int result = -1;
-
-    std::istringstream(response) >> result;
-
-    return static_cast<MoveValidationResult>(result);
-}
-
-enum class StatusResponse {
-    UNKNOWN = -1,
-    NO_UPDATES = 0, // no new moves or no response
-    WAITING_FOR_OPPONENT = 1, // opponent's turn
-    PLAYING_TURN = 2, // user's turn
-    UNDER_CHECK = 3, // opponent's check
-    UNDER_CHECKMATE = 4, // opponent's checkmate
-    CHECK = 5, // user's ckeck
-    CHECKMATE = 6, // user's checkmate
-    OPPONENT_CASTLING_KING_SIDE = 7, // opponent's castling short side
-    OPPONENT_CASTLING_QUEEN_SIDE = 8, // opponent's castling long side
-    START_AS_BLACK = 12, // set up game with whites on the top
-    START_AS_WHITE = 17 // set up game with whites on the bottom
-};
-
-StatusResponse queryServer(const ApplicationConfig &config, const std::string &clientId, sf::Vector2i *from, sf::Vector2i *to) {
-    std::map<std::string, std::string> params = {
-        { "client", clientId }
-    };
-
-    std::string requestBody = formatQueryString(params);
-    
-    std::string response = sendRequest(config, config.server.queryingURI, requestBody);
-
-    auto stream = std::istringstream(response);
-    int tmp = static_cast<int>(StatusResponse::UNKNOWN);
-
-    stream >> tmp;
-
-    StatusResponse result { tmp };
-
-    if (result == StatusResponse::PLAYING_TURN || result == StatusResponse::OPPONENT_CASTLING_KING_SIDE) {
-        int y1 = -1, y2 = -1;
-        char x1 = 0, x2 = 0;
-
-        stream >> x1 >> y1 >> x2 >> y2;
-
-        *from = sf::Vector2i((x1 - static_cast<int>('a')), y1 - 1);
-        *to = sf::Vector2i((x2 - static_cast<int>('a')), y2 - 1);
-    }
-
-    return static_cast<StatusResponse>(result);
-}
-
-enum class FindSideResponse {
-    UNKNOWN = -1,
-    WHITE = 2,
-    BLACK = 7
-};
-
-int findSide(const ApplicationConfig &config, std::string *side) {
-    std::string response = sendRequest(config, config.server.findSideURI, "");
-
-    int s_side = static_cast<int>(FindSideResponse::UNKNOWN);
-
-    std::istringstream(response) >> s_side;
-
-    if (s_side == static_cast<int>(FindSideResponse::WHITE)) {
-        *side = "white";
-    }
-    else if (s_side == static_cast<int>(FindSideResponse::BLACK)) {
-        *side = "black";
-    }
-    else {
-        std::cout << "Server error while choosing your side\n";
-
-        return 1;
-    }
-
-    return 0;
-}
-
-int promoteSelf(ApplicationConfig config, const std::string &side, std::string *client_id) {
-    std::string message = "side=" + side;
-    std::string response = sendRequest(config, config.server.searchURI, message);
-
-    *client_id = response.substr(1, response.length() - 1);
-
-    if (response[0] == '!') {
-        return 1;
-    }
-    else {
-        return 0;
-    }
-}
-
-int waitForOpponent(ApplicationConfig config, const std::string &client_id) {
-    std::string message = "client=" + client_id;
-    std::string response = sendRequest(config, config.server.gameStartedURI, message);
-
-    int result = -1;
-
-    std::istringstream(response) >> result;
-
-    return (result == 1);
-}
-
 int** setupBoard(int whitesDown = 1) {
     int row1w[] = { 1, 1, 1, 1, 1, 1, 1, 1 };
     int row2w[] = { 2, 3, 4, 5, 6, 4, 3, 2 };
@@ -285,13 +341,6 @@ int** setupBoard(int whitesDown = 1) {
     return board;
 }
 
-enum class GameState {
-    WAITING_FOR_OPPONENT = 0, // opponent's turn or any other lock mode
-    MAKING_TURN = 1, // my turn
-    UNDER_CHECK = 2, // check for me
-    UNDER_CHECKMATE = 4 // checkmate for me
-};
-
 std::shared_ptr<sf::Sprite> findPieceSprite(std::map<std::string, std::shared_ptr<sf::Sprite>> resources, unsigned int pieceCode) {
     std::map<unsigned int, std::string> pieceCodes = {
         { 0, "white_pawn" },
@@ -311,7 +360,7 @@ std::shared_ptr<sf::Sprite> findPieceSprite(std::map<std::string, std::shared_pt
     return resources[pieceCodes[pieceCode]];
 }
 
-int mainLoop(const ApplicationConfig &config, const std::string &clientId, int firstTurnPrivilege = 0) {
+int mainLoop(const ApplicationConfig &config, std::shared_ptr<ChessClient> client, const std::string &clientId, int firstTurnPrivilege = 0) {
     sf::RenderWindow appWindow(sf::VideoMode(800, 600, 32), "mooChess");
 
     int **board = 0;
@@ -378,7 +427,7 @@ int mainLoop(const ApplicationConfig &config, const std::string &clientId, int f
                     case (sf::Keyboard::Return):
                     case (sf::Keyboard::Space):
                         if (selected.x > -1 && selected.y > -1) {
-                            MoveValidationResult res = validateMove(config, clientId, selected, cursor);
+                            MoveValidationResult res = client->validateMove(clientId, selected, cursor);
 
                             if (res == MoveValidationResult::NORMAL_MOVE) {
                                 board[cursor.y][cursor.x] = board[selected.y][selected.x];
@@ -447,7 +496,7 @@ int mainLoop(const ApplicationConfig &config, const std::string &clientId, int f
         if (timeSinceLastUpdate > 3.f) {
             if (gameStatus == GameState::WAITING_FOR_OPPONENT) {
                 sf::Vector2i from, to;
-                StatusResponse res = queryServer(config, clientId, &from, &to);
+                StatusResponse res = client->queryServer(clientId, &from, &to);
 
                 if (res == StatusResponse::PLAYING_TURN) {
                     gameStatus = GameState::MAKING_TURN;
@@ -609,6 +658,7 @@ int main(int argc, char** argv) {
     std::string clientId = "";
 
     auto config = readConfig("game.cfg");
+    auto client = std::make_shared<ChessClient>(config);
 
     if (argv1 == "--version" || argv1 == "-v") {
         showVersionString();
@@ -620,41 +670,27 @@ int main(int argc, char** argv) {
         return 0;
     } else if (argv1 == "black" || argv1 == "white" || argv1 == "random") {
         if (argv1 == "random") {
-            if (findSide(config, &side)) {
+            if (client->findSide() == FindSideResponse::UNKNOWN) {
                 return 1;
             }
         } else {
             side = argv1;
         }
 
-        int res = promoteSelf(config, side, &clientId);
+        auto promotionResult = client->promoteSelf(side);
 
-        if (res < 0) {
-            std::cout << "Promotion error - shutting down\n\n";
+        auto timer = std::make_unique<sf::Clock>();
 
-            return 1;
-        } else if (res > 0) {
-            // start game
-        } else {
-            auto timer = std::make_unique<sf::Clock>();
+        timer->restart();
 
-            timer->restart();
-
-            while (1) {
-                if (timer->getElapsedTime().asSeconds() > 3.f) {
-                    int res = waitForOpponent(config, clientId);
-
-                    if (res < 0) {
-                        std::cout << "Waiting for opponent error - shutting down\n\n";
-
-                        return 1;
-                    } else if (res > 0) {
-                        // start game
-                        break;
-                    }
-
-                    timer->restart();
+        while (1) {
+            if (timer->getElapsedTime().asSeconds() > 3.f) {
+                if (client->waitForOpponent(promotionResult.getClientId())) {
+                    // start game
+                    break;
                 }
+
+                timer->restart();
             }
         }
     } else {
@@ -664,5 +700,5 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    return mainLoop(config, clientId, side == "white");
+    return mainLoop(config, client, clientId, side == "white");
 }
