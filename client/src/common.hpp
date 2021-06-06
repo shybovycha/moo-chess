@@ -7,8 +7,7 @@
 #include <vector>
 #include <memory>
 #include <exception>
+#include <map>
 
 #include <SFML/Graphics.hpp>
 #include <SFML/Network.hpp>
-
-#include <stdlib.h>

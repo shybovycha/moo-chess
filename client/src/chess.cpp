@@ -7,11 +7,16 @@ struct ServerConfig {
     std::string queryingURI;
     std::string moveValidationURI;
     std::string findSideURI;
-} networkConfig;
+};
 
 struct ClientConfig {
     std::string dataFolderPath;
-} mainConfig;
+};
+
+struct ApplicationConfig {
+    ServerConfig server;
+    ClientConfig game;
+};
 
 class BadResponse : public std::exception {
 public:
@@ -27,90 +32,65 @@ protected:
     int mStatus;
 };
 
-void loadPaths() {
-    mainConfig.dataFolderPath.clear();
-    networkConfig.host.clear();
-    networkConfig.searchURI.clear();
-    networkConfig.moveValidationURI.clear();
-    networkConfig.queryingURI.clear();
-    networkConfig.gameStartedURI.clear();
+ApplicationConfig readConfig(const std::string &configFilename) {
+    ApplicationConfig config;
 
-    std::ifstream ifs;
-
-    ifs.open("game.cfg", std::ifstream::in);
+    std::ifstream ifs(configFilename, std::ifstream::in);
 
     // data path
-    ifs >> mainConfig.dataFolderPath;
+    ifs >> config.game.dataFolderPath;
 
-    // server host
-    ifs >> networkConfig.host;
-
-    // find side uri
-    ifs >> networkConfig.findSideURI;
-
-    // find opponent uri
-    ifs >> networkConfig.searchURI;
-
-    // server move validation uri
-    ifs >> networkConfig.moveValidationURI;
-
-    // server querying uri
-    ifs >> networkConfig.queryingURI;
-
-    // game start test uri
-    ifs >> networkConfig.gameStartedURI;
+    ifs >> config.server.host;
+    ifs >> config.server.findSideURI;
+    ifs >> config.server.searchURI;
+    ifs >> config.server.moveValidationURI;
+    ifs >> config.server.queryingURI;
+    ifs >> config.server.gameStartedURI;
 
     ifs.close();
+
+    return config;
 }
 
-int loadFigures(std::shared_ptr<std::vector<std::shared_ptr<sf::Sprite>>> figuresSprites, std::shared_ptr<sf::Sprite> boardSprite) {
-    std::vector<std::string> figureFiles = {
-        "w_pawn.png",
-        "w_rook.png",
-        "w_knight.png",
-        "w_bishop.png",
-        "w_queen.png",
-        "w_king.png",
-        "b_pawn.png",
-        "b_rook.png",
-        "b_knight.png",
-        "b_bishop.png",
-        "b_queen.png",
-        "b_king.png"
+std::map<std::string, std::shared_ptr<sf::Sprite>> loadResources(const ApplicationConfig &config) {
+    std::map<std::string, std::shared_ptr<sf::Sprite>> resources;
+
+    std::map<std::string, std::string> resourcesToLoad = {
+        { "white_pawn", "w_pawn.png" },
+        { "white_rook", "w_rook.png" },
+        { "white_knight", "w_knight.png" },
+        { "white_bishop", "w_bishop.png" },
+        { "white_queen", "w_queen.png" },
+        { "white_king", "w_king.png" },
+        { "black_pawn", "b_pawn.png" },
+        { "black_rook", "b_rook.png" },
+        { "black_knight", "b_knight.png" },
+        { "black_bishop", "b_bishop.png" },
+        { "black_queen", "b_queen.png" },
+        { "black_king", "b_king.png" },
+        { "board", "board.png" }
     };
 
-    for (auto it = figureFiles.begin(); it != figureFiles.end(); ++it) {
+    for (auto const & [resourceName, filename] : resourcesToLoad) {
         auto texture = std::make_unique<sf::Texture>();
-        std::string path = mainConfig.dataFolderPath + "/" + *it;
+        
+        std::string path = config.game.dataFolderPath + "/" + filename;
 
         if (!texture->loadFromFile(path)) {
-            std::cout << "Could not load image " << path << "\n";
+            std::cerr << "Could not load image " << path << "\n";
 
-            return 1;
+            continue;
         }
 
-        figuresSprites->push_back(std::make_shared<sf::Sprite>(*texture));
+        resources[resourceName] = std::make_shared<sf::Sprite>(*texture);
     }
 
-    {
-        auto texture = std::make_unique<sf::Texture>();
-        std::string path = mainConfig.dataFolderPath + "/" + "board.png";
-
-        if (!texture->loadFromFile(path)) {
-            std::cout << "Could not load board from " << path << "\n";
-
-            return 1;
-        }
-
-        boardSprite->setTexture(*texture);
-    }
-
-    return 0;
+    return resources;
 }
 
-std::string sendRequest(std::string url, std::string body) {
+std::string sendRequest(const ApplicationConfig &config, std::string url, std::string body) {
     std::unique_ptr<sf::Http> http(new sf::Http());
-    http->setHost(networkConfig.host);
+    http->setHost(config.server.host);
 
     std::unique_ptr<sf::Http::Request> request(new sf::Http::Request);
     request->setMethod(sf::Http::Request::Post);
@@ -121,95 +101,124 @@ std::string sendRequest(std::string url, std::string body) {
 
     auto response = std::make_unique<sf::Http::Response>(http->sendRequest(*request));
 
-    if (response->getStatus() != 200) {
+    if (response->getStatus() != sf::Http::Response::Status::Ok) {
         throw BadResponse(response->getStatus());
     }
 
     return response->getBody();
 }
 
-int validateMove(const std::string &client_id, sf::Vector2i from, sf::Vector2i to) {
-    std::string message = "client=" +
-        client_id +
-        "&from=" +
-        std::to_string(static_cast<int>('a') + from.x) +
-        std::to_string(from.y + 1) +
-        "&to=" +
-        std::to_string(static_cast<int>('a') + to.x) +
-        std::to_string(to.y + 1);
+std::string formatQueryString(std::map<std::string, std::string> params) {
+    std::string result;
 
-    std::string response = sendRequest(networkConfig.moveValidationURI, message);
+    for (auto const & [key, value] : params) {
+        if (!result.empty()) {
+            result += "&";
+        }
 
-    int result = -1;
-
-    /*
-     * Response reference:
-     *
-     * 0 - invalid move
-     * 1 - usual move - move figure from [from] cell to the [to] one
-     * 4 - castling (swap rook and king for 2 cells)
-     * 8 - en passant (remove neighbour pawn and place player's one as it captured other when it moves one cell less)
-     * 16 - promote pawn to queen
-     * 17 - promote pawn to bishop
-     * 18 - promote pawn to knight
-     * 19 - promote pawn to rook
-     * 32 - check to whites
-     * 64 - checkmate
-     */
-
-    std::istringstream(response) >> result;
-
-    return result;
-}
-
-int queryServer(const std::string &client_id, sf::Vector2i *from, sf::Vector2i *to) {
-    std::string message = "client=" + client_id;
-    std::string response = sendRequest(networkConfig.queryingURI, message);
-
-    int result = -1;
-
-    /*
-     * Response reference:
-     *
-     * 0 - no new moves or no response
-     * 1 - opponent's turn
-     * 2 - user's turn
-     * 3 - opponent's check
-     * 4 - opponent's checkmate
-     * 5 - user's ckeck
-     * 6 - user's checkmate
-     * 7 - opponent's castling
-     * 12 - set up game with whites on the top
-     * 17 - set up game with whites on the bottom
-     */
-
-    std::istringstream(response) >> result;
-
-    if (result == 2 || result == 7) {
-        int y1 = -1, y2 = -1;
-        char x1 = 0, x2 = 0;
-
-        std::istringstream(response) >> result >> x1 >> y1 >> x2 >> y2;
-
-        *from = sf::Vector2i((int) (x1 - 'a'), y1 - 1);
-        *to = sf::Vector2i((int) (x2 - 'a'), y2 - 1);
+        result += key + "=" + value;
     }
 
     return result;
 }
 
-int findSide(std::string *side) {
-    std::string response = sendRequest(networkConfig.findSideURI, "");
+enum MoveValidationResult {
+    UNKNOWN = -1,
+    INVALID_MOVE = 0, // invalid move
+    NORMAL_MOVE = 1, // normal move - move piece from [from] squasre to the [to] square
+    CASTLING_KING_SIDE = 4, // castling (swap rook and king for 3 squares)
+    CASTLING_QUEEN_SIDE = 5, // castling (swap rook and king for 2 squares)
+    EN_PASSANT = 8, // en passant (remove neighbour pawn and place player's one as it captured other when it moves one square less)
+    PROMOTE_PAWN_TO_QUEEN = 16, // promote pawn to queen
+    PROMOTE_PAWN_TO_BISHOP = 17, // promote pawn to bishop
+    PROMOTE_PAWN_TO_KNIGHT = 18, // promote pawn to knight
+    PROMOTE_PAWN_TO_ROOK = 19, // promote pawn to rook
+    CHECK = 32, // check
+    CHECKMATE = 64 // checkmate
+};
 
-    int s_side = -1;
+MoveValidationResult validateMove(const ApplicationConfig &config, const std::string &clientId, const sf::Vector2i &from, const sf::Vector2i &to) {
+    std::map<std::string, std::string> params = {
+        { "client", clientId },
+        { "from", std::to_string(static_cast<int>('a') + from.x) + std::to_string(from.y + 1) },
+        { "to", std::to_string(static_cast<int>('a') + to.x) + std::to_string(to.y + 1) }
+    };
+
+    std::string requestBody = formatQueryString(params);
+
+    std::string response = sendRequest(config, config.server.moveValidationURI, requestBody);
+
+    int result = -1;
+
+    std::istringstream(response) >> result;
+
+    return static_cast<MoveValidationResult>(result);
+}
+
+enum class StatusResponse {
+    UNKNOWN = -1,
+    NO_UPDATES = 0, // no new moves or no response
+    WAITING_FOR_OPPONENT = 1, // opponent's turn
+    PLAYING_TURN = 2, // user's turn
+    UNDER_CHECK = 3, // opponent's check
+    UNDER_CHECKMATE = 4, // opponent's checkmate
+    CHECK = 5, // user's ckeck
+    CHECKMATE = 6, // user's checkmate
+    OPPONENT_CASTLING_KING_SIDE = 7, // opponent's castling short side
+    OPPONENT_CASTLING_QUEEN_SIDE = 8, // opponent's castling long side
+    START_AS_BLACK = 12, // set up game with whites on the top
+    START_AS_WHITE = 17 // set up game with whites on the bottom
+};
+
+StatusResponse queryServer(const ApplicationConfig &config, const std::string &clientId, sf::Vector2i *from, sf::Vector2i *to) {
+    std::map<std::string, std::string> params = {
+        { "client", clientId }
+    };
+
+    std::string requestBody = formatQueryString(params);
+    
+    std::string response = sendRequest(config, config.server.queryingURI, requestBody);
+
+    auto stream = std::istringstream(response);
+    int tmp = static_cast<int>(StatusResponse::UNKNOWN);
+
+    stream >> tmp;
+
+    StatusResponse result { tmp };
+
+    if (result == StatusResponse::PLAYING_TURN || result == StatusResponse::OPPONENT_CASTLING_KING_SIDE) {
+        int y1 = -1, y2 = -1;
+        char x1 = 0, x2 = 0;
+
+        stream >> x1 >> y1 >> x2 >> y2;
+
+        *from = sf::Vector2i((x1 - static_cast<int>('a')), y1 - 1);
+        *to = sf::Vector2i((x2 - static_cast<int>('a')), y2 - 1);
+    }
+
+    return static_cast<StatusResponse>(result);
+}
+
+enum class FindSideResponse {
+    UNKNOWN = -1,
+    WHITE = 2,
+    BLACK = 7
+};
+
+int findSide(const ApplicationConfig &config, std::string *side) {
+    std::string response = sendRequest(config, config.server.findSideURI, "");
+
+    int s_side = static_cast<int>(FindSideResponse::UNKNOWN);
 
     std::istringstream(response) >> s_side;
 
-    if (s_side == 2) {
+    if (s_side == static_cast<int>(FindSideResponse::WHITE)) {
         *side = "white";
-    } else if (s_side == 7) {
+    }
+    else if (s_side == static_cast<int>(FindSideResponse::BLACK)) {
         *side = "black";
-    } else {
+    }
+    else {
         std::cout << "Server error while choosing your side\n";
 
         return 1;
@@ -218,20 +227,23 @@ int findSide(std::string *side) {
     return 0;
 }
 
-int promoteSelf(const std::string &side, std::string *client_id) {
+int promoteSelf(ApplicationConfig config, const std::string &side, std::string *client_id) {
     std::string message = "side=" + side;
-    std::string response = sendRequest(networkConfig.searchURI, message);
+    std::string response = sendRequest(config, config.server.searchURI, message);
 
     *client_id = response.substr(1, response.length() - 1);
 
-    if (response[0] == '!')
-        return 1; else
-            return 0;
+    if (response[0] == '!') {
+        return 1;
+    }
+    else {
+        return 0;
+    }
 }
 
-int waitForOpponent(const std::string &client_id) {
+int waitForOpponent(ApplicationConfig config, const std::string &client_id) {
     std::string message = "client=" + client_id;
-    std::string response = sendRequest(networkConfig.gameStartedURI, message);
+    std::string response = sendRequest(config, config.server.gameStartedURI, message);
 
     int result = -1;
 
@@ -246,22 +258,22 @@ int** setupBoard(int whitesDown = 1) {
     int row1b[] = { 11, 11, 11, 11, 11, 11, 11, 11 };
     int row2b[] = { 12, 13, 14, 16, 15, 14, 13, 12 };
 
-    int** board = (int**) malloc(8 * sizeof(int*));
+    int** board = (int**) new int*[8];
 
     for (int i = 0; i < 8; i++) {
-        board[i] = (int*) calloc(8, sizeof(int));
+        board[i] = new int[8];
     }
 
     if (!whitesDown) {
-        memcpy(board[1], row1w, sizeof(row1w));
-        memcpy(board[0], row2w, sizeof(row2w));
-        memcpy(board[6], row1b, sizeof(row1b));
-        memcpy(board[7], row2b, sizeof(row2b));
+        std::memcpy(board[1], row1w, sizeof(row1w));
+        std::memcpy(board[0], row2w, sizeof(row2w));
+        std::memcpy(board[6], row1b, sizeof(row1b));
+        std::memcpy(board[7], row2b, sizeof(row2b));
     } else {
-        memcpy(board[1], row1b, sizeof(row1w));
-        memcpy(board[0], row2b, sizeof(row2w));
-        memcpy(board[6], row1w, sizeof(row1b));
-        memcpy(board[7], row2w, sizeof(row2b));
+        std::memcpy(board[1], row1b, sizeof(row1w));
+        std::memcpy(board[0], row2b, sizeof(row2w));
+        std::memcpy(board[6], row1w, sizeof(row1b));
+        std::memcpy(board[7], row2w, sizeof(row2b));
     }
 
     for (int i = 0; i < 4; i++) {
@@ -273,20 +285,37 @@ int** setupBoard(int whitesDown = 1) {
     return board;
 }
 
-int mainLoop(const std::string &client_id, int firstTurnPrivilege = 0) {
+enum class GameState {
+    WAITING_FOR_OPPONENT = 0, // opponent's turn or any other lock mode
+    MAKING_TURN = 1, // my turn
+    UNDER_CHECK = 2, // check for me
+    UNDER_CHECKMATE = 4 // checkmate for me
+};
+
+std::shared_ptr<sf::Sprite> findPieceSprite(std::map<std::string, std::shared_ptr<sf::Sprite>> resources, unsigned int pieceCode) {
+    std::map<unsigned int, std::string> pieceCodes = {
+        { 0, "white_pawn" },
+        { 1, "white_rook" },
+        { 2, "white_knight" },
+        { 3, "white_bishop" },
+        { 4, "white_queen" },
+        { 5, "white_king" },
+        { 6, "black_pawn" },
+        { 7, "black_rook" },
+        { 8, "black_knight" },
+        { 9, "black_bishop" },
+        { 10, "black_queen" },
+        { 11, "black_king" }
+    };
+
+    return resources[pieceCodes[pieceCode]];
+}
+
+int mainLoop(const ApplicationConfig &config, const std::string &clientId, int firstTurnPrivilege = 0) {
     sf::RenderWindow appWindow(sf::VideoMode(800, 600, 32), "mooChess");
 
-    /*
-     * Game status reference:
-     *
-     * 0 - opponent's turn or any other lock mode
-     * 1 - my turn
-     * 2 - check for me
-     * 4 - check for my opponent
-     */
-
     int **board = 0;
-    int gameStatus = firstTurnPrivilege;
+    GameState gameStatus { firstTurnPrivilege };
 
     sf::Vector2u windowSize = appWindow.getSize();
 
@@ -301,9 +330,6 @@ int mainLoop(const std::string &client_id, int firstTurnPrivilege = 0) {
     auto selectionColor = std::make_unique<sf::Color>(200, 200, 0);
     auto cursorColor = std::make_unique<sf::Color>(200, 100, 100);
 
-    auto figuresSprites = std::make_shared<std::vector<std::shared_ptr<sf::Sprite>>>();
-    auto boardSprite = std::make_shared<sf::Sprite>();
-
     auto cursorRect = std::make_unique<sf::RectangleShape>(cellSize);
     auto selectionRect = std::make_unique<sf::RectangleShape>(cellSize);
 
@@ -315,9 +341,7 @@ int mainLoop(const std::string &client_id, int firstTurnPrivilege = 0) {
     selectionRect->setOutlineColor(*selectionColor);
     selectionRect->setOutlineThickness(2);
 
-    if (loadFigures(figuresSprites, boardSprite)) {
-        return 1;
-    }
+    auto resources = loadResources(config);
 
     board = setupBoard(firstTurnPrivilege);
 
@@ -333,7 +357,7 @@ int mainLoop(const std::string &client_id, int firstTurnPrivilege = 0) {
                 appWindow.close();
             }
 
-            if (event.type == sf::Event::KeyPressed && gameStatus > 0) {
+            if (event.type == sf::Event::KeyPressed && gameStatus != GameState::WAITING_FOR_OPPONENT) {
                 switch (event.key.code) {
                     case (sf::Keyboard::Up):
                         cursor.y = (8 + --cursor.y) % 8;
@@ -354,16 +378,16 @@ int mainLoop(const std::string &client_id, int firstTurnPrivilege = 0) {
                     case (sf::Keyboard::Return):
                     case (sf::Keyboard::Space):
                         if (selected.x > -1 && selected.y > -1) {
-                            int res = validateMove(client_id, selected, cursor);
+                            MoveValidationResult res = validateMove(config, clientId, selected, cursor);
 
-                            if (res == 1) {
+                            if (res == MoveValidationResult::NORMAL_MOVE) {
                                 board[cursor.y][cursor.x] = board[selected.y][selected.x];
                                 board[selected.y][selected.x] = 0;
                                 selected = sf::Vector2i(-1, -1);
-                                gameStatus = 0;
+                                gameStatus = GameState::WAITING_FOR_OPPONENT;
                             } else
                             // castling
-                            if (res == 4) {
+                            if (res == MoveValidationResult::CASTLING_KING_SIDE) {
                                 if (selected.y == 7 && selected.x == 4 && firstTurnPrivilege) {
                                     if (cursor.y == 7 && cursor.x == 2) {
                                         int king = board[7][4], rook = board[7][0];
@@ -382,7 +406,7 @@ int mainLoop(const std::string &client_id, int firstTurnPrivilege = 0) {
                                     }
 
                                     selected = sf::Vector2i(-1, -1);
-                                    gameStatus = 0;
+                                    gameStatus = GameState::WAITING_FOR_OPPONENT;
                                 } else if (selected.y == 7 && selected.x == 3 && !firstTurnPrivilege) {
                                     if (cursor.y == 7 && cursor.x == 1) {
                                         int king = board[7][3], rook = board[7][0];
@@ -401,7 +425,7 @@ int mainLoop(const std::string &client_id, int firstTurnPrivilege = 0) {
                                     }
 
                                     selected = sf::Vector2i(-1, -1);
-                                    gameStatus = 0;
+                                    gameStatus = GameState::WAITING_FOR_OPPONENT;
                                 }
                             } else {
                                 selected = sf::Vector2i(-1, -1);
@@ -421,19 +445,19 @@ int mainLoop(const std::string &client_id, int firstTurnPrivilege = 0) {
         float timeSinceLastUpdate = timer->getElapsedTime().asSeconds();
 
         if (timeSinceLastUpdate > 3.f) {
-            if (gameStatus < 1) {
+            if (gameStatus == GameState::WAITING_FOR_OPPONENT) {
                 sf::Vector2i from, to;
-                int res = queryServer(client_id, &from, &to);
+                StatusResponse res = queryServer(config, clientId, &from, &to);
 
-                if (res == 2) {
-                    gameStatus = 1;
+                if (res == StatusResponse::PLAYING_TURN) {
+                    gameStatus = GameState::MAKING_TURN;
 
                     if (from.x > -1 && from.x < 8 && to.x > -1 && to.x < 8 && from.y > -1 && from.y < 8 && to.y > -1 && to.y < 8) {
                         board[to.y][to.x] = board[from.y][from.x];
                         board[from.y][from.x] = 0;
                     }
-                } else if (res == 7) {
-                    gameStatus = 1;
+                } else if (res == StatusResponse::OPPONENT_CASTLING_KING_SIDE) {
+                    gameStatus = GameState::MAKING_TURN;
 
                     int king = board[from.y][from.x], rook = -1;
 
@@ -474,14 +498,14 @@ int mainLoop(const std::string &client_id, int firstTurnPrivilege = 0) {
 
         appWindow.clear();
 
-        boardSprite->setPosition(offset.x, offset.y);
-        appWindow.draw(*boardSprite);
+        resources["board"]->setPosition(offset.x, offset.y);
+        appWindow.draw(*resources["board"]);
 
         for (int i = 0; i < 8; i++) {
             for (int t = 0; t < 8; t++) {
                 if (board[i][t]) {
                     int n = (board[i][t] > 10) ? (board[i][t] - 1 - 10 + 6) : board[i][t] - 1;
-                    auto sprite = figuresSprites->at(n);
+                    auto sprite = findPieceSprite(resources, n); // figuresSprites->at(n);
 
                     sprite->setScale(
                         static_cast<float>(cSize / sprite->getLocalBounds().width),
@@ -498,7 +522,7 @@ int mainLoop(const std::string &client_id, int firstTurnPrivilege = 0) {
             }
         }
 
-        if (gameStatus > 0) {
+        if (gameStatus != GameState::WAITING_FOR_OPPONENT) {
             {
                 sf::Vector2f positionFloat(offset + (cursor * cSize));
                 cursorRect->setPosition(positionFloat);
@@ -518,19 +542,19 @@ int mainLoop(const std::string &client_id, int firstTurnPrivilege = 0) {
             auto statusMessage = std::make_unique<sf::Text>();
 
             switch (gameStatus) {
-                case 0:
+                case GameState::WAITING_FOR_OPPONENT:
                     statusMessage->setString("Please, stand by...");
                 break;
 
-                case 1:
+                case GameState::MAKING_TURN:
                     statusMessage->setString("Now it's your time!");
                 break;
 
-                case 2:
+                case GameState::UNDER_CHECK:
                     statusMessage->setString("Whoops... You were checked...");
                 break;
 
-                case 4:
+                case GameState::UNDER_CHECKMATE:
                     statusMessage->setString("Crap... You were checkmated...");
                 break;
 
@@ -580,9 +604,11 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    std::string argv1 = argv[1], side = "none", client_id = "";
+    std::string argv1 = argv[1];
+    std::string side = "none";
+    std::string clientId = "";
 
-    loadPaths();
+    auto config = readConfig("game.cfg");
 
     if (argv1 == "--version" || argv1 == "-v") {
         showVersionString();
@@ -594,14 +620,14 @@ int main(int argc, char** argv) {
         return 0;
     } else if (argv1 == "black" || argv1 == "white" || argv1 == "random") {
         if (argv1 == "random") {
-            if (findSide(&side)) {
+            if (findSide(config, &side)) {
                 return 1;
             }
         } else {
             side = argv1;
         }
 
-        int res = promoteSelf(side, &client_id);
+        int res = promoteSelf(config, side, &clientId);
 
         if (res < 0) {
             std::cout << "Promotion error - shutting down\n\n";
@@ -616,7 +642,7 @@ int main(int argc, char** argv) {
 
             while (1) {
                 if (timer->getElapsedTime().asSeconds() > 3.f) {
-                    int res = waitForOpponent(client_id);
+                    int res = waitForOpponent(config, clientId);
 
                     if (res < 0) {
                         std::cout << "Waiting for opponent error - shutting down\n\n";
@@ -638,5 +664,5 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    return mainLoop(client_id, side == "white");
+    return mainLoop(config, clientId, side == "white");
 }

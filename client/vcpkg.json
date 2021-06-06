@@ -3,6 +3,6 @@
     "name": "moo-chess-client",
     "version-string": "0.1.0",
     "dependencies": [
-        "SFML"
+        "sfml"
     ]
 }
