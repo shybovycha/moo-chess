@@ -1,4 +1,7 @@
+#pragma once
+
 #include <string>
+#include <fstream>
 
 struct ServerConfig {
     std::string host;
