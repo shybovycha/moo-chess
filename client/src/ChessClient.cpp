@@ -76,9 +76,9 @@ FindSideResponse ChessClient::findSide() {
 //    }
 //}
 
-PromoteResponse ChessClient::promoteSelf(const std::string& side) {
+PromoteResponse ChessClient::promoteSelf(const PieceColor playerColor) {
     std::map<std::string, std::string> params = {
-        { "side", side }
+        { "side", playerColor == PieceColor::WHITE ? "white" : "black" }
     };
 
     auto response = sendRequest(config.server.searchURI, params);

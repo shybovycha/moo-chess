@@ -1,14 +1,13 @@
 #include "Game.hpp"
 
-Game::Game() {}
-
-void Game::init() {
+Game::Game() {
     config = readConfig("config.xml");
     client = std::make_shared<ChessClient>(config);
+    loadResources();
 }
 
 void Game::start(const std::string &initialSide) {
-    std::string side = initialSide;
+    auto playerColor = initialSide == "white" ? PieceColor::WHITE : PieceColor::BLACK;
 
     if (initialSide == "random") {
         auto findSideResponse = client->findSide();
@@ -17,14 +16,14 @@ void Game::start(const std::string &initialSide) {
             return;
         }
 
-        side = (findSideResponse == FindSideResponse::WHITE) ? "white" : "black";
+        playerColor = (findSideResponse == FindSideResponse::WHITE) ? PieceColor::WHITE : PieceColor::BLACK;
     }
 
-    auto promotionResponse = client->promoteSelf(side);
+    auto promotionResponse = client->promoteSelf(playerColor);
 
     clientId = promotionResponse.getClientId();
 
-    mainLoop(side == "white");
+    mainLoop(playerColor);
 }
 
 ApplicationConfig Game::readConfig(const std::string& configFilename) {
@@ -73,10 +72,8 @@ ApplicationConfig Game::readConfig(const std::string& configFilename) {
     return config;
 }
 
-std::map<std::string, std::shared_ptr<sf::Sprite>> Game::loadResources() {
-    std::map<std::string, std::shared_ptr<sf::Sprite>> resources;
-
-    std::map<std::string, std::string> resourcesToLoad = {
+void Game::loadResources() {
+    const std::map<std::string, std::string> resourcesToLoad = {
         { "white_pawn", "w_pawn.png" },
         { "white_rook", "w_rook.png" },
         { "white_knight", "w_knight.png" },
@@ -93,7 +90,7 @@ std::map<std::string, std::shared_ptr<sf::Sprite>> Game::loadResources() {
     };
 
     for (auto const& [resourceName, filename] : resourcesToLoad) {
-        auto texture = std::make_unique<sf::Texture>();
+        auto texture = std::make_shared<sf::Texture>();
 
         std::string path = config.game.dataFolderPath + "/" + filename;
 
@@ -103,78 +100,103 @@ std::map<std::string, std::shared_ptr<sf::Sprite>> Game::loadResources() {
             continue;
         }
 
-        resources[resourceName] = std::make_shared<sf::Sprite>(*texture);
+        resources[resourceName] = texture;
     }
 
-    return resources;
+    font = std::make_shared<sf::Font>();
+
+    font->loadFromFile(config.game.dataFolderPath + "/" + "arial.ttf");
 }
 
-int** Game::setupBoard(int whitesDown) {
-    int row1w[] = { 1, 1, 1, 1, 1, 1, 1, 1 };
-    int row2w[] = { 2, 3, 4, 5, 6, 4, 3, 2 };
-    int row1b[] = { 11, 11, 11, 11, 11, 11, 11, 11 };
-    int row2b[] = { 12, 13, 14, 16, 15, 14, 13, 12 };
-
-    int** board = (int**) new int* [8];
-
-    for (int i = 0; i < 8; i++) {
-        board[i] = new int[8];
-    }
-
-    if (!whitesDown) {
-        std::memcpy(board[1], row1w, sizeof(row1w));
-        std::memcpy(board[0], row2w, sizeof(row2w));
-        std::memcpy(board[6], row1b, sizeof(row1b));
-        std::memcpy(board[7], row2b, sizeof(row2b));
-    }
-    else {
-        std::memcpy(board[1], row1b, sizeof(row1w));
-        std::memcpy(board[0], row2b, sizeof(row2w));
-        std::memcpy(board[6], row1w, sizeof(row1b));
-        std::memcpy(board[7], row2w, sizeof(row2b));
-    }
-
-    for (int i = 0; i < 4; i++) {
-        int c = board[0][(8 - 1) - i];
-        board[0][(8 - 1) - i] = board[0][i];
-        board[0][i] = c;
-    }
+std::array<std::array<Piece, 8>, 8> Game::setupBoard() {
+    std::array<std::array<Piece, 8>, 8> board{
+        {
+            { WHITE_ROOK, WHITE_BISHOP, WHITE_KNIGHT, WHITE_QUEEN, WHITE_KING, WHITE_BISHOP, WHITE_KNIGHT, WHITE_ROOK },
+            { WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN },
+            { NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE },
+            { NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE },
+            { NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE },
+            { NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE },
+            { BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN },
+            { BLACK_ROOK, BLACK_BISHOP, BLACK_KNIGHT, BLACK_QUEEN, BLACK_KING, BLACK_BISHOP, BLACK_KNIGHT, BLACK_ROOK }
+        }
+    };
 
     return board;
 }
 
-std::shared_ptr<sf::Sprite> Game::findPieceSprite(std::map<std::string, std::shared_ptr<sf::Sprite>> resources, unsigned int pieceCode) {
-    std::map<unsigned int, std::string> pieceCodes = {
-        { 0, "white_pawn" },
-        { 1, "white_rook" },
-        { 2, "white_knight" },
-        { 3, "white_bishop" },
-        { 4, "white_queen" },
-        { 5, "white_king" },
-        { 6, "black_pawn" },
-        { 7, "black_rook" },
-        { 8, "black_knight" },
-        { 9, "black_bishop" },
-        { 10, "black_queen" },
-        { 11, "black_king" }
+std::shared_ptr<sf::Sprite> Game::getPieceSprite(Piece piece) {
+    std::shared_ptr<sf::Texture> texture = nullptr;
+
+    switch (piece) {
+    case WHITE_ROOK:
+        texture = resources["white_rook"];
+        break;
+
+    case WHITE_BISHOP:
+        texture = resources["white_bishop"];
+        break;
+
+    case WHITE_KNIGHT:
+        texture = resources["white_knight"];
+        break;
+
+    case WHITE_QUEEN:
+        texture = resources["white_queen"];
+        break;
+
+    case WHITE_KING:
+        texture = resources["white_king"];
+        break;
+
+    case WHITE_PAWN:
+        texture = resources["white_pawn"];
+        break;
+
+    case BLACK_ROOK:
+        texture = resources["black_rook"];
+        break;
+
+    case BLACK_BISHOP:
+        texture = resources["black_bishop"];
+        break;
+
+    case BLACK_KNIGHT:
+        texture = resources["black_knight"];
+        break;
+
+    case BLACK_QUEEN:
+        texture = resources["black_queen"];
+        break;
+
+    case BLACK_KING:
+        texture = resources["black_king"];
+        break;
+
+    case BLACK_PAWN:
+        texture = resources["black_pawn"];
+        break;
     };
 
-    return resources[pieceCodes[pieceCode]];
+    if (texture == nullptr) {
+        throw std::format("Can not get sprite for unknown piece type {}", static_cast<int>(piece));
+    }
+
+    return std::make_shared<sf::Sprite>(*texture);
 }
 
-int Game::mainLoop(int firstTurnPrivilege) {
-    sf::RenderWindow appWindow(sf::VideoMode(800, 600, 32), "mooChess");
+int Game::mainLoop(const PieceColor playerColor) {
+    auto appWindow = std::make_unique<sf::RenderWindow>(sf::VideoMode(800, 600, 32), "mooChess");
 
-    int** board = 0;
-    GameState gameStatus{ firstTurnPrivilege };
+    GameState gameStatus{ playerColor == PieceColor::WHITE ? GameState::MAKING_TURN : GameState::WAITING_FOR_OPPONENT };
 
-    sf::Vector2u windowSize = appWindow.getSize();
+    sf::Vector2u windowSize = appWindow->getSize();
 
     int k = (windowSize.x < windowSize.y) ? windowSize.x : windowSize.y;
     int cSize = k / 10;
 
     sf::Vector2i cursor(4, 6);
-    sf::Vector2i offset(windowSize.x / 5, windowSize.y / 10);
+    sf::Vector2f offset(windowSize.x / 5.f, windowSize.y / 10.f);
     sf::Vector2i selected(-1, -1);
     sf::Vector2f cellSize(cSize, cSize);
 
@@ -192,20 +214,29 @@ int Game::mainLoop(int firstTurnPrivilege) {
     selectionRect->setOutlineColor(*selectionColor);
     selectionRect->setOutlineThickness(2);
 
-    auto resources = loadResources();
+    auto board = setupBoard();
 
-    board = setupBoard(firstTurnPrivilege);
+    auto boardSprite = std::make_shared<sf::Sprite>(*resources["board"]);
 
     auto timer = std::make_unique<sf::Clock>();
 
+    auto label = std::make_unique<sf::Text>();
+
+    const auto fontSize = 12 * cSize / 50;
+
+    label->setFont(*font);
+    label->setFillColor(sf::Color::Red);
+    label->setCharacterSize(fontSize);
+    label->setStyle(sf::Text::Style::Bold);
+
     timer->restart();
 
-    while (appWindow.isOpen()) {
+    while (appWindow->isOpen()) {
         sf::Event event;
 
-        while (appWindow.pollEvent(event)) {
+        while (appWindow->pollEvent(event)) {
             if (event.type == sf::Event::Closed) {
-                appWindow.close();
+                appWindow->close();
             }
 
             if (event.type == sf::Event::KeyPressed && gameStatus != GameState::WAITING_FOR_OPPONENT) {
@@ -233,27 +264,29 @@ int Game::mainLoop(int firstTurnPrivilege) {
 
                         if (res == MoveValidationResult::NORMAL_MOVE) {
                             board[cursor.y][cursor.x] = board[selected.y][selected.x];
-                            board[selected.y][selected.x] = 0;
+                            board[selected.y][selected.x] = Piece::NONE;
                             selected = sf::Vector2i(-1, -1);
                             gameStatus = GameState::WAITING_FOR_OPPONENT;
                         }
                         else
                             // castling
                             if (res == MoveValidationResult::CASTLING_KING_SIDE) {
-                                if (selected.y == 7 && selected.x == 4 && firstTurnPrivilege) {
+                                if (selected.y == 7 && selected.x == 4 && playerColor == PieceColor::WHITE) {
                                     if (cursor.y == 7 && cursor.x == 2) {
-                                        int king = board[7][4], rook = board[7][0];
+                                        auto king = board[7][4];
+                                        auto rook = board[7][0];
 
-                                        board[7][0] = 0;
-                                        board[7][4] = 0;
+                                        board[7][0] = Piece::NONE;
+                                        board[7][4] = Piece::NONE;
                                         board[7][2] = king;
                                         board[7][3] = rook;
                                     }
                                     else if (cursor.y == 7 && cursor.x == 6) {
-                                        int king = board[7][4], rook = board[7][7];
+                                        auto king = board[7][4];
+                                        auto rook = board[7][7];
 
-                                        board[7][7] = 0;
-                                        board[7][4] = 0;
+                                        board[7][7] = Piece::NONE;
+                                        board[7][4] = Piece::NONE;
                                         board[7][6] = king;
                                         board[7][5] = rook;
                                     }
@@ -261,20 +294,22 @@ int Game::mainLoop(int firstTurnPrivilege) {
                                     selected = sf::Vector2i(-1, -1);
                                     gameStatus = GameState::WAITING_FOR_OPPONENT;
                                 }
-                                else if (selected.y == 7 && selected.x == 3 && !firstTurnPrivilege) {
+                                else if (selected.y == 7 && selected.x == 3 && playerColor == PieceColor::BLACK) {
                                     if (cursor.y == 7 && cursor.x == 1) {
-                                        int king = board[7][3], rook = board[7][0];
+                                        auto king = board[7][3];
+                                        auto rook = board[7][0];
 
-                                        board[7][0] = 0;
-                                        board[7][3] = 0;
+                                        board[7][0] = Piece::NONE;
+                                        board[7][3] = Piece::NONE;
                                         board[7][1] = king;
                                         board[7][2] = rook;
                                     }
                                     else if (cursor.y == 7 && cursor.x == 5) {
-                                        int king = board[7][3], rook = board[7][7];
+                                        auto king = board[7][3];
+                                        auto rook = board[7][7];
 
-                                        board[7][7] = 0;
-                                        board[7][3] = 0;
+                                        board[7][7] = Piece::NONE;
+                                        board[7][3] = Piece::NONE;
                                         board[7][5] = king;
                                         board[7][4] = rook;
                                     }
@@ -311,43 +346,44 @@ int Game::mainLoop(int firstTurnPrivilege) {
 
                     if (from.x > -1 && from.x < 8 && to.x > -1 && to.x < 8 && from.y > -1 && from.y < 8 && to.y > -1 && to.y < 8) {
                         board[to.y][to.x] = board[from.y][from.x];
-                        board[from.y][from.x] = 0;
+                        board[from.y][from.x] = Piece::NONE;
                     }
                 }
                 else if (res == StatusResponse::OPPONENT_CASTLING_KING_SIDE) {
                     gameStatus = GameState::MAKING_TURN;
 
-                    int king = board[from.y][from.x], rook = -1;
+                    auto king = board[from.y][from.x];
+                    auto rook = Piece::NONE;
 
                     if (to.x == 1) {
                         rook = board[0][0];
 
-                        board[0][0] = 0;
-                        board[from.y][from.x] = 0;
+                        board[0][0] = Piece::NONE;
+                        board[from.y][from.x] = Piece::NONE;
                         board[0][1] = king;
                         board[0][2] = rook;
                     }
                     else if (to.x == 2) {
                         rook = board[0][0];
 
-                        board[0][0] = 0;
-                        board[from.y][from.x] = 0;
+                        board[0][0] = Piece::NONE;
+                        board[from.y][from.x] = Piece::NONE;
                         board[0][2] = king;
                         board[0][3] = rook;
                     }
                     else if (to.x == 5) {
                         rook = board[0][7];
 
-                        board[0][7] = 0;
-                        board[from.y][from.x] = 0;
+                        board[0][7] = Piece::NONE;
+                        board[from.y][from.x] = Piece::NONE;
                         board[0][5] = king;
                         board[0][4] = rook;
                     }
                     else if (to.x == 6) {
                         rook = board[0][7];
 
-                        board[0][7] = 0;
-                        board[from.y][from.x] = 0;
+                        board[0][7] = Piece::NONE;
+                        board[from.y][from.x] = Piece::NONE;
                         board[0][6] = king;
                         board[0][5] = rook;
                     }
@@ -357,45 +393,69 @@ int Game::mainLoop(int firstTurnPrivilege) {
             timer->restart();
         }
 
-        appWindow.clear();
+        appWindow->clear();
 
-        resources["board"]->setPosition(offset.x, offset.y);
-        appWindow.draw(*resources["board"]);
+        boardSprite->setPosition(offset.x, offset.y);
+        appWindow->draw(*boardSprite);
 
         for (int i = 0; i < 8; i++) {
             for (int t = 0; t < 8; t++) {
-                if (board[i][t]) {
-                    int n = (board[i][t] > 10) ? (board[i][t] - 1 - 10 + 6) : board[i][t] - 1;
-                    auto sprite = findPieceSprite(resources, n); // figuresSprites->at(n);
+                if (board[i][t] != Piece::NONE) {
+                    auto sprite = getPieceSprite(playerColor == PieceColor::WHITE ? board[7 - i][t] : board[i][t]);
 
                     sprite->setScale(
                         static_cast<float>(cSize / sprite->getLocalBounds().width),
                         static_cast<float>(cSize / sprite->getLocalBounds().height)
                     );
 
-                    sprite->setPosition(
-                        static_cast<int>(offset.x + (t * cSize)),
-                        static_cast<int>(offset.y + (i * cSize))
-                    );
+                    sprite->setPosition(offset + sf::Vector2f(t * cSize, i * cSize));
 
-                    appWindow.draw(*sprite);
+                    appWindow->draw(*sprite);
+                }
+
+                // column label
+                if (i == 7) {
+                    if (playerColor == PieceColor::WHITE) {
+                        label->setString(std::format("{}", static_cast<char>('a' + t)));
+                    }
+                    else {
+                        label->setString(std::format("{}", static_cast<char>('a' + 7 - t)));
+                    }
+
+                    label->setPosition(offset + sf::Vector2f(((t + 1) * cSize) - fontSize, ((i + 1) * cSize) - fontSize));
+
+                    appWindow->draw(*label);
+                }
+
+                // row label
+                if (t == 0) {
+                    if (playerColor == PieceColor::WHITE) {
+                        label->setString(std::format("{}", static_cast<char>('1' + 7 - i)));
+                    }
+                    else {
+                        label->setString(std::format("{}", static_cast<char>('1' + i)));
+                    }
+
+                    label->setPosition(offset + sf::Vector2f(t * cSize, i * cSize));
+
+                    appWindow->draw(*label);
                 }
             }
         }
 
         if (gameStatus != GameState::WAITING_FOR_OPPONENT) {
             {
-                sf::Vector2f positionFloat(offset + (cursor * cSize));
+                sf::Vector2f positionFloat(offset + (sf::Vector2f(cursor.x, cursor.y) * static_cast<float>(cSize)));
                 cursorRect->setPosition(positionFloat);
 
-                appWindow.draw(*cursorRect);
+                appWindow->draw(*cursorRect);
             }
 
             if (selected.x > -1 && selected.y > -1) {
-                sf::Vector2f positionFloat(offset + (selected * cSize));
+                sf::Vector2f positionFloat(offset + (sf::Vector2f(selected.x, selected.y) * static_cast<float>(cSize)));
                 selectionRect->setPosition(positionFloat);
 
-                appWindow.draw(*selectionRect);
+                appWindow->draw(*selectionRect);
             }
         }
 
@@ -428,10 +488,10 @@ int Game::mainLoop(int firstTurnPrivilege) {
                 statusMessage->getLocalBounds().height / 2.f)
             );
 
-            appWindow.draw(*statusMessage);
+            appWindow->draw(*statusMessage);
         }
 
-        appWindow.display();
+        appWindow->display();
     }
 
     return 0;

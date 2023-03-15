@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common.hpp"
+
 #include "Config.hpp"
 
 class BadResponse : public std::exception {
@@ -17,11 +18,6 @@ public:
 
 protected:
     int status;
-};
-
-enum class PieceColor {
-    BLACK,
-    WHITE
 };
 
 class PromoteResponse {
@@ -48,7 +44,6 @@ private:
     std::string clientId;
     PieceColor color;
 };
-
 
 enum class MoveValidationResult {
     UNKNOWN = -1,
@@ -103,7 +98,7 @@ public:
 
     FindSideResponse findSide();
 
-    PromoteResponse promoteSelf(const std::string& side);
+    PromoteResponse promoteSelf(const PieceColor playerColor);
 
     bool waitForOpponent(const std::string& clientId);
 

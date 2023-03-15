@@ -44,7 +44,6 @@ int main(int argc, char** argv) {
     } else if (argv1 == "black" || argv1 == "white" || argv1 == "random") {
         std::unique_ptr<Game> game = std::make_unique<Game>();
 
-        game->init();
         game->start(argv1);
     } else {
         showHelp(argv);

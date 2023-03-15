@@ -1,5 +1,7 @@
 # Client-server chess
 
+![screenshot](screenshot.png)
+
 ## Requirements
 
 * Client: [SFML](https://www.sfml-dev.org/)
@@ -7,8 +9,7 @@
 
 ## Building
 
-Client is now built with CMake.
-To build client, run `cmake -B build -H .` from the `client` directory.
+To build client, run `cmake -B build -S .` from the `client` directory, followed by `cmake --build build`.
 
 ## Configuration
 
