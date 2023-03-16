@@ -225,7 +225,7 @@ Move Game::parseMove(const std::string& moveString) const {
         .isCastling = false
     };
 
-    if (moveString == "O-O") {
+    if (moveString == "O-O" || moveString == "0-0") {
         move.isCastling = true;
 
         if (currentPlayer == WHITE) {
@@ -237,7 +237,7 @@ Move Game::parseMove(const std::string& moveString) const {
             move.to = { .row = 8, .col = static_cast<int>('g') };
         }
     }
-    else if (moveString == "O-O-O") {
+    else if (moveString == "O-O-O" || moveString == "0-0-0") {
         move.isCastling = true;
 
         if (currentPlayer == WHITE) {
@@ -252,19 +252,26 @@ Move Game::parseMove(const std::string& moveString) const {
     else {
         move.piece = parsePiece(moveString.at(0));
 
-        if (moveString.at(1) == 'x') {
+        if (moveString.substr(1).find('x') > 0) {
             move.isCapture = true;
-            move.to.parse(moveString.substr(2));
+            move.to.parse(moveString.substr(moveString.find('x')));
         }
-        else {
-            // TODO: implement disambiguating pieces & moves
-            move.to.parse(moveString);
-        }
-
-        if ((move.piece == WHITE_PAWN || move.piece == BLACK_PAWN) && moveString.at(2) == '=') {
+        else if ((move.piece == WHITE_PAWN || move.piece == BLACK_PAWN) && moveString.at(2) == '=') {
             move.promotion = parsePiece(moveString.at(3));
         }
+        else {
+            // ignore notation: # - checkmate, + - check, ! - a very good move, !! - a brilliant move, !? - interesting move, ?! - dubious move, ? - bad move, ?? - blunder
+            int positionStringEnd = moveString.length() - 1;
+
+            while (!std::isalnum(moveString.at(positionStringEnd))) {
+                --positionStringEnd;
+            }
+
+            move.to.parse(moveString.substr(positionStringEnd - 1, positionStringEnd));
+        }
     }
+
+    // TODO: implement disambiguiting moves by filling out `move.from` **correctly**
 
     return move;
 }
@@ -278,109 +285,248 @@ Piece Game::pieceAt(int row, char col) const {
     return pieces[row][static_cast<int>(col) - 'a'];
 }
 
+Piece Game::pieceAt(const Position pos) const {
+    return pieces[pos.row][static_cast<int>(pos.col) - 'a'];
+}
+
 void Game::setPieceAt(int row, char col, const Piece piece) {
     pieces[row - 1][static_cast<int>(col) - 'a'] = piece;
 }
 
-void Game::applyMove(const Move move) {
-    bool isMoveValid = false;
+void Game::setPieceAt(const Position pos, const Piece piece) {
+    pieces[pos.row - 1][static_cast<int>(pos.col) - 'a'] = piece;
+}
 
+void Game::movePiece(Position from, Position to) {
+    auto piece = pieceAt(from.row, from.col);
+
+    setPieceAt(from.row, from.col, NONE);
+    setPieceAt(to.row, to.col, piece);
+}
+
+bool Game::opponentPieceAt(const Position pos) const {
+    auto piece = pieceAt(pos);
+
+    if (currentPlayer == WHITE) {
+        return piece == BLACK_ROOK ||
+            piece == BLACK_KNIGHT ||
+            piece == BLACK_BISHOP ||
+            piece == BLACK_KING ||
+            piece == BLACK_QUEEN ||
+            piece == BLACK_PAWN;
+    }
+    else {
+        return piece == WHITE_ROOK ||
+            piece == WHITE_KNIGHT ||
+            piece == WHITE_BISHOP ||
+            piece == WHITE_KING ||
+            piece == WHITE_QUEEN ||
+            piece == WHITE_PAWN;
+    }
+}
+
+bool Game::isValidMove(const Move move) const {
     if (move.isCastling) {
         if (currentPlayer == WHITE) {
             // long, aka queen side castling
-            if (move.piece == WHITE_KING && move.from.row == 1 && move.from.col == static_cast<int>('e') - 'a' && move.to.row == 1 && move.to.col == static_cast<int>('g') - 'a') {
-                if (castlingAvailability.WHITE_QUEEN_SIDE &&
+            if (move.piece == WHITE_KING && move.from.row == 1 && move.from.col == 'e' && move.to.row == 1 && move.to.col == 'g') {
+                return castlingAvailability.WHITE_QUEEN_SIDE &&
                     pieceAt(1, 'e') == WHITE_KING &&
                     pieceAt(1, 'h') == WHITE_ROOK &&
                     pieceAt(1, 'f') == NONE &&
-                    pieceAt(1, 'g') == NONE
-                ) {
-                    setPieceAt(1, 'e', NONE);
-                    setPieceAt(1, 'h', NONE);
-                    setPieceAt(1, 'f', WHITE_ROOK);
-                    setPieceAt(1, 'g', WHITE_KING);
-
-                    castlingAvailability.WHITE_KING_SIDE = false;
-                    castlingAvailability.WHITE_QUEEN_SIDE = false;
-
-                    isMoveValid = true;
-                }
+                    pieceAt(1, 'g') == NONE;
             }
 
             // short, aka king side castling
-            if (move.piece == WHITE_KING && move.from.row == 1 && move.from.col == static_cast<int>('e') - 'a' && move.to.row == 1 && move.to.col == static_cast<int>('b') - 'a') {
-                if (castlingAvailability.WHITE_QUEEN_SIDE &&
+            if (move.piece == WHITE_KING && move.from.row == 1 && move.from.col == 'e' && move.to.row == 1 && move.to.col == 'b') {
+                return castlingAvailability.WHITE_QUEEN_SIDE &&
                     pieceAt(1, 'e') == WHITE_KING &&
                     pieceAt(1, 'a') == WHITE_ROOK &&
                     pieceAt(1, 'b') == NONE &&
                     pieceAt(1, 'c') == NONE &&
-                    pieceAt(1, 'd') == NONE
-                ) {
-                    setPieceAt(1, 'a', NONE);
-                    setPieceAt(1, 'd', NONE);
-                    setPieceAt(1, 'e', NONE);
-                    setPieceAt(1, 'c', WHITE_ROOK);
-                    setPieceAt(1, 'b', WHITE_KING);
-
-                    castlingAvailability.WHITE_KING_SIDE = false;
-                    castlingAvailability.WHITE_QUEEN_SIDE = false;
-                }
+                    pieceAt(1, 'd') == NONE;
             }
         }
         else {
             // long, aka queen side castling
-            if (move.piece == BLACK_KING && move.from.row == 8 && move.from.col == static_cast<int>('e') - 'a' && move.to.row == 8 && move.to.col == static_cast<int>('g') - 'a') {
-                if (castlingAvailability.BLACK_QUEEN_SIDE &&
+            if (move.piece == BLACK_KING && move.from.row == 8 && move.from.col == 'e' && move.to.row == 8 && move.to.col == 'g') {
+                return castlingAvailability.BLACK_QUEEN_SIDE &&
                     pieceAt(8, 'e') == BLACK_KING &&
                     pieceAt(8, 'h') == BLACK_ROOK &&
                     pieceAt(8, 'f') == NONE &&
-                    pieceAt(8, 'g') == NONE
-                ) {
-                    setPieceAt(8, 'e', NONE);
-                    setPieceAt(8, 'h', NONE);
-                    setPieceAt(8, 'f', BLACK_ROOK);
-                    setPieceAt(8, 'g', BLACK_KING);
-
-                    castlingAvailability.BLACK_KING_SIDE = false;
-                    castlingAvailability.BLACK_QUEEN_SIDE = false;
-
-                    isMoveValid = true;
-                }
+                    pieceAt(8, 'g') == NONE;
             }
 
             // short, aka king side castling
-            if (move.piece == BLACK_KING && move.from.row == 8 && move.from.col == static_cast<int>('e') - 'a' && move.to.row == 8 && move.to.col == static_cast<int>('b') - 'a') {
-                if (castlingAvailability.BLACK_QUEEN_SIDE &&
+            if (move.piece == BLACK_KING && move.from.row == 8 && move.from.col == 'e' && move.to.row == 8 && move.to.col == 'b') {
+                return castlingAvailability.BLACK_QUEEN_SIDE &&
                     pieceAt(8, 'e') == BLACK_KING &&
                     pieceAt(8, 'a') == BLACK_ROOK &&
                     pieceAt(8, 'b') == NONE &&
                     pieceAt(8, 'c') == NONE &&
-                    pieceAt(8, 'd') == NONE
-                ) {
-                    setPieceAt(8, 'a', NONE);
-                    setPieceAt(8, 'd', NONE);
-                    setPieceAt(8, 'e', NONE);
-                    setPieceAt(8, 'c', BLACK_ROOK);
-                    setPieceAt(8, 'b', BLACK_KING);
-
-                    castlingAvailability.BLACK_KING_SIDE = false;
-                    castlingAvailability.BLACK_QUEEN_SIDE = false;
-                }
+                    pieceAt(8, 'd') == NONE;
             }
         }
     }
 
-    if (currentPlayer == WHITE && move.piece == WHITE_ROOK) {
-        // TODO: figure out which rook has moved
-        castlingAvailability.WHITE_KING_SIDE = false;
-        castlingAvailability.WHITE_QUEEN_SIDE = false;
+    if (move.isCapture) {
+        return isValidMove(Move{ .piece = move.piece, .from = move.from, .to = move.to }) && opponentPieceAt(move.to);
     }
 
-    if (currentPlayer == BLACK && move.piece == BLACK_ROOK) {
-        // TODO: figure out which rook has moved
-        castlingAvailability.BLACK_KING_SIDE = false;
-        castlingAvailability.BLACK_QUEEN_SIDE = false;
+    if (move.promotion.has_value()) {
+        if (currentPlayer == WHITE) {
+            return move.piece == WHITE_PAWN &&
+                move.to.row == 8 &&
+                isValidMove(Move{ .piece = move.piece, .from = move.from, .to = move.to, .isCapture = move.isCapture }) &&
+                (move.promotion == WHITE_QUEEN || move.promotion == WHITE_ROOK || move.promotion == WHITE_BISHOP || move.promotion == WHITE_KNIGHT);
+
+                /*move.from.row == 7 &&
+                move.to.row == 8 &&
+                (
+                    (move.to.col == move.from.col && pieceAt(move.to) == NONE) ||
+                    (move.from.col > 'a' && move.to.col == move.from.col - 1 && opponentPieceAt(move.to)) ||
+                    (move.from.col < 'h' && move.to.col == move.from.col + 1 && opponentPieceAt(move.to))
+                );*/
+        }
+        else {
+            return move.piece == BLACK_PAWN &&
+                move.to.row == 1 &&
+                isValidMove(Move{ .piece = move.piece, .from = move.from, .to = move.to, .isCapture = move.isCapture }) &&
+                (move.promotion == BLACK_QUEEN || move.promotion == BLACK_ROOK || move.promotion == BLACK_BISHOP || move.promotion == BLACK_KNIGHT);
+
+            /*return move.piece == BLACK_PAWN &&
+                move.from.row == 2 &&
+                move.to.row == 1 &&
+                (
+                    (move.to.col == move.from.col && pieceAt(move.to) == NONE) ||
+                    (move.from.col > 'a' && move.to.col == move.from.col - 1 && opponentPieceAt(move.to)) ||
+                    (move.from.col < 'h' && move.to.col == move.from.col + 1 && opponentPieceAt(move.to))
+                );*/
+        }
     }
+
+    if (currentPlayer == WHITE && move.piece != WHITE_PAWN && move.piece != WHITE_ROOK && move.piece != WHITE_KNIGHT && move.piece != WHITE_BISHOP && move.piece != WHITE_QUEEN && move.piece != WHITE_KING) {
+        return false;
+    }
+
+    if (currentPlayer == BLACK && move.piece != BLACK_PAWN && move.piece != BLACK_ROOK && move.piece != BLACK_KNIGHT && move.piece != BLACK_BISHOP && move.piece != BLACK_QUEEN && move.piece != BLACK_KING) {
+        return false;
+    }
+
+    if (move.piece == WHITE_PAWN) {
+        // TODO: implement en passant
+        if (move.isCapture) {
+            return move.from.row == move.to.row - 1 &&
+                (
+                    (move.from.col > 'a' && move.from.col == move.to.col - 1) ||
+                    (move.from.col < 'h' && move.from.col == move.to.col + 1) ||
+                    (move.from.col == 'a' && move.to.col == 'b') ||
+                    (move.from.col == 'h' && move.to.col == 'g')
+                )
+                && opponentPieceAt(move.to);
+        }
+        else {
+            if (move.from.row == 2 && move.to.row == move.from.row + 2) {
+                return pieceAt(move.to) == NONE && pieceAt(Position{ .row = move.from.row + 1, .col = move.from.col }) == NONE;
+            }
+
+            return
+                move.to.row == move.from.row + 1 &&
+                move.from.col == move.to.col &&
+                pieceAt(move.to) == NONE;
+        }
+    }
+    else {
+        // TODO: implement en passant
+        if (move.isCapture) {
+            return move.from.row == move.to.row + 1 &&
+                (
+                    (move.from.col > 'a' && move.from.col == move.to.col - 1) ||
+                    (move.from.col < 'h' && move.from.col == move.to.col + 1) ||
+                    (move.from.col == 'a' && move.to.col == 'b') ||
+                    (move.from.col == 'h' && move.to.col == 'g')
+                    )
+                && opponentPieceAt(move.to);
+        }
+        else {
+            if (move.from.row == 7 && move.to.row == move.from.row - 2) {
+                return pieceAt(move.to) == NONE && pieceAt(Position{ .row = move.from.row - 1, .col = move.from.col }) == NONE;
+            }
+
+            return
+                move.to.row == move.from.row - 1 &&
+                move.from.col == move.to.col &&
+                pieceAt(move.to) == NONE;
+        }
+    }
+
+    return false;
+}
+
+void Game::applyMove(const Move move) {
+    if (!isValidMove(move)) {
+        return;
+    }
+
+    if (move.isCastling) {
+        if (currentPlayer == WHITE) {
+            // long, aka queen side castling
+            if (move.piece == WHITE_KING && move.to.col == 'g') {
+                movePiece(Position{ .row = 1, .col = 'e' }, Position{ .row = 1, .col = 'g' });
+                movePiece(Position{ .row = 1, .col = 'h' }, Position{ .row = 1, .col = 'f' });
+
+                castlingAvailability.WHITE_KING_SIDE = false;
+                castlingAvailability.WHITE_QUEEN_SIDE = false;
+            }
+
+            // short, aka king side castling
+            if (move.piece == WHITE_KING && move.to.col == 'b') {
+                movePiece(Position{ .row = 1, .col = 'e' }, Position{ .row = 1, .col = 'b' });
+                movePiece(Position{ .row = 1, .col = 'a' }, Position{ .row = 1, .col = 'c' });
+
+                castlingAvailability.WHITE_KING_SIDE = false;
+                castlingAvailability.WHITE_QUEEN_SIDE = false;
+            }
+        }
+        else {
+            // long, aka queen side castling
+            if (move.piece == BLACK_KING && move.to.col == 'g') {
+                movePiece(Position{ .row = 8, .col = 'e' }, Position{ .row = 8, .col = 'g' });
+                movePiece(Position{ .row = 8, .col = 'h' }, Position{ .row = 8, .col = 'f' });
+
+                castlingAvailability.BLACK_KING_SIDE = false;
+                castlingAvailability.BLACK_QUEEN_SIDE = false;
+            }
+
+            // short, aka king side castling
+            if (move.piece == BLACK_KING && move.to.col == 'b') {
+                movePiece(Position{ .row = 8, .col = 'e' }, Position{ .row = 8, .col = 'b' });
+                movePiece(Position{ .row = 8, .col = 'a' }, Position{ .row = 8, .col = 'c' });
+
+                castlingAvailability.BLACK_KING_SIDE = false;
+                castlingAvailability.BLACK_QUEEN_SIDE = false;
+            }
+        }
+    }
+
+    if (currentPlayer == WHITE && move.piece == WHITE_ROOK && !move.isCastling && move.from.row == 1) {
+        if (move.from.col == static_cast<int>('h')) {
+            castlingAvailability.WHITE_KING_SIDE = false;
+        }
+        else if (move.from.col == static_cast<int>('a')) {
+            castlingAvailability.WHITE_QUEEN_SIDE = false;
+        }
+    }
+    else if (currentPlayer == BLACK && move.piece == BLACK_ROOK && !move.isCastling && move.from.row == 8) {
+        if (move.from.col == static_cast<int>('h')) {
+            castlingAvailability.BLACK_KING_SIDE = false;
+        }
+        else if (move.from.col == static_cast<int>('a')) {
+            castlingAvailability.BLACK_QUEEN_SIDE = false;
+        }
+    }
+
+    // TODO: if check conditions fulfill, remove castlingAvailability
 
     moveHistory.push_back(move);
 }

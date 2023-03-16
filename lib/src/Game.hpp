@@ -39,10 +39,10 @@ struct CastlingAvailability {
 
 struct Position {
     unsigned int row;
-    unsigned int col;
+    char col;
 
     void parse(const std::string& positionString) {
-        col = static_cast<int>(positionString.at(0)) - static_cast<int>('a');
+        col = positionString.at(0);
         row = static_cast<int>(positionString.at(1)) - static_cast<int>('1');
     }
 };
@@ -75,12 +75,20 @@ public:
 
     void applyMove(const Move move);
 
+    bool isValidMove(const Move move) const;
+
 private:
     Piece parsePiece(char pieceSymbol) const;
 
     Piece pieceAt(int row, char col) const;
+    Piece pieceAt(const Position pos) const;
 
     void setPieceAt(int row, char col, const Piece piece);
+    void setPieceAt(const Position pos, const Piece piece);
+
+    void movePiece(Position from, Position to);
+
+    bool opponentPieceAt(const Position pos) const;
 
 public:
     std::array<std::array<Piece, 8>, 8> pieces;
