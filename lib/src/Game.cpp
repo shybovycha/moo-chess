@@ -379,29 +379,12 @@ bool Game::isValidMove(const Move move) const {
                 move.to.row == 8 &&
                 isValidMove(Move{ .piece = move.piece, .from = move.from, .to = move.to, .isCapture = move.isCapture }) &&
                 (move.promotion == WHITE_QUEEN || move.promotion == WHITE_ROOK || move.promotion == WHITE_BISHOP || move.promotion == WHITE_KNIGHT);
-
-                /*move.from.row == 7 &&
-                move.to.row == 8 &&
-                (
-                    (move.to.col == move.from.col && pieceAt(move.to) == NONE) ||
-                    (move.from.col > 'a' && move.to.col == move.from.col - 1 && opponentPieceAt(move.to)) ||
-                    (move.from.col < 'h' && move.to.col == move.from.col + 1 && opponentPieceAt(move.to))
-                );*/
         }
         else {
             return move.piece == BLACK_PAWN &&
                 move.to.row == 1 &&
                 isValidMove(Move{ .piece = move.piece, .from = move.from, .to = move.to, .isCapture = move.isCapture }) &&
                 (move.promotion == BLACK_QUEEN || move.promotion == BLACK_ROOK || move.promotion == BLACK_BISHOP || move.promotion == BLACK_KNIGHT);
-
-            /*return move.piece == BLACK_PAWN &&
-                move.from.row == 2 &&
-                move.to.row == 1 &&
-                (
-                    (move.to.col == move.from.col && pieceAt(move.to) == NONE) ||
-                    (move.from.col > 'a' && move.to.col == move.from.col - 1 && opponentPieceAt(move.to)) ||
-                    (move.from.col < 'h' && move.to.col == move.from.col + 1 && opponentPieceAt(move.to))
-                );*/
         }
     }
 
@@ -414,7 +397,6 @@ bool Game::isValidMove(const Move move) const {
     }
 
     if (move.piece == WHITE_PAWN) {
-        // TODO: implement en passant
         if (move.isCapture) {
             return move.from.row == move.to.row - 1 &&
                 (
@@ -422,8 +404,19 @@ bool Game::isValidMove(const Move move) const {
                     (move.from.col < 'h' && move.from.col == move.to.col + 1) ||
                     (move.from.col == 'a' && move.to.col == 'b') ||
                     (move.from.col == 'h' && move.to.col == 'g')
-                )
-                && opponentPieceAt(move.to);
+                ) &&
+                (
+                    opponentPieceAt(move.to) ||
+                    // en passant
+                    (
+                        move.from.row == 5 &&
+                        opponentPieceAt(Position{ .row = move.from.row, .col = move.to.col }) &&
+                        moveHistory.size() > 1 &&
+                        moveHistory.at(moveHistory.size() - 1).piece == BLACK_PAWN &&
+                        moveHistory.at(moveHistory.size() - 1).from.row == 7 &&
+                        moveHistory.at(moveHistory.size() - 1).to.row == 5
+                    )
+                );
         }
         else {
             if (move.from.row == 2 && move.to.row == move.from.row + 2) {
@@ -437,7 +430,6 @@ bool Game::isValidMove(const Move move) const {
         }
     }
     else {
-        // TODO: implement en passant
         if (move.isCapture) {
             return move.from.row == move.to.row + 1 &&
                 (
@@ -445,8 +437,19 @@ bool Game::isValidMove(const Move move) const {
                     (move.from.col < 'h' && move.from.col == move.to.col + 1) ||
                     (move.from.col == 'a' && move.to.col == 'b') ||
                     (move.from.col == 'h' && move.to.col == 'g')
+                ) &&
+                (
+                    opponentPieceAt(move.to) ||
+                    // en passant
+                    (
+                        move.from.row == 4 &&
+                        opponentPieceAt(Position{ .row = move.from.row, .col = move.to.col }) &&
+                        moveHistory.size() > 1 &&
+                        moveHistory.at(moveHistory.size() - 1).piece == WHITE_PAWN &&
+                        moveHistory.at(moveHistory.size() - 1).from.row == 2 &&
+                        moveHistory.at(moveHistory.size() - 1).to.row == 4
                     )
-                && opponentPieceAt(move.to);
+                );
         }
         else {
             if (move.from.row == 7 && move.to.row == move.from.row - 2) {
