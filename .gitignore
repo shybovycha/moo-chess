@@ -3,3 +3,5 @@ buck-out
 .vs
 .vscode
 .xmake
+out/
+build/
