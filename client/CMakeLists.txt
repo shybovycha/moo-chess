@@ -16,5 +16,5 @@ find_package(tinyxml2 CONFIG REQUIRED)
 target_link_libraries(${EXECUTABLE_NAME} PRIVATE tinyxml2::tinyxml2)
 
 # copy media files to the target directory
-add_custom_command(TARGET ${EXECUTABLE_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory  ${CMAKE_CURRENT_LIST_DIR}/data $<TARGET_FILE_DIR:${EXECUTABLE_NAME}>/data)
+add_custom_command(TARGET ${EXECUTABLE_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory  ${CMAKE_CURRENT_LIST_DIR}/assets $<TARGET_FILE_DIR:${EXECUTABLE_NAME}>/assets)
 add_custom_command(TARGET ${EXECUTABLE_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy  ${CMAKE_CURRENT_LIST_DIR}/config.xml $<TARGET_FILE_DIR:${EXECUTABLE_NAME}>)

@@ -1,12 +1,12 @@
 <?xml version="1.0"?>
 <config>
     <game>
-        <media-path>./data</media-path>
+        <media-path>./assets</media-path>
     </game>
 
     <server>
         <host>localhost</host>
-        
+
         <endpoints>
             <find-side>index.php?find_side</find-side>
             <search>index.php?find_opponent</search>
