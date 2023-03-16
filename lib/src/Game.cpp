@@ -193,62 +193,194 @@ std::string Game::serializeAsFEN() const {
     return result;
 }
 
-Move Game::parseMove(const std::string& moveString) const {
-    Move move{ .piece = NONE, .position = { .row = 9, .col = 9 } };
+Piece Game::parsePiece(char pieceSymbol) const {
+    switch (pieceSymbol) {
+        case 'R':
+            return (currentPlayer == WHITE) ? WHITE_ROOK : BLACK_ROOK;
 
-    if (moveString == "O-O") {
-        if (currentPlayer == WHITE) {
-            move.piece = WHITE_KING;
-            move.position = { .row = 1, .col = static_cast<int>('g') };
-        }
-        else {
-            move.piece = BLACK_KING;
-            move.position = { .row = 8, .col = static_cast<int>('g') };
-        }
-    }
-    else if (moveString == "O-O-O") {
-        if (currentPlayer == WHITE) {
-            move.piece = WHITE_KING;
-            move.position = { .row = 1, .col = static_cast<int>('b') };
-        }
-        else {
-            move.piece = BLACK_KING;
-            move.position = { .row = 8, .col = static_cast<int>('b') };
-        }
-    }
-    else {
-        if (moveString.at(0) == 'R') {
-            move.piece = (currentPlayer == WHITE) ? WHITE_ROOK : BLACK_ROOK;
-        }
-        else if (moveString.at(0) == 'B') {
-            move.piece = (currentPlayer == WHITE) ? WHITE_BISHOP : BLACK_BISHOP;
-        }
-        else if (moveString.at(0) == 'N') {
-            move.piece = (currentPlayer == WHITE) ? WHITE_KNIGHT : BLACK_KNIGHT;
-        }
-        else if (moveString.at(0) == 'K') {
-            move.piece = (currentPlayer == WHITE) ? WHITE_KING : BLACK_KING;
-        }
-        else if (moveString.at(0) == 'Q') {
-            move.piece = (currentPlayer == WHITE) ? WHITE_QUEEN : BLACK_QUEEN;
-        }
-        else {
-            move.piece = (currentPlayer == WHITE) ? WHITE_PAWN : BLACK_PAWN;
-        }
+        case 'B':
+            return (currentPlayer == WHITE) ? WHITE_BISHOP : BLACK_BISHOP;
 
-        if (moveString.at(1) == 'x') {
-            move.position.parse(moveString.substr(2));
-        }
-        else {
-            move.position.parse(moveString);
-        }
+        case 'N':
+            return (currentPlayer == WHITE) ? WHITE_KNIGHT : BLACK_KNIGHT;
 
-        // TODO: pawn promotion
-        if ((move.piece == WHITE_PAWN || move.piece == BLACK_PAWN) && moveString.at(2) == '=') {
-        }
+        case 'K':
+            return (currentPlayer == WHITE) ? WHITE_KING : BLACK_KING;
+
+        case 'Q':
+            return (currentPlayer == WHITE) ? WHITE_QUEEN : BLACK_QUEEN;
+
+        default:
+            return (currentPlayer == WHITE) ? WHITE_PAWN : BLACK_PAWN;
     }
 }
 
+Move Game::parseMove(const std::string& moveString) const {
+    Move move{
+        .piece = NONE,
+        .from = {.row = 9, .col = 9 },
+        .to = { .row = 9, .col = 9 },
+        .promotion = std::nullopt,
+        .isCapture = false,
+        .isCastling = false
+    };
+
+    if (moveString == "O-O") {
+        move.isCastling = true;
+
+        if (currentPlayer == WHITE) {
+            move.piece = WHITE_KING;
+            move.to = { .row = 1, .col = static_cast<int>('g') };
+        }
+        else {
+            move.piece = BLACK_KING;
+            move.to = { .row = 8, .col = static_cast<int>('g') };
+        }
+    }
+    else if (moveString == "O-O-O") {
+        move.isCastling = true;
+
+        if (currentPlayer == WHITE) {
+            move.piece = WHITE_KING;
+            move.to = { .row = 1, .col = static_cast<int>('b') };
+        }
+        else {
+            move.piece = BLACK_KING;
+            move.to = { .row = 8, .col = static_cast<int>('b') };
+        }
+    }
+    else {
+        move.piece = parsePiece(moveString.at(0));
+
+        if (moveString.at(1) == 'x') {
+            move.isCapture = true;
+            move.to.parse(moveString.substr(2));
+        }
+        else {
+            // TODO: implement disambiguating pieces & moves
+            move.to.parse(moveString);
+        }
+
+        if ((move.piece == WHITE_PAWN || move.piece == BLACK_PAWN) && moveString.at(2) == '=') {
+            move.promotion = parsePiece(moveString.at(3));
+        }
+    }
+
+    return move;
+}
+
 std::string Game::serializeMove(const Move move) const {
-    // TODO
+    // TODO: implement
+    return "";
+}
+
+Piece Game::pieceAt(int row, char col) const {
+    return pieces[row][static_cast<int>(col) - 'a'];
+}
+
+void Game::setPieceAt(int row, char col, const Piece piece) {
+    pieces[row - 1][static_cast<int>(col) - 'a'] = piece;
+}
+
+void Game::applyMove(const Move move) {
+    bool isMoveValid = false;
+
+    if (move.isCastling) {
+        if (currentPlayer == WHITE) {
+            // long, aka queen side castling
+            if (move.piece == WHITE_KING && move.from.row == 1 && move.from.col == static_cast<int>('e') - 'a' && move.to.row == 1 && move.to.col == static_cast<int>('g') - 'a') {
+                if (castlingAvailability.WHITE_QUEEN_SIDE &&
+                    pieceAt(1, 'e') == WHITE_KING &&
+                    pieceAt(1, 'h') == WHITE_ROOK &&
+                    pieceAt(1, 'f') == NONE &&
+                    pieceAt(1, 'g') == NONE
+                ) {
+                    setPieceAt(1, 'e', NONE);
+                    setPieceAt(1, 'h', NONE);
+                    setPieceAt(1, 'f', WHITE_ROOK);
+                    setPieceAt(1, 'g', WHITE_KING);
+
+                    castlingAvailability.WHITE_KING_SIDE = false;
+                    castlingAvailability.WHITE_QUEEN_SIDE = false;
+
+                    isMoveValid = true;
+                }
+            }
+
+            // short, aka king side castling
+            if (move.piece == WHITE_KING && move.from.row == 1 && move.from.col == static_cast<int>('e') - 'a' && move.to.row == 1 && move.to.col == static_cast<int>('b') - 'a') {
+                if (castlingAvailability.WHITE_QUEEN_SIDE &&
+                    pieceAt(1, 'e') == WHITE_KING &&
+                    pieceAt(1, 'a') == WHITE_ROOK &&
+                    pieceAt(1, 'b') == NONE &&
+                    pieceAt(1, 'c') == NONE &&
+                    pieceAt(1, 'd') == NONE
+                ) {
+                    setPieceAt(1, 'a', NONE);
+                    setPieceAt(1, 'd', NONE);
+                    setPieceAt(1, 'e', NONE);
+                    setPieceAt(1, 'c', WHITE_ROOK);
+                    setPieceAt(1, 'b', WHITE_KING);
+
+                    castlingAvailability.WHITE_KING_SIDE = false;
+                    castlingAvailability.WHITE_QUEEN_SIDE = false;
+                }
+            }
+        }
+        else {
+            // long, aka queen side castling
+            if (move.piece == BLACK_KING && move.from.row == 8 && move.from.col == static_cast<int>('e') - 'a' && move.to.row == 8 && move.to.col == static_cast<int>('g') - 'a') {
+                if (castlingAvailability.BLACK_QUEEN_SIDE &&
+                    pieceAt(8, 'e') == BLACK_KING &&
+                    pieceAt(8, 'h') == BLACK_ROOK &&
+                    pieceAt(8, 'f') == NONE &&
+                    pieceAt(8, 'g') == NONE
+                ) {
+                    setPieceAt(8, 'e', NONE);
+                    setPieceAt(8, 'h', NONE);
+                    setPieceAt(8, 'f', BLACK_ROOK);
+                    setPieceAt(8, 'g', BLACK_KING);
+
+                    castlingAvailability.BLACK_KING_SIDE = false;
+                    castlingAvailability.BLACK_QUEEN_SIDE = false;
+
+                    isMoveValid = true;
+                }
+            }
+
+            // short, aka king side castling
+            if (move.piece == BLACK_KING && move.from.row == 8 && move.from.col == static_cast<int>('e') - 'a' && move.to.row == 8 && move.to.col == static_cast<int>('b') - 'a') {
+                if (castlingAvailability.BLACK_QUEEN_SIDE &&
+                    pieceAt(8, 'e') == BLACK_KING &&
+                    pieceAt(8, 'a') == BLACK_ROOK &&
+                    pieceAt(8, 'b') == NONE &&
+                    pieceAt(8, 'c') == NONE &&
+                    pieceAt(8, 'd') == NONE
+                ) {
+                    setPieceAt(8, 'a', NONE);
+                    setPieceAt(8, 'd', NONE);
+                    setPieceAt(8, 'e', NONE);
+                    setPieceAt(8, 'c', BLACK_ROOK);
+                    setPieceAt(8, 'b', BLACK_KING);
+
+                    castlingAvailability.BLACK_KING_SIDE = false;
+                    castlingAvailability.BLACK_QUEEN_SIDE = false;
+                }
+            }
+        }
+    }
+
+    if (currentPlayer == WHITE && move.piece == WHITE_ROOK) {
+        // TODO: figure out which rook has moved
+        castlingAvailability.WHITE_KING_SIDE = false;
+        castlingAvailability.WHITE_QUEEN_SIDE = false;
+    }
+
+    if (currentPlayer == BLACK && move.piece == BLACK_ROOK) {
+        // TODO: figure out which rook has moved
+        castlingAvailability.BLACK_KING_SIDE = false;
+        castlingAvailability.BLACK_QUEEN_SIDE = false;
+    }
+
+    moveHistory.push_back(move);
 }

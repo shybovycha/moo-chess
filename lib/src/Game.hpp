@@ -4,6 +4,7 @@
 #include <deque>
 #include <memory>
 #include <string>
+#include <optional>
 
 enum PieceColor {
     BLACK = 'b',
@@ -48,7 +49,14 @@ struct Position {
 
 struct Move {
     Piece piece;
-    Position position;
+
+    Position from;
+    Position to;
+
+    std::optional<Piece> promotion;
+
+    bool isCapture;
+    bool isCastling;
 };
 
 class Game {
@@ -65,9 +73,18 @@ public:
 
     std::string serializeMove(const Move move) const;
 
+    void applyMove(const Move move);
+
+private:
+    Piece parsePiece(char pieceSymbol) const;
+
+    Piece pieceAt(int row, char col) const;
+
+    void setPieceAt(int row, char col, const Piece piece);
+
 public:
     std::array<std::array<Piece, 8>, 8> pieces;
     PieceColor currentPlayer;
     CastlingAvailability castlingAvailability;
-    std::deque<std::string> moveHistory;
+    std::deque<Move> moveHistory;
 };
