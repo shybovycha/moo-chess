@@ -26,13 +26,13 @@ void Game::parseFEN(const std::string& fenString) {
     // parse first part of the FEN string - board state
     std::array<std::array<Piece, 8>, 8> board{ { NONE } };
 
-    int currentRow = 0;
+    int currentRow = 7;
     int currentCol = 0;
 
     for (auto i = 0; i < boardStringEnd; ++i) {
         switch (fenString.at(i)) {
         case '/':
-            ++currentRow;
+            --currentRow;
             currentCol = 0;
             break;
 
@@ -136,7 +136,7 @@ std::string Game::serializeAsFEN() const {
     std::string boardString = "";
 
     // board state block
-    for (int i = 0; i < 8; ++i) {
+    for (int i = 7; i >= 0; --i) {
         int contiguousEmpty = 0;
 
         for (int t = 0; t < 8; ++t) {
@@ -157,7 +157,7 @@ std::string Game::serializeAsFEN() const {
             boardString += static_cast<char>(static_cast<int>('1') + contiguousEmpty - 1);
         }
 
-        if (i < 7) {
+        if (i > 1) {
             boardString += '/';
         }
     }
@@ -478,6 +478,7 @@ bool Game::isValidMove(const Move move) const {
     }
 
     if (move.piece == WHITE_KING || move.piece == BLACK_KING) {
+        // TODO: opposite color kings can not approach each other?
         // TODO: can not move into a space under check
         return (
             (move.from.col < 'h' && move.to.col == move.from.col + 1) ||
@@ -647,6 +648,10 @@ void Game::applyMove(const Move move) {
     }
 
     // TODO: if check conditions fulfill, remove castlingAvailability
+
+    if ((move.isCapture && opponentPieceAt(move.to)) || (!move.isCapture && pieceAt(move.to) == NONE)) {
+        movePiece(move.from, move.to);
+    }
 
     moveHistory.push_back(move);
 }
