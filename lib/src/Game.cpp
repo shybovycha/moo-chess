@@ -404,7 +404,7 @@ bool Game::isValidMove(const Move move) const {
                     (move.from.col < 'h' && move.from.col == move.to.col + 1) ||
                     (move.from.col == 'a' && move.to.col == 'b') ||
                     (move.from.col == 'h' && move.to.col == 'g')
-                ) &&
+                    ) &&
                 (
                     opponentPieceAt(move.to) ||
                     // en passant
@@ -415,8 +415,8 @@ bool Game::isValidMove(const Move move) const {
                         moveHistory.at(moveHistory.size() - 1).piece == BLACK_PAWN &&
                         moveHistory.at(moveHistory.size() - 1).from.row == 7 &&
                         moveHistory.at(moveHistory.size() - 1).to.row == 5
-                    )
-                );
+                        )
+                    );
         }
         else {
             if (move.from.row == 2 && move.to.row == move.from.row + 2) {
@@ -429,7 +429,7 @@ bool Game::isValidMove(const Move move) const {
                 pieceAt(move.to) == NONE;
         }
     }
-    else {
+    else if (move.piece == BLACK_PAWN) {
         if (move.isCapture) {
             return move.from.row == move.to.row + 1 &&
                 (
@@ -437,7 +437,7 @@ bool Game::isValidMove(const Move move) const {
                     (move.from.col < 'h' && move.from.col == move.to.col + 1) ||
                     (move.from.col == 'a' && move.to.col == 'b') ||
                     (move.from.col == 'h' && move.to.col == 'g')
-                ) &&
+                    ) &&
                 (
                     opponentPieceAt(move.to) ||
                     // en passant
@@ -448,8 +448,8 @@ bool Game::isValidMove(const Move move) const {
                         moveHistory.at(moveHistory.size() - 1).piece == WHITE_PAWN &&
                         moveHistory.at(moveHistory.size() - 1).from.row == 2 &&
                         moveHistory.at(moveHistory.size() - 1).to.row == 4
-                    )
-                );
+                        )
+                    );
         }
         else {
             if (move.from.row == 7 && move.to.row == move.from.row - 2) {
@@ -461,6 +461,100 @@ bool Game::isValidMove(const Move move) const {
                 move.from.col == move.to.col &&
                 pieceAt(move.to) == NONE;
         }
+    }
+
+    if (move.piece == WHITE_KING || move.piece == BLACK_KING) {
+        // TODO: can not move into a space under check
+        return (
+            (move.from.col < 'h' && move.to.col == move.from.col + 1) ||
+            (move.from.col > 'a' && move.to.col == move.from.col - 1) ||
+            (move.from.col == move.to.col)
+        ) && (
+            (move.from.row > 1 && move.to.row == move.from.row - 1) ||
+            (move.from.row < 8 && move.to.row == move.from.row + 1) ||
+            (move.from.row == move.to.row)
+        ) &&
+            !allyPieceAt(move.to);
+    }
+
+    if (move.piece == WHITE_ROOK || move.piece == BLACK_ROOK) {
+        if (move.from.col != move.to.col && move.from.row != move.to.row) {
+            return false;
+        }
+
+        if (allyPieceAt(move.to)) {
+            return false;
+        }
+
+        for (auto row = std::min(move.from.row, move.to.row), col = std::min(static_cast<unsigned int>(move.from.col), static_cast<unsigned int>(move.to.col));
+            row <= std::max(move.from.row, move.to.row) || col <= std::max(static_cast<unsigned int>(move.from.col), static_cast<unsigned int>(move.to.col));
+            ++row, ++col
+        ) {
+            if (row == move.from.row && col == move.to.col)
+                continue;
+
+            if (pieceAt(Position{ .row = row, .col = static_cast<char>(col + static_cast<int>('a'))}) != NONE)
+                return false;
+        }
+
+        return true;
+    }
+
+    if (move.piece == WHITE_BISHOP || move.piece == BLACK_BISHOP) {
+        if (move.from.col == move.to.col || move.from.row == move.to.row) {
+            return false;
+        }
+
+        if (allyPieceAt(move.to)) {
+            return false;
+        }
+
+        for (auto row = std::min(move.from.row, move.to.row), col = std::min(static_cast<unsigned int>(move.from.col), static_cast<unsigned int>(move.to.col));
+            row <= std::max(move.from.row, move.to.row) || col <= std::max(static_cast<unsigned int>(move.from.col), static_cast<unsigned int>(move.to.col));
+            ++row, ++col
+        ) {
+            if (row == move.from.row && col == move.to.col)
+                continue;
+
+            if (pieceAt(Position{ .row = row, .col = static_cast<char>(col + static_cast<int>('a')) }) != NONE)
+                return false;
+        }
+
+        return true;
+    }
+
+    if (move.piece == WHITE_QUEEN || move.piece == BLACK_QUEEN) {
+        if (allyPieceAt(move.to)) {
+            return false;
+        }
+
+        for (auto row = std::min(move.from.row, move.to.row), col = std::min(static_cast<unsigned int>(move.from.col), static_cast<unsigned int>(move.to.col));
+            row <= std::max(move.from.row, move.to.row) || col <= std::max(static_cast<unsigned int>(move.from.col), static_cast<unsigned int>(move.to.col));
+            ++row, ++col
+        ) {
+            if (row == move.from.row && col == move.to.col)
+                continue;
+
+            if (pieceAt(Position{ .row = row, .col = static_cast<char>(col + static_cast<int>('a')) }) != NONE)
+                return false;
+        }
+
+        return true;
+    }
+
+    if (move.piece == WHITE_KNIGHT || move.piece == BLACK_KNIGHT) {
+        return (
+            // TODO: add validation for boundaries
+            (move.to.row == move.from.row + 2 && move.to.col == move.from.col + 1) ||
+            (move.to.row == move.from.row - 2 && move.to.col == move.from.col + 1) ||
+            (move.to.row == move.from.row + 2 && move.to.col == move.from.col - 1) ||
+            (move.to.row == move.from.row - 2 && move.to.col == move.from.col - 1) ||
+
+            (move.to.row == move.from.row + 1 && move.to.col == move.from.col + 2) ||
+            (move.to.row == move.from.row - 1 && move.to.col == move.from.col + 2) ||
+            (move.to.row == move.from.row + 1 && move.to.col == move.from.col - 2) ||
+            (move.to.row == move.from.row - 1 && move.to.col == move.from.col - 2)
+        ) && !allyPieceAt(move.to);
     }
 
     return false;

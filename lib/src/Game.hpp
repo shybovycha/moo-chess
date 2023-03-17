@@ -89,6 +89,7 @@ private:
     void movePiece(Position from, Position to);
 
     bool opponentPieceAt(const Position pos) const;
+    bool allyPieceAt(const Position pos) const;
 
 public:
     std::array<std::array<Piece, 8>, 8> pieces;
