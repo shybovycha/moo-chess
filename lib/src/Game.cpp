@@ -133,10 +133,10 @@ void Game::parseFEN(const std::string& fenString) {
 }
 
 std::string Game::serializeAsFEN() const {
-    std::string result = "";
+    std::string boardString = "";
 
     // board state block
-    for (int i = 7; i > -1; --i) {
+    for (int i = 0; i < 8; ++i) {
         int contiguousEmpty = 0;
 
         for (int t = 0; t < 8; ++t) {
@@ -146,49 +146,42 @@ std::string Game::serializeAsFEN() const {
             }
 
             if (pieces[i][t] != NONE && contiguousEmpty > 0) {
-                result += static_cast<char>(static_cast<int>('1') + contiguousEmpty - 1);
+                boardString += static_cast<char>(static_cast<int>('1') + contiguousEmpty - 1);
                 contiguousEmpty = 0;
             }
 
-            result += static_cast<char>(pieces[i][t]);
+            boardString += static_cast<char>(pieces[i][t]);
         }
 
         if (contiguousEmpty > 0) {
-            result += static_cast<char>(static_cast<int>('1') + contiguousEmpty - 1);
+            boardString += static_cast<char>(static_cast<int>('1') + contiguousEmpty - 1);
         }
 
-        if (i > 0) {
-            result += '/';
+        if (i < 7) {
+            boardString += '/';
         }
     }
 
-    // current player block
-    result += " " + static_cast<char>(currentPlayer);
-
-    // castling availability block
-    result += " ";
+    std::string castlingString = "";
 
     if (castlingAvailability.WHITE_KING_SIDE)
-        result += 'K';
+        castlingString += 'K';
 
     if (castlingAvailability.WHITE_QUEEN_SIDE)
-        result += 'Q';
+        castlingString += 'Q';
 
     if (castlingAvailability.BLACK_KING_SIDE)
-        result += 'k';
+        castlingString += 'k';
 
     if (castlingAvailability.BLACK_QUEEN_SIDE)
-        result += 'q';
+        castlingString += 'q';
 
-    // en passant block
-    result += " " + '-'; // TODO: implement en passant
+    if (castlingString.empty())
+        castlingString = "-";
 
-    // half-move clock block
-    result += " " + '0'; // TODO: clock?
+    std::string enPassantString = "-";
 
-    // full move number
-    result += " ";
-    result += std::to_string((moveHistory.size() / 2) + 1);
+    std::string result = std::format("{0} {1} {2} {3} {4} {5}", boardString, static_cast<char>(currentPlayer), castlingString, enPassantString, 0, (moveHistory.size() / 2) + 1);
 
     return result;
 }
@@ -308,6 +301,27 @@ bool Game::opponentPieceAt(const Position pos) const {
     auto piece = pieceAt(pos);
 
     if (currentPlayer == WHITE) {
+        return piece == BLACK_ROOK ||
+            piece == BLACK_KNIGHT ||
+            piece == BLACK_BISHOP ||
+            piece == BLACK_KING ||
+            piece == BLACK_QUEEN ||
+            piece == BLACK_PAWN;
+    }
+    else {
+        return piece == WHITE_ROOK ||
+            piece == WHITE_KNIGHT ||
+            piece == WHITE_BISHOP ||
+            piece == WHITE_KING ||
+            piece == WHITE_QUEEN ||
+            piece == WHITE_PAWN;
+    }
+}
+
+bool Game::allyPieceAt(const Position pos) const {
+    auto piece = pieceAt(pos);
+
+    if (currentPlayer == BLACK) {
         return piece == BLACK_ROOK ||
             piece == BLACK_KNIGHT ||
             piece == BLACK_BISHOP ||
@@ -607,20 +621,29 @@ void Game::applyMove(const Move move) {
     }
 
     if (currentPlayer == WHITE && move.piece == WHITE_ROOK && !move.isCastling && move.from.row == 1) {
-        if (move.from.col == static_cast<int>('h')) {
+        if (move.from.col == 'h') {
             castlingAvailability.WHITE_KING_SIDE = false;
         }
-        else if (move.from.col == static_cast<int>('a')) {
+        else if (move.from.col == 'a') {
             castlingAvailability.WHITE_QUEEN_SIDE = false;
         }
     }
     else if (currentPlayer == BLACK && move.piece == BLACK_ROOK && !move.isCastling && move.from.row == 8) {
-        if (move.from.col == static_cast<int>('h')) {
+        if (move.from.col == 'h') {
             castlingAvailability.BLACK_KING_SIDE = false;
         }
-        else if (move.from.col == static_cast<int>('a')) {
+        else if (move.from.col == 'a') {
             castlingAvailability.BLACK_QUEEN_SIDE = false;
         }
+    }
+
+    if (currentPlayer == WHITE && move.piece == WHITE_KING && !move.isCastling) {
+        castlingAvailability.WHITE_KING_SIDE = false;
+        castlingAvailability.WHITE_QUEEN_SIDE = false;
+    }
+    else if (currentPlayer == BLACK && move.piece == BLACK_KING && !move.isCastling) {
+        castlingAvailability.BLACK_KING_SIDE = false;
+        castlingAvailability.BLACK_QUEEN_SIDE = false;
     }
 
     // TODO: if check conditions fulfill, remove castlingAvailability
