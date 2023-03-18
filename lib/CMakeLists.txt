@@ -8,16 +8,12 @@ project(moo-chess-lib LANGUAGES CXX)
 # target_compile_features(chess-lib INTERFACE cxx_std_20)
 # set_target_properties(chess-lib PROPERTIES LINKER_LANGUAGE CXX)
 
-add_executable(moo-chess-lib-test "src/test.cpp" "src/Game.hpp" "src/Game.cpp")
-target_compile_features(moo-chess-lib-test PRIVATE cxx_std_20)
-# target_link_libraries(moo-chess-lib-test INTERFACE chess-lib)
+add_executable(moo-chess-lib-tests "test/main.cpp" "test/ParsingTests.cpp" "test/MoveValidationTests.cpp" "src/Game.hpp" "src/Game.cpp" "test/main.cpp")
+target_compile_features(moo-chess-lib-tests PRIVATE cxx_std_20)
 
 enable_testing()
 
 find_package(gtest CONFIG REQUIRED)
-target_link_libraries(moo-chess-lib-test PRIVATE GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)
+target_link_libraries(moo-chess-lib-tests PRIVATE GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)
 
-add_test(AllTestsInMain moo-chess-lib-test)
-
-# include(GoogleTest)
-# gtest_discovery
+add_test(AllTestsInMain moo-chess-lib-tests)
