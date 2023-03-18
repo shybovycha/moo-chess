@@ -153,6 +153,62 @@ TEST(ValidatingPawnMoveTest, EnPassant) {
         << "Pawn can ignore en passant and advance one rank straight";
 }
 
+TEST(ValidatingPawnMoveTest, Promotion) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("8/4P3/8/8/8/8/8/8 w KQkq - 0 1");
+
+    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 6, .col = 'e' }, .promotion = WHITE_QUEEN }))
+        << "Pawn can be promoted to queen on a straight advancement";
+
+    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 6, .col = 'e' }, .promotion = WHITE_ROOK }))
+        << "Pawn can be promoted to rook on a straight advancement";
+
+    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 6, .col = 'e' }, .promotion = WHITE_KNIGHT }))
+        << "Pawn can be promoted to knight on a straight advancement";
+
+    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 6, .col = 'e' }, .promotion = WHITE_BISHOP }))
+        << "Pawn can be promoted to bishop on a straight advancement";
+
+    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 6, .col = 'e' }, .promotion = WHITE_KING }))
+        << "Pawn can not be promoted to king";
+
+    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 6, .col = 'e' }, .promotion = WHITE_PAWN }))
+        << "Pawn can not be promoted to pawn";
+
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 8, .col = 'd' }, .promotion = WHITE_QUEEN }))
+        << "Pawn can not be promoted diagonally to the left";
+
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 8, .col = 'f' }, .promotion = WHITE_QUEEN }))
+        << "Pawn can not be promoted diagonally to the right";
+
+    game->parseFEN("3q4/4P3/8/8/8/8/8/8 w KQkq - 0 1");
+
+    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 6, .col = 'e' }, .promotion = WHITE_QUEEN, .isCapture = true }))
+        << "Pawn can be promoted to queen on a straight advancement even if capture is available to the left";
+
+    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 8, .col = 'd' }, .promotion = WHITE_QUEEN, .isCapture = true }))
+        << "Pawn can be promoted diagonally to the left only if capturing";
+
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 8, .col = 'f' }, .promotion = WHITE_QUEEN }))
+        << "Pawn can not be promoted diagonally to the right if capture is available to the left";
+
+    game->parseFEN("3Q4/4P3/8/8/8/8/8/8 w KQkq - 0 1");
+
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 8, .col = 'f' }, .promotion = WHITE_QUEEN }))
+        << "Pawn can not be promoted diagonally to the right if blocked by the ally piece on the capture field to the left";
+
+    game->parseFEN("4q3/4P3/8/8/8/8/8/8 w KQkq - 0 1");
+
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 8, .col = 'f' }, .promotion = WHITE_QUEEN }))
+        << "Pawn can not be promoted if blocked by the opponent piece ahead";
+
+    game->parseFEN("4Q3/4P3/8/8/8/8/8/8 w KQkq - 0 1");
+
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 8, .col = 'f' }, .promotion = WHITE_QUEEN }))
+        << "Pawn can not be promoted if blocked by the ally piece ahead";
+}
+
 TEST(ValidatingKingMoveTest, Castling) {
     auto game = std::make_unique<Game>();
 

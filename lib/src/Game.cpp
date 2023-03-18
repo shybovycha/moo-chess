@@ -721,8 +721,14 @@ void Game::applyMove(const Move move) {
 
     // TODO: if check conditions fulfill, remove castlingAvailability
 
-    if ((move.isCapture && opponentPieceAt(move.to)) || (!move.isCapture && pieceAt(move.to) == NONE)) {
-        movePiece(move.from, move.to);
+    if (move.promotion.has_value()) {
+        setPieceAt(move.from, NONE);
+        setPieceAt(move.to, move.promotion.value());
+    }
+    else {
+        if ((move.isCapture && opponentPieceAt(move.to)) || (!move.isCapture && pieceAt(move.to) == NONE)) {
+            movePiece(move.from, move.to);
+        }
     }
 
     currentPlayer = (currentPlayer == WHITE) ? BLACK : WHITE;
