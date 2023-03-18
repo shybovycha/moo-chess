@@ -102,10 +102,12 @@ void Game::parseFEN(const std::string& fenString) {
     // parse second part of FEN string - current player
     auto currentPlayerStringEnd = fenString.find(' ', boardStringEnd + 1);
 
-    currentPlayer = (fenString.at(currentPlayerStringEnd + 1) == 'b') ? BLACK : WHITE;
+    currentPlayer = (fenString.at(boardStringEnd + 1) == 'b') ? BLACK : WHITE;
 
     // parse third part of FEN string - castling availability
     auto castlingAvailabilityStringEnd = fenString.find(' ', currentPlayerStringEnd + 1);
+
+    castlingAvailability = CastlingAvailability{ false };
 
     for (int i = currentPlayerStringEnd + 1; i < castlingAvailabilityStringEnd; ++i) {
         if (fenString.at(i) == '-') {
@@ -272,7 +274,7 @@ std::optional<Move> Game::parseMove(const std::string& moveString) const {
         for (auto col = static_cast<int>('a'); col <= static_cast<int>('h'); ++col) {
             candidateMove.from = Position{ .row = row, .col = static_cast<char>(col) };
 
-            if (pieceAt(row, col) == move.piece) {
+            if (pieceAt(candidateMove.from) == move.piece) {
                 if (isValidMove(candidateMove))
                     fromCandidates.push_back(candidateMove.from);
             }
@@ -502,7 +504,9 @@ bool Game::isValidMove(const Move move) const {
         }
         else {
             if (move.from.row == 2 && move.to.row == move.from.row + 2) {
-                return pieceAt(move.to) == NONE && pieceAt(Position{ .row = move.from.row + 1, .col = move.from.col }) == NONE;
+                return move.from.col == move.to.col &&
+                    pieceAt(move.to) == NONE &&
+                    pieceAt(Position{ .row = move.from.row + 1, .col = move.from.col }) == NONE;
             }
 
             return

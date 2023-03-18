@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 #include <optional>
+#include <ostream>
 #include <vector>
 
 enum PieceColor {
@@ -46,6 +47,14 @@ struct Position {
     void parse(const std::string& positionString) {
         col = positionString.at(0);
         row = static_cast<int>(positionString.at(1)) - static_cast<int>('1') + 1;
+    }
+
+    bool operator==(const Position& other) const {
+        return row == other.row && col == other.col;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const Position& pos) {
+        return os << std::format("<{1}, {0}>", static_cast<char>(pos.col), pos.row);
     }
 };
 
