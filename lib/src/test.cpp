@@ -146,15 +146,63 @@ TEST(SerializingBoardTest, SerializeFEN) {
     EXPECT_EQ(game->serializeAsFEN(), "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR w - - 0 1");
 }
 
-TEST(ParsingMoveTest, ParsingPawnMove) {
+TEST(ParsingMoveTest, ParsingPawnAdvancement) {
     auto game = std::make_unique<Game>();
 
     auto move = game->parseMove("e4");
 
-    EXPECT_THAT(move, Optional(Field(&Move::isCastling, Eq(false))));
-    EXPECT_THAT(move, Optional(Field(&Move::isCapture, Eq(false))));
-    EXPECT_THAT(move, Optional(Field(&Move::piece, Eq(WHITE_PAWN))));
-    EXPECT_THAT(move, Optional(Field(&Move::to, FieldsAre(Eq(4), Eq('e')))));
+    ASSERT_NE(move, std::nullopt);
+
+    EXPECT_EQ(move->isCastling, false);
+    EXPECT_EQ(move->isCapture, false);
+    EXPECT_EQ(move->piece, WHITE_PAWN);
+    EXPECT_THAT(move->from, FieldsAre(Eq(2), Eq('e')));
+    EXPECT_THAT(move->to, FieldsAre(Eq(4), Eq('e')));
+
+    auto move2 = game->parseMove("e3");
+
+    ASSERT_NE(move2, std::nullopt);
+
+    EXPECT_EQ(move2->isCastling, false);
+    EXPECT_EQ(move2->isCapture, false);
+    EXPECT_EQ(move2->piece, WHITE_PAWN);
+    EXPECT_THAT(move2->from, FieldsAre(Eq(2), Eq('e')));
+    EXPECT_THAT(move2->to, FieldsAre(Eq(3), Eq('e')));
+}
+
+TEST(ParsingMoveTest, ParsingPawnCapture) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 8");
+
+    auto move = game->parseMove("exd5");
+
+    EXPECT_EQ(move->isCastling, false);
+    EXPECT_EQ(move->isCapture, true);
+    EXPECT_EQ(move->piece, WHITE_PAWN);
+    EXPECT_THAT(move->from, FieldsAre(Eq(4), Eq('e')));
+    EXPECT_THAT(move->to, FieldsAre(Eq(5), Eq('d')));
+}
+
+TEST(ParsingMoveTest, ParsingEnPassant) {
+    auto game = std::make_unique<Game>();
+
+    game->applyMove(*game->parseMove("e4"));
+    game->applyMove(*game->parseMove("b6"));
+    game->applyMove(*game->parseMove("e5"));
+    game->applyMove(*game->parseMove("d5"));
+
+    // essentially setting the board in the position of `rnbqkbnr/p1p1pppp/1p6/3pP3/8/8/PPPP1PPP/RNBQKBNR` with the last move by black, `d6`
+
+    auto move = game->parseMove("exd6");
+
+    EXPECT_EQ(move->isCastling, false);
+    EXPECT_EQ(move->isCapture, true);
+    EXPECT_EQ(move->piece, WHITE_PAWN);
+    EXPECT_THAT(move->from, FieldsAre(Eq(5), Eq('e')));
+    EXPECT_THAT(move->to, FieldsAre(Eq(6), Eq('d')));
+
+    EXPECT_TRUE(game->isValidMove(*move));
 }
 
 TEST(ParsingMoveTest, DisambiguishingPawnMove) {
@@ -253,7 +301,7 @@ TEST(ParsingMoveTest, ParsingCastling) {
     EXPECT_THAT(move4->to, FieldsAre(Eq(8), Eq('b')));
 }
 
-TEST(ValidatingMoveTest, PawnMovement) {
+TEST(ValidatingMoveTest, PawnAdvancement) {
     auto game = std::make_unique<Game>();
 
     EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'e' }, .to = Position{.row = 3, .col = 'e' } }));
@@ -276,6 +324,50 @@ TEST(ValidatingMoveTest, PawnMovement) {
     EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'f' }, .to = Position{.row = 3, .col = 'e' } }));
     EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'g' }, .to = Position{.row = 3, .col = 'e' } }));
     EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'h' }, .to = Position{.row = 3, .col = 'e' } }));
+
+    game->parseFEN("rnbqkbnr/1ppppppp/p7/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 8");
+
+    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 4, .col = 'e' }, .to = Position{.row = 5, .col = 'e' } }));
+
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 4, .col = 'e' }, .to = Position{.row = 6, .col = 'e' } }));
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 4, .col = 'e' }, .to = Position{.row = 5, .col = 'd' } }));
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 4, .col = 'e' }, .to = Position{.row = 5, .col = 'f' } }));
+
+    game->parseFEN("rnbqkbnr/pppp1ppp/8/8/4p3/P7/1PPPPPPP/RNBQKBNR w KQkq - 0 8");
+
+    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'e' }, .to = Position{.row = 3, .col = 'e' } }));
+
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'e' }, .to = Position{.row = 4, .col = 'e' } }));
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'e' }, .to = Position{.row = 3, .col = 'd' } }));
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'e' }, .to = Position{.row = 3, .col = 'f' } }));
+}
+
+TEST(ValidatingMoveTest, PawnCapture) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 8");
+
+    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 4, .col = 'e' }, .to = Position{.row = 5, .col = 'e' } }));
+
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 4, .col = 'e' }, .to = Position{.row = 6, .col = 'e' } }));
+
+    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 4, .col = 'e' }, .to = Position{.row = 5, .col = 'd' }, .isCapture = true }));
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 4, .col = 'e' }, .to = Position{.row = 5, .col = 'f' }, .isCapture = true }));
+}
+
+TEST(ValidatingMoveTest, EnPassant) {
+    auto game = std::make_unique<Game>();
+
+    game->applyMove(*game->parseMove("e4"));
+    game->applyMove(*game->parseMove("b6"));
+    game->applyMove(*game->parseMove("e5"));
+    game->applyMove(*game->parseMove("d5"));
+
+    // essentially setting the board in the position of `rnbqkbnr/p1p1pppp/1p6/3pP3/8/8/PPPP1PPP/RNBQKBNR` with the last move by black, `d6`
+
+    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 5, .col = 'e' }, .to = Position{.row = 6, .col = 'e' } }));
+
+    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 5, .col = 'e' }, .to = Position{.row = 6, .col = 'd' }, .isCapture = true }));
 }
 
 TEST(ValidatingMoveTest, Castling) {
@@ -335,7 +427,7 @@ TEST(ApplyingMoveTest, PawnAdvancement) {
     // game->applyMove(game->parseMove("e4"));
     game->applyMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'e' }, .to = Position{.row = 4, .col = 'e' } });
 
-    EXPECT_EQ(game->serializeAsFEN(), "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR w - - 0 1");
+    EXPECT_EQ(game->serializeAsFEN(), "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b - - 0 1");
 }
 
 int main() {

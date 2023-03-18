@@ -725,5 +725,7 @@ void Game::applyMove(const Move move) {
         movePiece(move.from, move.to);
     }
 
+    currentPlayer = (currentPlayer == WHITE) ? BLACK : WHITE;
+
     moveHistory.push_back(move);
 }
