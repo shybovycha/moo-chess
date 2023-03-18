@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 #include <optional>
+#include <vector>
 
 enum PieceColor {
     BLACK = 'b',
@@ -44,7 +45,7 @@ struct Position {
 
     void parse(const std::string& positionString) {
         col = positionString.at(0);
-        row = static_cast<int>(positionString.at(1)) - static_cast<int>('1');
+        row = static_cast<int>(positionString.at(1)) - static_cast<int>('1') + 1;
     }
 };
 
@@ -70,7 +71,7 @@ public:
 
     std::string serializeAsFEN() const;
 
-    Move parseMove(const std::string& moveString) const;
+    std::optional<Move> parseMove(const std::string& moveString) const;
 
     std::string serializeMove(const Move move) const;
 
@@ -78,7 +79,7 @@ public:
 
     bool isValidMove(const Move move) const;
 
-private:
+public:
     Piece parsePiece(char pieceSymbol) const;
 
     Piece pieceAt(int row, char col) const;

@@ -6,14 +6,14 @@ Game::Game() :
 {
     std::array<std::array<Piece, 8>, 8> standardBoard{
         {
-            { WHITE_ROOK, WHITE_BISHOP, WHITE_KNIGHT, WHITE_QUEEN, WHITE_KING, WHITE_BISHOP, WHITE_KNIGHT, WHITE_ROOK },
+            { WHITE_ROOK, WHITE_KNIGHT, WHITE_BISHOP, WHITE_QUEEN, WHITE_KING, WHITE_BISHOP, WHITE_KNIGHT, WHITE_ROOK },
             { WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN },
             { NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE },
             { NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE },
             { NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE },
             { NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE },
             { BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN },
-            { BLACK_ROOK, BLACK_BISHOP, BLACK_KNIGHT, BLACK_QUEEN, BLACK_KING, BLACK_BISHOP, BLACK_KNIGHT, BLACK_ROOK }
+            { BLACK_ROOK, BLACK_KNIGHT, BLACK_BISHOP, BLACK_QUEEN, BLACK_KING, BLACK_BISHOP, BLACK_KNIGHT, BLACK_ROOK }
         }
     };
 
@@ -100,14 +100,14 @@ void Game::parseFEN(const std::string& fenString) {
     pieces = board;
 
     // parse second part of FEN string - current player
-    auto currentPlayerStringEnd = fenString.find(' ', boardStringEnd);
+    auto currentPlayerStringEnd = fenString.find(' ', boardStringEnd + 1);
 
-    currentPlayer = (fenString.at(currentPlayerStringEnd - 1) == 'b') ? BLACK : WHITE;
+    currentPlayer = (fenString.at(currentPlayerStringEnd + 1) == 'b') ? BLACK : WHITE;
 
     // parse third part of FEN string - castling availability
-    auto castlingAvailabilityStringEnd = fenString.find(' ', currentPlayerStringEnd);
+    auto castlingAvailabilityStringEnd = fenString.find(' ', currentPlayerStringEnd + 1);
 
-    for (int i = currentPlayerStringEnd; i < castlingAvailabilityStringEnd; ++i) {
+    for (int i = currentPlayerStringEnd + 1; i < castlingAvailabilityStringEnd; ++i) {
         if (fenString.at(i) == '-') {
             break;
         }
@@ -157,7 +157,7 @@ std::string Game::serializeAsFEN() const {
             boardString += static_cast<char>(static_cast<int>('1') + contiguousEmpty - 1);
         }
 
-        if (i > 1) {
+        if (i > 0) {
             boardString += '/';
         }
     }
@@ -208,7 +208,7 @@ Piece Game::parsePiece(char pieceSymbol) const {
     }
 }
 
-Move Game::parseMove(const std::string& moveString) const {
+std::optional<Move> Game::parseMove(const std::string& moveString) const {
     Move move{
         .piece = NONE,
         .from = {.row = 9, .col = 9 },
@@ -245,11 +245,12 @@ Move Game::parseMove(const std::string& moveString) const {
     else {
         move.piece = parsePiece(moveString.at(0));
 
-        if (moveString.substr(1).find('x') > 0) {
+        if (moveString.find('x') != std::string::npos) {
             move.isCapture = true;
-            move.to.parse(moveString.substr(moveString.find('x')));
+
+            move.to.parse(moveString.substr(moveString.find('x') + 1));
         }
-        else if ((move.piece == WHITE_PAWN || move.piece == BLACK_PAWN) && moveString.at(2) == '=') {
+        else if ((move.piece == WHITE_PAWN || move.piece == BLACK_PAWN) && moveString.find('=') != std::string::npos) {
             move.promotion = parsePiece(moveString.at(3));
         }
         else {
@@ -260,11 +261,78 @@ Move Game::parseMove(const std::string& moveString) const {
                 --positionStringEnd;
             }
 
-            move.to.parse(moveString.substr(positionStringEnd - 1, positionStringEnd));
+            move.to.parse(moveString.substr(positionStringEnd - 1));
         }
     }
 
-    // TODO: implement disambiguiting moves by filling out `move.from` **correctly**
+    std::vector<Position> fromCandidates;
+    Move candidateMove = move;
+
+    for (unsigned int row = 1; row <= 8; ++row) {
+        for (auto col = static_cast<int>('a'); col <= static_cast<int>('h'); ++col) {
+            candidateMove.from = Position{ .row = row, .col = static_cast<char>(col) };
+
+            if (pieceAt(row, col) == move.piece) {
+                if (isValidMove(candidateMove))
+                    fromCandidates.push_back(candidateMove.from);
+            }
+        }
+    }
+
+    if (fromCandidates.size() == 0) {
+        return std::nullopt;
+    }
+    else if (fromCandidates.size() == 1) {
+        move.from = fromCandidates.at(0);
+    }
+    else {
+        // resolve ambiguous moves
+        if (move.piece == WHITE_PAWN || move.piece == BLACK_PAWN) {
+            // two pawns can only have same target position if they are on the same row, but different columns
+            // hence first character of the `moveString` would identify the column
+            char col = moveString.at(0);
+
+            auto position = std::find_if(fromCandidates.begin(), fromCandidates.end(), [col](auto p) { return p.col == col; });
+
+            if (position == fromCandidates.end()) {
+                // impossible?!
+                return std::nullopt;
+            }
+
+            move.from = *position;
+        }
+        else {
+            // hence first character of the `moveString` after the piece character would identify the column __or__ the row
+            char ch = moveString.at(1);
+
+            if (std::isdigit(ch)) {
+                // search for pieces by the row
+                auto row = static_cast<int>(ch) - static_cast<int>('a') + 1;
+                auto position = std::find_if(fromCandidates.begin(), fromCandidates.end(), [row](auto p) { return p.row == row; });
+
+                if (position == fromCandidates.end()) {
+                    // impossible?!
+                    return std::nullopt;
+                }
+
+                move.from = *position;
+            }
+            else if (std::isalpha(ch)) {
+                // search for pieces by the column
+                auto position = std::find_if(fromCandidates.begin(), fromCandidates.end(), [ch](auto p) { return p.col == ch; });
+
+                if (position == fromCandidates.end()) {
+                    // impossible?!
+                    return std::nullopt;
+                }
+
+                move.from = *position;
+            }
+            else {
+                return std::nullopt;
+            }
+        }
+    }
 
     return move;
 }
@@ -275,11 +343,11 @@ std::string Game::serializeMove(const Move move) const {
 }
 
 Piece Game::pieceAt(int row, char col) const {
-    return pieces[row][static_cast<int>(col) - 'a'];
+    return pieces[row - 1][static_cast<int>(col) - 'a'];
 }
 
 Piece Game::pieceAt(const Position pos) const {
-    return pieces[pos.row][static_cast<int>(pos.col) - 'a'];
+    return pieces[pos.row - 1][static_cast<int>(pos.col) - 'a'];
 }
 
 void Game::setPieceAt(int row, char col, const Piece piece) {
@@ -342,16 +410,16 @@ bool Game::allyPieceAt(const Position pos) const {
 bool Game::isValidMove(const Move move) const {
     if (move.isCastling) {
         if (currentPlayer == WHITE) {
-            // long, aka queen side castling
+            // short, aka king side castling
             if (move.piece == WHITE_KING && move.from.row == 1 && move.from.col == 'e' && move.to.row == 1 && move.to.col == 'g') {
-                return castlingAvailability.WHITE_QUEEN_SIDE &&
+                return castlingAvailability.WHITE_KING_SIDE &&
                     pieceAt(1, 'e') == WHITE_KING &&
                     pieceAt(1, 'h') == WHITE_ROOK &&
                     pieceAt(1, 'f') == NONE &&
                     pieceAt(1, 'g') == NONE;
             }
 
-            // short, aka king side castling
+            // long, aka queen side castling
             if (move.piece == WHITE_KING && move.from.row == 1 && move.from.col == 'e' && move.to.row == 1 && move.to.col == 'b') {
                 return castlingAvailability.WHITE_QUEEN_SIDE &&
                     pieceAt(1, 'e') == WHITE_KING &&
@@ -383,7 +451,7 @@ bool Game::isValidMove(const Move move) const {
         }
     }
 
-    if (move.isCapture) {
+    if (move.isCapture && move.piece != WHITE_PAWN && move.piece != BLACK_PAWN) {
         return isValidMove(Move{ .piece = move.piece, .from = move.from, .to = move.to }) && opponentPieceAt(move.to);
     }
 

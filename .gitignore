@@ -5,3 +5,8 @@ buck-out
 .xmake
 out/
 build/
+out/
+build/
+CMakeSettings.json
+CMakeProperties.json
+CppProperties.json
