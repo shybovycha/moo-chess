@@ -17,61 +17,126 @@ using ::testing::Ne;
 
 #include "../src/Game.hpp"
 
-TEST(ValidatingMoveTest, PawnAdvancement) {
+TEST(ValidatingPawnMoveTest, Advancement) {
     auto game = std::make_unique<Game>();
 
-    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'e' }, .to = Position{.row = 3, .col = 'e' } }));
-    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'e' }, .to = Position{.row = 4, .col = 'e' } }));
+    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'e' }, .to = Position{.row = 3, .col = 'e' } }))
+        << "e2 - e3 is allowed";
 
-    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'e' }, .to = Position{.row = 5, .col = 'e' } }));
+    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'e' }, .to = Position{.row = 4, .col = 'e' } }))
+        << "e2 - e4 is allowed";
 
-    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'a' }, .to = Position{.row = 4, .col = 'e' } }));
-    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'b' }, .to = Position{.row = 4, .col = 'e' } }));
-    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'c' }, .to = Position{.row = 4, .col = 'e' } }));
-    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'd' }, .to = Position{.row = 4, .col = 'e' } }));
-    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'f' }, .to = Position{.row = 4, .col = 'e' } }));
-    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'g' }, .to = Position{.row = 4, .col = 'e' } }));
-    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'h' }, .to = Position{.row = 4, .col = 'e' } }));
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'e' }, .to = Position{.row = 5, .col = 'e' } }))
+        << "e2 - e5 is not allowed";
 
-    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'a' }, .to = Position{.row = 3, .col = 'e' } }));
-    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'b' }, .to = Position{.row = 3, .col = 'e' } }));
-    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'c' }, .to = Position{.row = 3, .col = 'e' } }));
-    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'd' }, .to = Position{.row = 3, .col = 'e' } }));
-    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'f' }, .to = Position{.row = 3, .col = 'e' } }));
-    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'g' }, .to = Position{.row = 3, .col = 'e' } }));
-    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'h' }, .to = Position{.row = 3, .col = 'e' } }));
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'a' }, .to = Position{.row = 4, .col = 'e' } }))
+        << "a2 - e4 is not allowed";
 
-    game->parseFEN("rnbqkbnr/1ppppppp/p7/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 8");
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'b' }, .to = Position{.row = 4, .col = 'e' } }))
+        << "b2 - e4 is not allowed";
 
-    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 4, .col = 'e' }, .to = Position{.row = 5, .col = 'e' } }));
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'c' }, .to = Position{.row = 4, .col = 'e' } }))
+        << "c2 - e4 is not allowed";
 
-    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 4, .col = 'e' }, .to = Position{.row = 6, .col = 'e' } }));
-    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 4, .col = 'e' }, .to = Position{.row = 5, .col = 'd' } }));
-    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 4, .col = 'e' }, .to = Position{.row = 5, .col = 'f' } }));
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'd' }, .to = Position{.row = 4, .col = 'e' } }))
+        << "d2 - e4 is not allowed";
 
-    game->parseFEN("rnbqkbnr/pppp1ppp/8/8/4p3/P7/1PPPPPPP/RNBQKBNR w KQkq - 0 8");
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'f' }, .to = Position{.row = 4, .col = 'e' } }))
+        << "f2 - e4 is not allowed";
 
-    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'e' }, .to = Position{.row = 3, .col = 'e' } }));
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'g' }, .to = Position{.row = 4, .col = 'e' } }))
+        << "g2 - e4 is not allowed";
 
-    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'e' }, .to = Position{.row = 4, .col = 'e' } }));
-    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'e' }, .to = Position{.row = 3, .col = 'd' } }));
-    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'e' }, .to = Position{.row = 3, .col = 'f' } }));
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'h' }, .to = Position{.row = 4, .col = 'e' } }))
+        << "h2 - e4 is not allowed";
+
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'a' }, .to = Position{.row = 3, .col = 'e' } }))
+        << "a2 - e3 is not allowed";
+
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'b' }, .to = Position{.row = 3, .col = 'e' } }))
+        << "b2 - e3 is not allowed";
+
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'c' }, .to = Position{.row = 3, .col = 'e' } }))
+        << "c2 - e3 is not allowed";
+
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'd' }, .to = Position{.row = 3, .col = 'e' } }))
+        << "d2 - e3 is not allowed";
+
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'f' }, .to = Position{.row = 3, .col = 'e' } }))
+        << "f2 - e3 is not allowed";
+
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'g' }, .to = Position{.row = 3, .col = 'e' } }))
+        << "g2 - e3 is not allowed";
+
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'h' }, .to = Position{.row = 3, .col = 'e' } }))
+        << "h2 - e3 is not allowed";
 }
 
-TEST(ValidatingMoveTest, PawnCapture) {
+TEST(ValidatingPawnMoveTest, FirstMoveAdvancement) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("rnbqkbnr/1ppppppp/p7/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 3");
+
+    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 4, .col = 'e' }, .to = Position{.row = 5, .col = 'e' } }))
+        << "Can advance one rank after first 2-rank move";
+
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 4, .col = 'e' }, .to = Position{.row = 6, .col = 'e' } }))
+        << "Can not advance 2 ranks after first move";
+
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 4, .col = 'e' }, .to = Position{.row = 5, .col = 'd' } }))
+        << "Can not move diagonally to the left";
+
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 4, .col = 'e' }, .to = Position{.row = 5, .col = 'f' } }))
+        << "Can not move diagonally to the right";
+
+    game->parseFEN("rnbqkbnr/pppp1ppp/8/8/4p3/P7/1PPPPPPP/RNBQKBNR w KQkq - 0 3");
+
+    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'e' }, .to = Position{.row = 3, .col = 'e' } }))
+        << "Can advance one rank on first move when 4th rank is blocked by an opponent";
+
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'e' }, .to = Position{.row = 4, .col = 'e' } }))
+        << "Can not advance 2 ranks on first move when 4th rank is blocked by an opponent";
+
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'e' }, .to = Position{.row = 3, .col = 'd' } }))
+        << "Can not advance diagonally to the left when 4th rank is blocked by an opponent";
+
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'e' }, .to = Position{.row = 3, .col = 'f' } }))
+        << "Can not advance diagonally to the right when 4th rank is blocked by an opponent";
+
+    game->parseFEN("rnbqkbnr/pppp1ppp/8/8/P7/4p3/1PPPPPPP/RNBQKBNR w KQkq - 0 8");
+
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'e' }, .to = Position{.row = 3, .col = 'e' } }))
+        << "Can not advance one rank if the 3rd rank is blocked by an opponent";
+
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'e' }, .to = Position{.row = 4, .col = 'e' } }))
+        << "Can not advance two ranks if the 3rd rank is blocked by an opponent";
+
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'e' }, .to = Position{.row = 3, .col = 'd' } }))
+        << "Can not advance diagonally to the left if the 3rd rank is blocked by an opponent";
+
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'e' }, .to = Position{.row = 3, .col = 'f' } }))
+        << "Can not advance diagonally to the right if the 3rd rank is blocked by an opponent";
+}
+
+TEST(ValidatingPawnMoveTest, PawnCapture) {
     auto game = std::make_unique<Game>();
 
     game->parseFEN("rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 8");
 
-    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 4, .col = 'e' }, .to = Position{.row = 5, .col = 'e' } }));
+    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 4, .col = 'e' }, .to = Position{.row = 5, .col = 'e' } }))
+        << "Pawn can still move straight when capture is available";
 
-    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 4, .col = 'e' }, .to = Position{.row = 6, .col = 'e' } }));
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 4, .col = 'e' }, .to = Position{.row = 6, .col = 'e' } }))
+        << "Pawn can not move 2 ranks straight when capture is available";
 
-    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 4, .col = 'e' }, .to = Position{.row = 5, .col = 'd' }, .isCapture = true }));
-    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 4, .col = 'e' }, .to = Position{.row = 5, .col = 'f' }, .isCapture = true }));
+    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 4, .col = 'e' }, .to = Position{.row = 5, .col = 'd' }, .isCapture = true }))
+        << "Pawn can move diagonally to the left (capture) when capture to the left is available";
+
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 4, .col = 'e' }, .to = Position{.row = 5, .col = 'f' }, .isCapture = true }))
+        << "Pawn can not move diagonally to the right when capture to the left is available";
 }
 
-TEST(ValidatingMoveTest, EnPassant) {
+TEST(ValidatingPawnMoveTest, EnPassant) {
     auto game = std::make_unique<Game>();
 
     game->applyMove(*game->parseMove("e4"));
@@ -81,109 +146,172 @@ TEST(ValidatingMoveTest, EnPassant) {
 
     // essentially setting the board in the position of `rnbqkbnr/p1p1pppp/1p6/3pP3/8/8/PPPP1PPP/RNBQKBNR` with the last move by black, `d6`
 
-    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 5, .col = 'e' }, .to = Position{.row = 6, .col = 'e' } }));
+    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 5, .col = 'e' }, .to = Position{.row = 6, .col = 'e' } }))
+        << "Pawn can perform en passant when the last move is the piece to be captured and it advanced 2 ranks";
 
-    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 5, .col = 'e' }, .to = Position{.row = 6, .col = 'd' }, .isCapture = true }));
+    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 5, .col = 'e' }, .to = Position{.row = 6, .col = 'd' }, .isCapture = true }))
+        << "Pawn can ignore en passant and advance one rank straight";
 }
 
-TEST(ValidatingMoveTest, Castling) {
+TEST(ValidatingKingMoveTest, Castling) {
     auto game = std::make_unique<Game>();
 
     game->parseFEN("rnbqkb1r/pp2pppp/2p2n2/3p4/4P3/3B1N2/PPPP1PPP/RNBQK2R w KQkq - 0 3");
 
     auto move1 = game->parseMove("O-O");
 
-    ASSERT_NE(move1, std::nullopt);
-    EXPECT_TRUE(game->isValidMove(*move1));
+    ASSERT_NE(move1, std::nullopt)
+        << "Notation of `O-O` is valid";
+
+    EXPECT_TRUE(game->isValidMove(*move1))
+        << "Short castling for white noted as `O-O` is valid";
 
     auto move2 = game->parseMove("0-0");
 
-    ASSERT_NE(move2, std::nullopt);
-    EXPECT_TRUE(game->isValidMove(*move2));
+    ASSERT_NE(move2, std::nullopt)
+        << "Notation of `0-0` is valid";
+
+    EXPECT_TRUE(game->isValidMove(*move2))
+        << "Short castling for white noted as `0-0` is valid";
 
     game->parseFEN("rnbqk2r/pp2bppp/2p1pn2/3pP3/8/2PB1N2/PP1P1PPP/RNBQK2R b KQkq - 0 4");
 
     auto move3 = game->parseMove("O-O");
 
-    ASSERT_NE(move3, std::nullopt);
-    EXPECT_TRUE(game->isValidMove(*move3));
+    ASSERT_NE(move3, std::nullopt)
+        << "Notation of `O-O` is valid";
+
+    EXPECT_TRUE(game->isValidMove(*move3))
+        << "Short castling for black noted as `O-O` is valid";
 
     auto move4 = game->parseMove("0-0");
 
-    ASSERT_NE(move4, std::nullopt);
-    EXPECT_TRUE(game->isValidMove(*move4));
+    ASSERT_NE(move4, std::nullopt)
+        << "Notation of `0-0` is valid";
+
+    EXPECT_TRUE(game->isValidMove(*move4))
+        << "Short castling for black noted as `0-0` is valid";
 
     game->parseFEN("r2qk2r/pp1b1ppp/n1p1pn2/2bp4/N3P3/1P1B1N2/PBPPQPPP/R3K2R w KQkq - 0 8");
 
     auto move5 = game->parseMove("0-0");
 
-    ASSERT_NE(move5, std::nullopt);
-    EXPECT_TRUE(game->isValidMove(*move5));
+    ASSERT_NE(move5, std::nullopt)
+        << "Notation of `0-0` is valid";
+
+    EXPECT_TRUE(game->isValidMove(*move5))
+        << "Short castling for white noted as `0-0` is valid";
 
     auto move6 = game->parseMove("0-0-0");
 
-    ASSERT_NE(move6, std::nullopt);
-    EXPECT_TRUE(game->isValidMove(*move6));
+    ASSERT_NE(move6, std::nullopt)
+        << "Notation of `0-0-0` is valid";
+
+    EXPECT_TRUE(game->isValidMove(*move6))
+        << "Long castling for white noted as `0-0-0` is valid";
 
     game->parseFEN("r2qk2r/pp1b1ppp/n1p1pn2/2bp4/4P3/1PNB1N2/PBPPQPPP/R3K2R b KQkq - 0 7");
 
     auto move7 = game->parseMove("0-0");
 
-    ASSERT_NE(move7, std::nullopt);
-    EXPECT_TRUE(game->isValidMove(*move7));
+    ASSERT_NE(move7, std::nullopt)
+        << "Notation of `0-0` is valid";
+
+    EXPECT_TRUE(game->isValidMove(*move7))
+        << "Short castling for black noted as `0-0` is a valid move";
 
     auto move8 = game->parseMove("0-0-0");
     
-    ASSERT_EQ(move8, std::nullopt);
+    ASSERT_EQ(move8, std::nullopt)
+        << "Long castling is an invalid move";
+
+    game->parseFEN("r2qk2r/pp1b1ppp/n1p1pn2/2bp4/4P3/1PNB1N2/PBPPQPPP/R3K2R b - - 0 7");
+
+    auto move9 = game->parseMove("0-0");
+
+    ASSERT_EQ(move9, std::nullopt)
+        << "Short castling is not available, hence an invalid move";
+
+    auto move10 = game->parseMove("0-0-0");
+
+    ASSERT_EQ(move8, std::nullopt)
+        << "Long castling is not available, hence an invalid move";
 }
 
-TEST(ValidatingMoveTest, KingMovement) {
+TEST(ValidatingKingMoveTest, Advancement) {
     auto game = std::make_unique<Game>();
 
     game->parseFEN("8/8/8/8/4K3/8/8/8 w KQkq - 0 1");
 
-    EXPECT_EQ(game->parseMove("O-O"), std::nullopt);
-    EXPECT_EQ(game->parseMove("O-O-O"), std::nullopt);
+    EXPECT_EQ(game->parseMove("O-O"), std::nullopt)
+        << "On an empty field, short castling is not valid";
+
+    EXPECT_EQ(game->parseMove("O-O-O"), std::nullopt)
+        << "On an empty field, long castling is not valid";
 
     auto move1 = game->parseMove("Kd5");
 
-    ASSERT_NE(move1, std::nullopt);
-    EXPECT_TRUE(game->isValidMove(*move1));
+    ASSERT_NE(move1, std::nullopt)
+        << "Kd5 is valid notation";
+
+    EXPECT_TRUE(game->isValidMove(*move1))
+        << "K e4 - K d5 is a valid move";
     
     auto move2 = game->parseMove("Ke5");
 
-    ASSERT_NE(move2, std::nullopt);
-    EXPECT_TRUE(game->isValidMove(*move2));
+    ASSERT_NE(move2, std::nullopt)
+        << "Ke5 is valid notation";
+
+    EXPECT_TRUE(game->isValidMove(*move2))
+        << "K e4 - K e5 is a valid move";
 
     auto move3 = game->parseMove("Kf5");
 
-    ASSERT_NE(move3, std::nullopt);
-    EXPECT_TRUE(game->isValidMove(*move3));
+    ASSERT_NE(move3, std::nullopt)
+        << "Kf5 is valid notation";
+
+    EXPECT_TRUE(game->isValidMove(*move3))
+        << "K e4 - K f5 is a valid move";
 
     auto move4 = game->parseMove("Kd4");
 
-    ASSERT_NE(move4, std::nullopt);
-    EXPECT_TRUE(game->isValidMove(*move4));
+    ASSERT_NE(move4, std::nullopt)
+        << "Kd4 is valid notation";
+
+    EXPECT_TRUE(game->isValidMove(*move4))
+        << "K e4 - K d4 is a valid move";
 
     auto move5 = game->parseMove("Kf4");
 
-    ASSERT_NE(move5, std::nullopt);
-    EXPECT_TRUE(game->isValidMove(*move5));
+    ASSERT_NE(move5, std::nullopt)
+        << "Kf4 is valid notation";
+
+    EXPECT_TRUE(game->isValidMove(*move5))
+        << "K e4 - K f4 is a valid move";
 
     auto move7 = game->parseMove("Kd3");
 
-    ASSERT_NE(move7, std::nullopt);
-    EXPECT_TRUE(game->isValidMove(*move7));
+    ASSERT_NE(move7, std::nullopt)
+        << "Kd3 is valid notation";
+
+    EXPECT_TRUE(game->isValidMove(*move7))
+        << "K e4 - K d3 is a valid move";
 
     auto move8 = game->parseMove("Ke3");
 
-    ASSERT_NE(move8, std::nullopt);
-    EXPECT_TRUE(game->isValidMove(*move8));
+    ASSERT_NE(move8, std::nullopt)
+        << "Ke3 is valid notation";
+
+    EXPECT_TRUE(game->isValidMove(*move8))
+        << "K e4 - K e3 is a valid move";
 
     auto move9 = game->parseMove("Kf3");
 
-    ASSERT_NE(move9, std::nullopt);
-    EXPECT_TRUE(game->isValidMove(*move9));
+    ASSERT_NE(move9, std::nullopt)
+        << "Kf3 is valid notation";
+
+    EXPECT_TRUE(game->isValidMove(*move9))
+        << "K e4 - K f3 is a valid move";
 }
 
 TEST(ApplyingMoveTest, PawnAdvancement) {
@@ -192,5 +320,6 @@ TEST(ApplyingMoveTest, PawnAdvancement) {
     // game->applyMove(game->parseMove("e4"));
     game->applyMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'e' }, .to = Position{.row = 4, .col = 'e' } });
 
-    EXPECT_EQ(game->serializeAsFEN(), "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b - - 0 1");
+    EXPECT_EQ(game->serializeAsFEN(), "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b - - 0 1")
+        << "Serialized board after applying a e4 move";
 }
