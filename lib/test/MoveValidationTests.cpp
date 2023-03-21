@@ -370,6 +370,93 @@ TEST(ValidatingKingMoveTest, Advancement) {
         << "K e4 - K f3 is a valid move";
 }
 
+TEST(ValidatingKingMoveTest, AdvancementUnderAttack) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("8/8/8/8/8/2k5/4K3/8 w - - 0 1");
+
+    EXPECT_EQ(game->parseMove("O-O"), std::nullopt)
+        << "Short castling is not valid if king is not on its original rank";
+
+    EXPECT_EQ(game->parseMove("O-O-O"), std::nullopt)
+        << "Long castling is not valid if king is not on its original rank";
+
+    auto move1 = game->parseMove("Kd1");
+    
+    ASSERT_EQ(move1, std::nullopt)
+        << "Kd1 is not a valid move since d1 is under attack by black king";
+
+    auto move2 = game->parseMove("Kd2");
+
+    ASSERT_EQ(move2, std::nullopt)
+        << "Kd2 is not a valid move since d2 is under attack by black king";
+
+    auto move3 = game->parseMove("Kd3");
+
+    ASSERT_EQ(move3, std::nullopt)
+        << "Kd3 is not a valid move since d3 is under attack by black king";
+
+    auto move4 = game->parseMove("Ke3");
+
+    ASSERT_NE(move4, std::nullopt)
+        << "Ke3 is valid notation";
+
+    EXPECT_TRUE(game->isValidMove(*move4))
+        << "Ke3 is a valid move";
+
+    auto move5 = game->parseMove("Kf3");
+
+    ASSERT_NE(move5, std::nullopt)
+        << "Kf3 is valid notation";
+
+    EXPECT_TRUE(game->isValidMove(*move5))
+        << "Kf3 is a valid move";
+
+    auto move6 = game->parseMove("Kf2");
+
+    ASSERT_NE(move6, std::nullopt)
+        << "Kf2 is valid notation";
+
+    EXPECT_TRUE(game->isValidMove(*move6))
+        << "Kf2 is a valid move";
+
+    auto move7 = game->parseMove("Kf1");
+
+    ASSERT_NE(move7, std::nullopt)
+        << "Kf1 is valid notation";
+
+    EXPECT_TRUE(game->isValidMove(*move7))
+        << "Kf1 is a valid move";
+
+    // ------------------------------------------------------------------------
+
+    game->parseFEN("8/8/8/8/8/2k5/4K3/8 b - - 0 1");
+
+    EXPECT_EQ(game->parseMove("O-O"), std::nullopt)
+        << "Short castling is not valid if king is not on its original rank";
+
+    EXPECT_EQ(game->parseMove("O-O-O"), std::nullopt)
+        << "Long castling is not valid if king is not on its original rank";
+
+    auto move8 = game->parseMove("Kd2");
+
+    ASSERT_EQ(move8, std::nullopt)
+        << "Kd2 is not a valid move since d2 is under attack by white king";
+
+    auto move9 = game->parseMove("Kd3");
+
+    ASSERT_EQ(move9, std::nullopt)
+        << "Kd3 is not a valid move since d3 is under attack by white king";
+
+    auto move10 = game->parseMove("Kd4");
+
+    ASSERT_NE(move10, std::nullopt)
+        << "Kd4 is valid notation";
+
+    EXPECT_TRUE(game->isValidMove(*move10))
+        << "Kd4 is a valid move";
+}
+
 TEST(ApplyingMoveTest, PawnAdvancement) {
     auto game = std::make_unique<Game>();
 

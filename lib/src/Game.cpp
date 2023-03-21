@@ -409,6 +409,30 @@ bool Game::allyPieceAt(const Position pos) const {
     }
 }
 
+bool Game::canOpponentMoveTo(const Position pos) const {
+    for (unsigned int row = 1; row < 8; ++row) {
+        for (char col = static_cast<int>('a'); col < static_cast<int>('h'); ++col) {
+            auto tmpPos = Position{ .row = row, .col = static_cast<char>(col) };
+
+            if (opponentPieceAt(tmpPos)) {
+                auto piece = pieceAt(tmpPos);
+
+                auto move = Move{ .piece = piece, .from = tmpPos, .to = pos };
+
+                if (allyPieceAt(pos)) {
+                    move.isCapture = true;
+                }
+
+                if (isValidMove(move)) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
 bool Game::isValidMove(const Move move) const {
     if (move.isCastling) {
         if (currentPlayer == WHITE) {
@@ -418,7 +442,10 @@ bool Game::isValidMove(const Move move) const {
                     pieceAt(1, 'e') == WHITE_KING &&
                     pieceAt(1, 'h') == WHITE_ROOK &&
                     pieceAt(1, 'f') == NONE &&
-                    pieceAt(1, 'g') == NONE;
+                    pieceAt(1, 'g') == NONE &&
+                    !canOpponentMoveTo(Position{ .row = 1, .col = 'e' }) && // king is not under check
+                    !canOpponentMoveTo(Position{ .row = 1, .col = 'f' }) &&
+                    !canOpponentMoveTo(Position{ .row = 1, .col = 'h' });
             }
 
             // long, aka queen side castling
@@ -428,7 +455,11 @@ bool Game::isValidMove(const Move move) const {
                     pieceAt(1, 'a') == WHITE_ROOK &&
                     pieceAt(1, 'b') == NONE &&
                     pieceAt(1, 'c') == NONE &&
-                    pieceAt(1, 'd') == NONE;
+                    pieceAt(1, 'd') == NONE &&
+                    !canOpponentMoveTo(Position{ .row = 1, .col = 'e' }) && // king is not under check
+                    !canOpponentMoveTo(Position{ .row = 1, .col = 'b' }) &&
+                    !canOpponentMoveTo(Position{ .row = 1, .col = 'c' }) &&
+                    !canOpponentMoveTo(Position{ .row = 1, .col = 'd' });
             }
         }
         else {
@@ -438,7 +469,10 @@ bool Game::isValidMove(const Move move) const {
                     pieceAt(8, 'e') == BLACK_KING &&
                     pieceAt(8, 'h') == BLACK_ROOK &&
                     pieceAt(8, 'f') == NONE &&
-                    pieceAt(8, 'g') == NONE;
+                    pieceAt(8, 'g') == NONE &&
+                    !canOpponentMoveTo(Position{ .row = 8, .col = 'e' }) && // king is not under check
+                    !canOpponentMoveTo(Position{ .row = 8, .col = 'f' }) &&
+                    !canOpponentMoveTo(Position{ .row = 8, .col = 'g' });
             }
 
             // short, aka king side castling
@@ -448,7 +482,11 @@ bool Game::isValidMove(const Move move) const {
                     pieceAt(8, 'a') == BLACK_ROOK &&
                     pieceAt(8, 'b') == NONE &&
                     pieceAt(8, 'c') == NONE &&
-                    pieceAt(8, 'd') == NONE;
+                    pieceAt(8, 'd') == NONE &&
+                    !canOpponentMoveTo(Position{ .row = 8, .col = 'e' }) && // king is not under check
+                    !canOpponentMoveTo(Position{ .row = 8, .col = 'b' }) &&
+                    !canOpponentMoveTo(Position{ .row = 8, .col = 'c' }) &&
+                    !canOpponentMoveTo(Position{ .row = 8, .col = 'd' });
             }
         }
     }
@@ -472,13 +510,14 @@ bool Game::isValidMove(const Move move) const {
         }
     }
 
-    if (currentPlayer == WHITE && move.piece != WHITE_PAWN && move.piece != WHITE_ROOK && move.piece != WHITE_KNIGHT && move.piece != WHITE_BISHOP && move.piece != WHITE_QUEEN && move.piece != WHITE_KING) {
+    // TODO: move this to #applyMove()
+    /*if (currentPlayer == WHITE && move.piece != WHITE_PAWN && move.piece != WHITE_ROOK && move.piece != WHITE_KNIGHT && move.piece != WHITE_BISHOP && move.piece != WHITE_QUEEN && move.piece != WHITE_KING) {
         return false;
     }
 
     if (currentPlayer == BLACK && move.piece != BLACK_PAWN && move.piece != BLACK_ROOK && move.piece != BLACK_KNIGHT && move.piece != BLACK_BISHOP && move.piece != BLACK_QUEEN && move.piece != BLACK_KING) {
         return false;
-    }
+    }*/
 
     if (move.piece == WHITE_PAWN) {
         if (move.isCapture) {
@@ -550,8 +589,11 @@ bool Game::isValidMove(const Move move) const {
     }
 
     if (move.piece == WHITE_KING || move.piece == BLACK_KING) {
-        // TODO: opposite color kings can not approach each other?
-        // TODO: can not move into a space under check
+        // can not move to the square under attack
+        if (!canOpponentMoveTo(move.to)) {
+            return false;
+        }
+
         return (
             (move.from.col < 'h' && move.to.col == move.from.col + 1) ||
             (move.from.col > 'a' && move.to.col == move.from.col - 1) ||
