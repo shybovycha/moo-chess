@@ -3,6 +3,7 @@
 #include <array>
 #include <deque>
 #include <format>
+#include <map>
 #include <memory>
 #include <string>
 #include <optional>
@@ -49,9 +50,7 @@ struct Position {
         row = static_cast<int>(positionString.at(1)) - static_cast<int>('1') + 1;
     }
 
-    bool operator==(const Position& other) const {
-        return row == other.row && col == other.col;
-    }
+    bool operator==(const Position& other) const = default;
 
     friend std::ostream& operator<<(std::ostream& os, const Position& pos) {
         return os << std::format("<{1}, {0}>", static_cast<char>(pos.col), pos.row);
@@ -68,6 +67,43 @@ struct Move {
 
     bool isCapture;
     bool isCastling;
+
+    bool operator==(const Move& other) const = default;
+};
+
+template<>
+struct std::hash<Piece> {
+    std::size_t operator()(Piece const& p) const noexcept {
+        return std::hash<char>{}(p);
+    }
+};
+
+template<>
+struct std::hash<Position> {
+    std::size_t operator()(Position const& pos) const noexcept {
+        std::size_t h1 = std::hash<int>{}(pos.row);
+        std::size_t h2 = std::hash<char>{}(pos.col);
+        return h1 ^ (h2 << 1);
+    }
+};
+
+template<>
+struct std::hash<Move> {
+    std::size_t operator()(Move const& move) const noexcept {
+        std::size_t h1 = std::hash<Position>{}(move.from);
+        std::size_t h2 = std::hash<Position>{}(move.to);
+        std::size_t h3 = std::hash<Piece>{}(move.piece);
+        std::size_t h4 = std::hash<std::optional<Piece>>{}(move.promotion);
+        std::size_t h5 = std::hash<bool>{}(move.isCapture);
+        std::size_t h6 = std::hash<bool>{}(move.isCastling);
+        return h1 ^ (h2 << 1) ^ (h3 << 2) ^ (h4 << 3) ^ (h5 << 4) ^ (h6 << 5); // or use boost::hash_combine
+    }
+};
+
+struct MoveComparator {
+    bool operator()(const Move& lhs, const Move& rhs) const {
+        return std::hash<Move>{}(lhs) < std::hash<Move>{}(rhs);
+    }
 };
 
 class Game {
@@ -103,6 +139,10 @@ public:
     bool allyPieceAt(const Position pos) const;
 
     bool canOpponentMoveTo(const Position pos) const;
+
+    bool isValidMove(const Move move, std::map<Move, bool, MoveComparator>& cache) const;
+
+    bool canOpponentMoveTo(const Position pos, std::map<Move, bool, MoveComparator>& cache) const;
 
 public:
     std::array<std::array<Piece, 8>, 8> pieces;

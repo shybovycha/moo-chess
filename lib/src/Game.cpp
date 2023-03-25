@@ -269,13 +269,14 @@ std::optional<Move> Game::parseMove(const std::string& moveString) const {
 
     std::vector<Position> fromCandidates;
     Move candidateMove = move;
+    std::map<Move, bool, MoveComparator> cache{};
 
     for (unsigned int row = 1; row <= 8; ++row) {
         for (auto col = static_cast<int>('a'); col <= static_cast<int>('h'); ++col) {
             candidateMove.from = Position{ .row = row, .col = static_cast<char>(col) };
 
             if (pieceAt(candidateMove.from) == move.piece) {
-                if (isValidMove(candidateMove))
+                if (isValidMove(candidateMove, cache))
                     fromCandidates.push_back(candidateMove.from);
             }
         }
@@ -410,6 +411,12 @@ bool Game::allyPieceAt(const Position pos) const {
 }
 
 bool Game::canOpponentMoveTo(const Position pos) const {
+    std::map<Move, bool, MoveComparator> cache{};
+
+    return canOpponentMoveTo(pos, cache);
+}
+
+bool Game::canOpponentMoveTo(const Position pos, std::map<Move, bool, MoveComparator>& cache) const {
     for (unsigned int row = 1; row < 8; ++row) {
         for (char col = static_cast<int>('a'); col < static_cast<int>('h'); ++col) {
             auto tmpPos = Position{ .row = row, .col = static_cast<char>(col) };
@@ -423,7 +430,7 @@ bool Game::canOpponentMoveTo(const Position pos) const {
                     move.isCapture = true;
                 }
 
-                if (isValidMove(move)) {
+                if (isValidMove(move, cache)) {
                     return true;
                 }
             }
@@ -434,79 +441,119 @@ bool Game::canOpponentMoveTo(const Position pos) const {
 }
 
 bool Game::isValidMove(const Move move) const {
+    std::map<Move, bool, MoveComparator> cache{};
+
+    return isValidMove(move, cache);
+}
+
+bool Game::isValidMove(const Move move, std::map<Move, bool, MoveComparator>& cache) const {
+    if (cache.find(move) != cache.end()) {
+        return cache[move];
+    }
+
+    cache[move] = false;
+
     if (move.isCastling) {
         if (currentPlayer == WHITE) {
             // short, aka king side castling
             if (move.piece == WHITE_KING && move.from.row == 1 && move.from.col == 'e' && move.to.row == 1 && move.to.col == 'g') {
-                return castlingAvailability.WHITE_KING_SIDE &&
+                auto isValid = castlingAvailability.WHITE_KING_SIDE &&
                     pieceAt(1, 'e') == WHITE_KING &&
                     pieceAt(1, 'h') == WHITE_ROOK &&
                     pieceAt(1, 'f') == NONE &&
                     pieceAt(1, 'g') == NONE &&
-                    !canOpponentMoveTo(Position{ .row = 1, .col = 'e' }) && // king is not under check
-                    !canOpponentMoveTo(Position{ .row = 1, .col = 'f' }) &&
-                    !canOpponentMoveTo(Position{ .row = 1, .col = 'h' });
+                    !canOpponentMoveTo(Position{ .row = 1, .col = 'e' }, cache) && // king is not under check
+                    !canOpponentMoveTo(Position{ .row = 1, .col = 'f' }, cache) &&
+                    !canOpponentMoveTo(Position{ .row = 1, .col = 'h' }, cache);
+
+                cache[move] = isValid;
+
+                return isValid;
             }
 
             // long, aka queen side castling
             if (move.piece == WHITE_KING && move.from.row == 1 && move.from.col == 'e' && move.to.row == 1 && move.to.col == 'b') {
-                return castlingAvailability.WHITE_QUEEN_SIDE &&
+                auto isValid = castlingAvailability.WHITE_QUEEN_SIDE &&
                     pieceAt(1, 'e') == WHITE_KING &&
                     pieceAt(1, 'a') == WHITE_ROOK &&
                     pieceAt(1, 'b') == NONE &&
                     pieceAt(1, 'c') == NONE &&
                     pieceAt(1, 'd') == NONE &&
-                    !canOpponentMoveTo(Position{ .row = 1, .col = 'e' }) && // king is not under check
-                    !canOpponentMoveTo(Position{ .row = 1, .col = 'b' }) &&
-                    !canOpponentMoveTo(Position{ .row = 1, .col = 'c' }) &&
-                    !canOpponentMoveTo(Position{ .row = 1, .col = 'd' });
+                    !canOpponentMoveTo(Position{ .row = 1, .col = 'e' }, cache) && // king is not under check
+                    !canOpponentMoveTo(Position{ .row = 1, .col = 'b' }, cache) &&
+                    !canOpponentMoveTo(Position{ .row = 1, .col = 'c' }, cache) &&
+                    !canOpponentMoveTo(Position{ .row = 1, .col = 'd' }, cache);
+
+                cache[move] = isValid;
+
+                return isValid;
             }
         }
         else {
             // long, aka queen side castling
             if (move.piece == BLACK_KING && move.from.row == 8 && move.from.col == 'e' && move.to.row == 8 && move.to.col == 'g') {
-                return castlingAvailability.BLACK_QUEEN_SIDE &&
+                auto isValid = castlingAvailability.BLACK_QUEEN_SIDE &&
                     pieceAt(8, 'e') == BLACK_KING &&
                     pieceAt(8, 'h') == BLACK_ROOK &&
                     pieceAt(8, 'f') == NONE &&
                     pieceAt(8, 'g') == NONE &&
-                    !canOpponentMoveTo(Position{ .row = 8, .col = 'e' }) && // king is not under check
-                    !canOpponentMoveTo(Position{ .row = 8, .col = 'f' }) &&
-                    !canOpponentMoveTo(Position{ .row = 8, .col = 'g' });
+                    !canOpponentMoveTo(Position{ .row = 8, .col = 'e' }, cache) && // king is not under check
+                    !canOpponentMoveTo(Position{ .row = 8, .col = 'f' }, cache) &&
+                    !canOpponentMoveTo(Position{ .row = 8, .col = 'g' }, cache);
+
+                cache[move] = isValid;
+
+                return isValid;
             }
 
             // short, aka king side castling
             if (move.piece == BLACK_KING && move.from.row == 8 && move.from.col == 'e' && move.to.row == 8 && move.to.col == 'b') {
-                return castlingAvailability.BLACK_QUEEN_SIDE &&
+                auto isValid = castlingAvailability.BLACK_QUEEN_SIDE &&
                     pieceAt(8, 'e') == BLACK_KING &&
                     pieceAt(8, 'a') == BLACK_ROOK &&
                     pieceAt(8, 'b') == NONE &&
                     pieceAt(8, 'c') == NONE &&
                     pieceAt(8, 'd') == NONE &&
-                    !canOpponentMoveTo(Position{ .row = 8, .col = 'e' }) && // king is not under check
-                    !canOpponentMoveTo(Position{ .row = 8, .col = 'b' }) &&
-                    !canOpponentMoveTo(Position{ .row = 8, .col = 'c' }) &&
-                    !canOpponentMoveTo(Position{ .row = 8, .col = 'd' });
+                    !canOpponentMoveTo(Position{ .row = 8, .col = 'e' }, cache) && // king is not under check
+                    !canOpponentMoveTo(Position{ .row = 8, .col = 'b' }, cache) &&
+                    !canOpponentMoveTo(Position{ .row = 8, .col = 'c' }, cache) &&
+                    !canOpponentMoveTo(Position{ .row = 8, .col = 'd' }, cache);
+
+                cache[move] = isValid;
+
+                return isValid;
             }
         }
     }
 
     if (move.isCapture && move.piece != WHITE_PAWN && move.piece != BLACK_PAWN) {
-        return isValidMove(Move{ .piece = move.piece, .from = move.from, .to = move.to }) && opponentPieceAt(move.to);
+        auto isValid = isValidMove(Move{ .piece = move.piece, .from = move.from, .to = move.to }, cache) && opponentPieceAt(move.to);
+
+        cache[move] = isValid;
+
+        return isValid;
     }
 
     if (move.promotion.has_value()) {
         if (currentPlayer == WHITE) {
-            return move.piece == WHITE_PAWN &&
+            auto isValid = move.piece == WHITE_PAWN &&
                 move.to.row == 8 &&
-                isValidMove(Move{ .piece = move.piece, .from = move.from, .to = move.to, .isCapture = move.isCapture }) &&
+                isValidMove(Move{ .piece = move.piece, .from = move.from, .to = move.to, .isCapture = move.isCapture }, cache) &&
                 (move.promotion == WHITE_QUEEN || move.promotion == WHITE_ROOK || move.promotion == WHITE_BISHOP || move.promotion == WHITE_KNIGHT);
+
+            cache[move] = isValid;
+
+            return isValid;
         }
         else {
-            return move.piece == BLACK_PAWN &&
+            auto isValid = move.piece == BLACK_PAWN &&
                 move.to.row == 1 &&
-                isValidMove(Move{ .piece = move.piece, .from = move.from, .to = move.to, .isCapture = move.isCapture }) &&
+                isValidMove(Move{ .piece = move.piece, .from = move.from, .to = move.to, .isCapture = move.isCapture }, cache) &&
                 (move.promotion == BLACK_QUEEN || move.promotion == BLACK_ROOK || move.promotion == BLACK_BISHOP || move.promotion == BLACK_KNIGHT);
+
+            cache[move] = isValid;
+
+            return isValid;
         }
     }
 
@@ -521,7 +568,7 @@ bool Game::isValidMove(const Move move) const {
 
     if (move.piece == WHITE_PAWN) {
         if (move.isCapture) {
-            return move.from.row == move.to.row - 1 &&
+            auto isValid = move.from.row == move.to.row - 1 &&
                 (
                     (move.from.col > 'a' && move.from.col == move.to.col - 1) ||
                     (move.from.col < 'h' && move.from.col == move.to.col + 1) ||
@@ -540,23 +587,34 @@ bool Game::isValidMove(const Move move) const {
                         moveHistory.at(moveHistory.size() - 1).to.row == 5
                         )
                     );
+
+            cache[move] = isValid;
+
+            return isValid;
         }
         else {
             if (move.from.row == 2 && move.to.row == move.from.row + 2) {
-                return move.from.col == move.to.col &&
+                auto isValid = move.from.col == move.to.col &&
                     pieceAt(move.to) == NONE &&
                     pieceAt(Position{ .row = move.from.row + 1, .col = move.from.col }) == NONE;
+
+                cache[move] = isValid;
+
+                return isValid;
             }
 
-            return
-                move.to.row == move.from.row + 1 &&
+            auto isValid = move.to.row == move.from.row + 1 &&
                 move.from.col == move.to.col &&
                 pieceAt(move.to) == NONE;
+
+            cache[move] = isValid;
+
+            return isValid;
         }
     }
     else if (move.piece == BLACK_PAWN) {
         if (move.isCapture) {
-            return move.from.row == move.to.row + 1 &&
+            auto isValid = move.from.row == move.to.row + 1 &&
                 (
                     (move.from.col > 'a' && move.from.col == move.to.col - 1) ||
                     (move.from.col < 'h' && move.from.col == move.to.col + 1) ||
@@ -575,26 +633,39 @@ bool Game::isValidMove(const Move move) const {
                         moveHistory.at(moveHistory.size() - 1).to.row == 4
                         )
                     );
+
+            cache[move] = isValid;
+
+            return isValid;
         }
         else {
             if (move.from.row == 7 && move.to.row == move.from.row - 2) {
-                return pieceAt(move.to) == NONE && pieceAt(Position{ .row = move.from.row - 1, .col = move.from.col }) == NONE;
+                auto isValid = pieceAt(move.to) == NONE && pieceAt(Position{ .row = move.from.row - 1, .col = move.from.col }) == NONE;
+
+                cache[move] = isValid;
+
+                return isValid;
             }
 
-            return
-                move.to.row == move.from.row - 1 &&
+            auto isValid = move.to.row == move.from.row - 1 &&
                 move.from.col == move.to.col &&
                 pieceAt(move.to) == NONE;
+
+            cache[move] = isValid;
+
+            return isValid;
         }
     }
 
     if (move.piece == WHITE_KING || move.piece == BLACK_KING) {
         // can not move to the square under attack
-        if (!canOpponentMoveTo(move.to)) {
+        if (!canOpponentMoveTo(move.to, cache)) {
+            cache[move] = false;
+
             return false;
         }
 
-        return (
+        auto isValid = (
             (move.from.col < 'h' && move.to.col == move.from.col + 1) ||
             (move.from.col > 'a' && move.to.col == move.from.col - 1) ||
             (move.from.col == move.to.col)
@@ -604,14 +675,22 @@ bool Game::isValidMove(const Move move) const {
             (move.from.row == move.to.row)
         ) &&
             !allyPieceAt(move.to);
+
+        cache[move] = isValid;
+
+        return isValid;
     }
 
     if (move.piece == WHITE_ROOK || move.piece == BLACK_ROOK) {
         if (move.from.col != move.to.col && move.from.row != move.to.row) {
+            cache[move] = false;
+
             return false;
         }
 
         if (allyPieceAt(move.to)) {
+            cache[move] = false;
+
             return false;
         }
 
@@ -622,8 +701,11 @@ bool Game::isValidMove(const Move move) const {
             if (row == move.from.row && col == move.to.col)
                 continue;
 
-            if (pieceAt(Position{ .row = row, .col = static_cast<char>(col + static_cast<int>('a'))}) != NONE)
+            if (pieceAt(Position{ .row = row, .col = static_cast<char>(col + static_cast<int>('a')) }) != NONE) {
+                cache[move] = false;
+
                 return false;
+            }
         }
 
         return true;
@@ -631,10 +713,14 @@ bool Game::isValidMove(const Move move) const {
 
     if (move.piece == WHITE_BISHOP || move.piece == BLACK_BISHOP) {
         if (move.from.col == move.to.col || move.from.row == move.to.row) {
+            cache[move] = false;
+
             return false;
         }
 
         if (allyPieceAt(move.to)) {
+            cache[move] = false;
+
             return false;
         }
 
@@ -645,15 +731,22 @@ bool Game::isValidMove(const Move move) const {
             if (row == move.from.row && col == move.to.col)
                 continue;
 
-            if (pieceAt(Position{ .row = row, .col = static_cast<char>(col + static_cast<int>('a')) }) != NONE)
+            if (pieceAt(Position{ .row = row, .col = static_cast<char>(col + static_cast<int>('a')) }) != NONE) {
+                cache[move] = false;
+
                 return false;
+            }
         }
+
+        cache[move] = true;
 
         return true;
     }
 
     if (move.piece == WHITE_QUEEN || move.piece == BLACK_QUEEN) {
         if (allyPieceAt(move.to)) {
+            cache[move] = false;
+
             return false;
         }
 
@@ -664,15 +757,20 @@ bool Game::isValidMove(const Move move) const {
             if (row == move.from.row && col == move.to.col)
                 continue;
 
-            if (pieceAt(Position{ .row = row, .col = static_cast<char>(col + static_cast<int>('a')) }) != NONE)
+            if (pieceAt(Position{ .row = row, .col = static_cast<char>(col + static_cast<int>('a')) }) != NONE) {
+                cache[move] = false;
+
                 return false;
+            }
         }
+
+        cache[move] = true;
 
         return true;
     }
 
     if (move.piece == WHITE_KNIGHT || move.piece == BLACK_KNIGHT) {
-        return (
+        auto isValid = (
             // TODO: add validation for boundaries
             (move.to.row == move.from.row + 2 && move.to.col == move.from.col + 1) ||
             (move.to.row == move.from.row - 2 && move.to.col == move.from.col + 1) ||
@@ -684,7 +782,13 @@ bool Game::isValidMove(const Move move) const {
             (move.to.row == move.from.row + 1 && move.to.col == move.from.col - 2) ||
             (move.to.row == move.from.row - 1 && move.to.col == move.from.col - 2)
         ) && !allyPieceAt(move.to);
+
+        cache[move] = isValid;
+
+        return isValid;
     }
+
+    cache[move] = false;
 
     return false;
 }
