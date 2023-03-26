@@ -447,7 +447,7 @@ bool Game::isValidMove(const Move move) const {
 }
 
 bool Game::isValidMove(const Move move, std::map<Move, bool, MoveComparator>& cache) const {
-    if (cache.find(move) != cache.end()) {
+    if (cache.contains(move)) {
         return cache[move];
     }
 
@@ -701,7 +701,7 @@ bool Game::isValidMove(const Move move, std::map<Move, bool, MoveComparator>& ca
             if (row == move.from.row && col == move.to.col)
                 continue;
 
-            if (pieceAt(Position{ .row = row, .col = static_cast<char>(col + static_cast<int>('a')) }) != NONE) {
+            if (pieceAt(Position{ .row = row, .col = static_cast<char>(col) }) != NONE) {
                 cache[move] = false;
 
                 return false;
@@ -724,18 +724,24 @@ bool Game::isValidMove(const Move move, std::map<Move, bool, MoveComparator>& ca
             return false;
         }
 
-        for (auto row = std::min(move.from.row, move.to.row), col = std::min(static_cast<unsigned int>(move.from.col), static_cast<unsigned int>(move.to.col));
-            row <= std::max(move.from.row, move.to.row) || col <= std::max(static_cast<unsigned int>(move.from.col), static_cast<unsigned int>(move.to.col));
-            ++row, ++col
-        ) {
-            if (row == move.from.row && col == move.to.col)
-                continue;
+        auto row = std::min(move.from.row, move.to.row);
+        auto col = std::min(static_cast<unsigned int>(move.from.col), static_cast<unsigned int>(move.to.col));
 
-            if (pieceAt(Position{ .row = row, .col = static_cast<char>(col + static_cast<int>('a')) }) != NONE) {
+        while (row <= std::max(move.from.row, move.to.row) && col <= std::max(static_cast<unsigned int>(move.from.col), static_cast<unsigned int>(move.to.col))) {
+            if (row != move.from.row && col != move.to.col && pieceAt(Position{ .row = row, .col = static_cast<char>(col) }) != NONE) {
                 cache[move] = false;
 
                 return false;
             }
+
+            if (col < std::max(static_cast<unsigned int>(move.from.col), static_cast<unsigned int>(move.to.col)))
+                ++col;
+
+            if (row < std::max(move.from.row, move.to.row))
+                ++row;
+
+            if (col == std::max(static_cast<unsigned int>(move.from.col), static_cast<unsigned int>(move.to.col)) && row == std::max(move.from.row, move.to.row))
+                break;
         }
 
         cache[move] = true;
@@ -750,18 +756,24 @@ bool Game::isValidMove(const Move move, std::map<Move, bool, MoveComparator>& ca
             return false;
         }
 
-        for (auto row = std::min(move.from.row, move.to.row), col = std::min(static_cast<unsigned int>(move.from.col), static_cast<unsigned int>(move.to.col));
-            row <= std::max(move.from.row, move.to.row) || col <= std::max(static_cast<unsigned int>(move.from.col), static_cast<unsigned int>(move.to.col));
-            ++row, ++col
-        ) {
-            if (row == move.from.row && col == move.to.col)
-                continue;
+        auto row = std::min(move.from.row, move.to.row);
+        auto col = std::min(static_cast<unsigned int>(move.from.col), static_cast<unsigned int>(move.to.col));
 
-            if (pieceAt(Position{ .row = row, .col = static_cast<char>(col + static_cast<int>('a')) }) != NONE) {
+        while (row <= std::max(move.from.row, move.to.row) && col <= std::max(static_cast<unsigned int>(move.from.col), static_cast<unsigned int>(move.to.col))) {
+            if (row != move.from.row && col != move.to.col && pieceAt(Position{ .row = row, .col = static_cast<char>(col) }) != NONE) {
                 cache[move] = false;
 
                 return false;
             }
+
+            if (col < std::max(static_cast<unsigned int>(move.from.col), static_cast<unsigned int>(move.to.col)))
+                ++col;
+
+            if (row < std::max(move.from.row, move.to.row))
+                ++row;
+
+            if (col == std::max(static_cast<unsigned int>(move.from.col), static_cast<unsigned int>(move.to.col)) && row == std::max(move.from.row, move.to.row))
+                break;
         }
 
         cache[move] = true;
