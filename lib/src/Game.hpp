@@ -106,6 +106,113 @@ struct MoveComparator {
     }
 };
 
+class PositionIterator {
+public:
+    PositionIterator(const Position from, const Position to) : dRow(0), dCol(0) {
+        auto beginRow = std::min(from.row, to.row);
+        auto beginCol = std::min(static_cast<unsigned int>(from.col), static_cast<unsigned int>(to.col));
+
+        auto endRow = std::max(from.row, to.row);
+        auto endCol = std::max(static_cast<unsigned int>(from.col), static_cast<unsigned int>(to.col));
+
+        _begin = Position{ .row = beginRow, .col = static_cast<char>(beginCol) };
+        _end = Position{ .row = endRow, .col = static_cast<char>(endCol) };
+
+        _current = _begin;
+    }
+
+    Position operator*() const {
+        return _current;
+    }
+
+    bool operator==(const PositionIterator& it) const {
+        return _current == it._current;
+    }
+
+    // prefix
+    PositionIterator& operator++() {
+        _current.row += dRow;
+        _current.col = static_cast<char>(_current.col + dCol);
+        return *this;
+    }
+
+    // postfix
+    PositionIterator operator++(int x) {
+        PositionIterator tmp = *this;
+        ++(*this);
+        return tmp;
+    }
+
+    bool hasNext() const {
+        return _current.row != _end.row &&
+            _current.col != _end.col &&
+            _current.row >= 1 &&
+            _current.row <= 8 &&
+            _current.col >= 'a' &&
+            _current.col <= 'h';
+    }
+
+protected:
+    Position _begin;
+    Position _end;
+    Position _current;
+
+    int dRow;
+    int dCol;
+};
+
+class RookMoveIterator : public PositionIterator {
+public:
+    RookMoveIterator(const Position from, const Position to) : PositionIterator(from, to) {
+        if (from.col == to.col) {
+            dRow = (static_cast<int>(to.row) - static_cast<int>(from.row)) / std::abs(static_cast<int>(to.row) - static_cast<int>(from.row));
+        }
+        else if (from.row == to.row) {
+            dCol = (to.col - from.col) / std::abs(to.col - from.col);
+        }
+        else {
+            throw std::format("Can not create vertical iterator from ({0}, {1}) to ({2}, {3}) - both cols and rows differ, must be same on one dimension", from.row, from.col, to.row, to.col);
+        }
+
+        // initialize iterator advanced by one position to prevent unnecessary checks
+        ++(*this);
+    }
+};
+
+class BishopMoveIterator : public PositionIterator {
+public:
+    BishopMoveIterator(const Position from, const Position to) : PositionIterator(from, to) {
+        if (from.col == to.col || from.row == to.row) {
+            throw std::format("Can not create diagonal iterator from ({0}, {1}) to ({2}, {3}) - either cols or rows are same, must be different on both dimensions", from.row, from.col, to.row, to.col);
+        }
+
+        dCol = (to.col - from.col) / std::abs(to.col - from.col);
+        dRow = (static_cast<int>(to.row) - static_cast<int>(from.row)) / std::abs(static_cast<int>(to.row) - static_cast<int>(from.row));
+
+        // initialize iterator advanced by one position to prevent unnecessary checks
+        ++(*this);
+    }
+};
+
+class QueenMoveIterator : public PositionIterator {
+public:
+    QueenMoveIterator(const Position from, const Position to) : PositionIterator(from, to) {
+        if (from.row == to.row) {
+            dRow = (static_cast<int>(to.row) - static_cast<int>(from.row)) / std::abs(static_cast<int>(to.row) - static_cast<int>(from.row));
+        }
+        else if (from.col == to.col) {
+            dCol = (to.col - from.col) / std::abs(to.col - from.col);
+        }
+        else {
+            dRow = (static_cast<int>(to.row) - static_cast<int>(from.row)) / std::abs(static_cast<int>(to.row) - static_cast<int>(from.row));
+            dCol = (to.col - from.col) / std::abs(to.col - from.col);
+        }
+
+        // initialize iterator advanced by one position to prevent unnecessary checks
+        ++(*this);
+    }
+};
+
 class Game {
 public:
     Game();

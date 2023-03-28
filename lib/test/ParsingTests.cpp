@@ -262,6 +262,8 @@ TEST(ParsingMoveTest, DisambiguishingPawnMove) {
 TEST(ParsingMoveTest, DisambiguishingPawnMove2) {
     auto game = std::make_unique<Game>();
 
+    game->parseFEN("r3k2r/pp1b1ppp/nqp1pn2/2bp4/N1P1P3/1P1B1N2/PB1PQPPP/R3K2R w KQkq - 0 8");
+
     auto move2 = game->parseMove("cxd5");
 
     ASSERT_NE(move2, std::nullopt);
@@ -291,6 +293,8 @@ TEST(ParsingMoveTest, DisambiguishingPawnMove3) {
 
 TEST(ParsingMoveTest, DisambiguishingPawnMove4) {
     auto game = std::make_unique<Game>();
+
+    game->parseFEN("r3k2r/pp1b1ppp/nqp1pn2/2bp4/N1P1P3/1P1B1N2/PB1PQPPP/R3K2R b KQkq - 0 8");
 
     auto move4 = game->parseMove("dxc4");
 

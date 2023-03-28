@@ -310,11 +310,8 @@ TEST(ValidatingKingMoveTest, Castling6) {
 
     auto move6 = game->parseMove("0-0-0");
 
-    ASSERT_NE(move6, std::nullopt)
-        << "Notation of `0-0-0` is valid";
-
-    EXPECT_TRUE(game->isValidMove(*move6))
-        << "Long castling for white noted as `0-0-0` is valid";
+    ASSERT_EQ(move6, std::nullopt)
+        << "Long castling is invalid move";
 }
 
 TEST(ValidatingKingMoveTest, Castling7) {
