@@ -100,12 +100,16 @@ TEST(BoardParsing, DefaultSetup) {
     EXPECT_EQ(game->castlingAvailability.WHITE_QUEEN_SIDE, false);
 }
 
-TEST(BoardParsing, ParsingCurrentPlayer) {
+TEST(FENParsing, ParsingCurrentPlayerBlack) {
     auto game = std::make_unique<Game>();
 
     game->parseFEN("r3k2r/pp1b1ppp/nqp1pn2/2bp4/N1P1P3/1P1B1N2/PB1PQPPP/R3K2R b kq - 0 8");
 
     EXPECT_EQ(game->currentPlayer, BLACK);
+}
+
+TEST(FENParsing, ParsingCurrentPlayerWhite) {
+    auto game = std::make_unique<Game>();
 
     game->parseFEN("r3k2r/pp1b1ppp/nqp1pn2/2bp4/N1P1P3/1P1B1N2/PB1PQPPP/R3K2R w Qq - 0 8");
 
@@ -122,6 +126,10 @@ TEST(BoardParsing, ParsingCastlingAvailability) {
     EXPECT_EQ(game->castlingAvailability.BLACK_QUEEN_SIDE, true);
     EXPECT_EQ(game->castlingAvailability.WHITE_KING_SIDE, false);
     EXPECT_EQ(game->castlingAvailability.WHITE_QUEEN_SIDE, false);
+}
+
+TEST(BoardParsing, ParsingCastlingAvailability2) {
+    auto game = std::make_unique<Game>();
 
     game->parseFEN("r3k2r/pp1b1ppp/nqp1pn2/2bp4/N1P1P3/1P1B1N2/PB1PQPPP/R3K2R b - - 0 8");
 
@@ -129,6 +137,10 @@ TEST(BoardParsing, ParsingCastlingAvailability) {
     EXPECT_EQ(game->castlingAvailability.BLACK_QUEEN_SIDE, false);
     EXPECT_EQ(game->castlingAvailability.WHITE_KING_SIDE, false);
     EXPECT_EQ(game->castlingAvailability.WHITE_QUEEN_SIDE, false);
+}
+ 
+TEST(BoardParsing, ParsingCastlingAvailability3) {
+    auto game = std::make_unique<Game>();
 
     game->parseFEN("r3k2r/pp1b1ppp/nqp1pn2/2bp4/N1P1P3/1P1B1N2/PB1PQPPP/R3K2R b kK - 0 8");
 
@@ -136,6 +148,10 @@ TEST(BoardParsing, ParsingCastlingAvailability) {
     EXPECT_EQ(game->castlingAvailability.BLACK_QUEEN_SIDE, false);
     EXPECT_EQ(game->castlingAvailability.WHITE_KING_SIDE, true);
     EXPECT_EQ(game->castlingAvailability.WHITE_QUEEN_SIDE, false);
+}
+
+TEST(BoardParsing, ParsingCastlingAvailability4) {
+    auto game = std::make_unique<Game>();
 
     game->parseFEN("r3k2r/pp1b1ppp/nqp1pn2/2bp4/N1P1P3/1P1B1N2/PB1PQPPP/R3K2R w Qq - 0 8");
 
@@ -143,6 +159,10 @@ TEST(BoardParsing, ParsingCastlingAvailability) {
     EXPECT_EQ(game->castlingAvailability.BLACK_QUEEN_SIDE, true);
     EXPECT_EQ(game->castlingAvailability.WHITE_KING_SIDE, false);
     EXPECT_EQ(game->castlingAvailability.WHITE_QUEEN_SIDE, true);
+}
+
+TEST(BoardParsing, ParsingCastlingAvailability5) {
+    auto game = std::make_unique<Game>();
 
     game->parseFEN("r3k2r/pp1b1ppp/nqp1pn2/2bp4/N1P1P3/1P1B1N2/PB1PQPPP/R3K2R w KQkq - 0 8");
 
@@ -172,6 +192,10 @@ TEST(ParsingMoveTest, ParsingPawnAdvancement) {
     EXPECT_EQ(move->piece, WHITE_PAWN);
     EXPECT_THAT(move->from, FieldsAre(Eq(2), Eq('e')));
     EXPECT_THAT(move->to, FieldsAre(Eq(4), Eq('e')));
+}
+
+TEST(ParsingMoveTest, ParsingPawnAdvancement2) {
+    auto game = std::make_unique<Game>();
 
     auto move2 = game->parseMove("e3");
 
@@ -233,6 +257,10 @@ TEST(ParsingMoveTest, DisambiguishingPawnMove) {
     EXPECT_EQ(move1->piece, WHITE_PAWN);
     EXPECT_THAT(move1->to, FieldsAre(Eq(5), Eq('d')));
     EXPECT_THAT(move1->from, FieldsAre(Eq(4), Eq('e')));
+}
+
+TEST(ParsingMoveTest, DisambiguishingPawnMove2) {
+    auto game = std::make_unique<Game>();
 
     auto move2 = game->parseMove("cxd5");
 
@@ -243,6 +271,10 @@ TEST(ParsingMoveTest, DisambiguishingPawnMove) {
     EXPECT_EQ(move2->piece, WHITE_PAWN);
     EXPECT_THAT(move2->to, FieldsAre(Eq(5), Eq('d')));
     EXPECT_THAT(move2->from, FieldsAre(Eq(4), Eq('c')));
+}
+
+TEST(ParsingMoveTest, DisambiguishingPawnMove3) {
+    auto game = std::make_unique<Game>();
 
     game->parseFEN("r3k2r/pp1b1ppp/nqp1pn2/2bp4/N1P1P3/1P1B1N2/PB1PQPPP/R3K2R b KQkq - 0 8");
 
@@ -255,6 +287,10 @@ TEST(ParsingMoveTest, DisambiguishingPawnMove) {
     EXPECT_EQ(move3->piece, BLACK_PAWN);
     EXPECT_THAT(move3->to, FieldsAre(Eq(4), Eq('e')));
     EXPECT_THAT(move3->from, FieldsAre(Eq(5), Eq('d')));
+}
+
+TEST(ParsingMoveTest, DisambiguishingPawnMove4) {
+    auto game = std::make_unique<Game>();
 
     auto move4 = game->parseMove("dxc4");
 
@@ -281,6 +317,12 @@ TEST(ParsingMoveTest, ParsingCastling) {
     EXPECT_EQ(move1->piece, WHITE_KING);
     EXPECT_THAT(move1->from, FieldsAre(Eq(1), Eq('e')));
     EXPECT_THAT(move1->to, FieldsAre(Eq(1), Eq('g')));
+}
+
+TEST(ParsingMoveTest, ParsingCastling2) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("rnbqkb1r/pp2pppp/2p2n2/3p4/4P3/3B1N2/PPPP1PPP/RNBQK2R w KQkq - 0 3");
 
     auto move2 = game->parseMove("0-0");
 
@@ -291,6 +333,11 @@ TEST(ParsingMoveTest, ParsingCastling) {
     EXPECT_EQ(move2->piece, WHITE_KING);
     EXPECT_THAT(move2->from, FieldsAre(Eq(1), Eq('e')));
     EXPECT_THAT(move2->to, FieldsAre(Eq(1), Eq('g')));
+}
+
+
+TEST(ParsingMoveTest, ParsingCastling3) {
+    auto game = std::make_unique<Game>();
 
     game->parseFEN("r3k2r/pp1b1ppp/nqp1pn2/2bp4/N3P3/1P1B1N2/PBPPQPPP/R3K2R b KQkq - 0 8");
 
@@ -303,6 +350,12 @@ TEST(ParsingMoveTest, ParsingCastling) {
     EXPECT_THAT(move3->piece, Eq(BLACK_KING));
     EXPECT_THAT(move3->from, FieldsAre(Eq(8), Eq('e')));
     EXPECT_THAT(move3->to, FieldsAre(Eq(8), Eq('g')));
+}
+
+TEST(ParsingMoveTest, ParsingCastling4) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("r3k2r/pp1b1ppp/nqp1pn2/2bp4/N3P3/1P1B1N2/PBPPQPPP/R3K2R b KQkq - 0 8");
 
     auto move4 = game->parseMove("0-0-0");
 

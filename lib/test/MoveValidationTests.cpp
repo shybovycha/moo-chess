@@ -88,6 +88,10 @@ TEST(ValidatingPawnMoveTest, FirstMoveAdvancement) {
 
     EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 4, .col = 'e' }, .to = Position{.row = 5, .col = 'f' } }))
         << "Can not move diagonally to the right";
+}
+
+TEST(ValidatingPawnMoveTest, FirstMoveAdvancement2) {
+    auto game = std::make_unique<Game>();
 
     game->parseFEN("rnbqkbnr/pppp1ppp/8/8/4p3/P7/1PPPPPPP/RNBQKBNR w KQkq - 0 3");
 
@@ -102,6 +106,10 @@ TEST(ValidatingPawnMoveTest, FirstMoveAdvancement) {
 
     EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'e' }, .to = Position{.row = 3, .col = 'f' } }))
         << "Can not advance diagonally to the right when 4th rank is blocked by an opponent";
+}
+
+TEST(ValidatingPawnMoveTest, FirstMoveAdvancement3) {
+    auto game = std::make_unique<Game>();
 
     game->parseFEN("rnbqkbnr/pppp1ppp/8/8/P7/4p3/1PPPPPPP/RNBQKBNR w KQkq - 0 8");
 
@@ -181,6 +189,10 @@ TEST(ValidatingPawnMoveTest, Promotion) {
 
     EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 8, .col = 'f' }, .promotion = WHITE_QUEEN }))
         << "Pawn can not be promoted diagonally to the right";
+}
+
+TEST(ValidatingPawnMoveTest, Promotion2) {
+    auto game = std::make_unique<Game>();
 
     game->parseFEN("3q4/4P3/8/8/8/8/8/8 w KQkq - 0 1");
 
@@ -192,16 +204,28 @@ TEST(ValidatingPawnMoveTest, Promotion) {
 
     EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 8, .col = 'f' }, .promotion = WHITE_QUEEN }))
         << "Pawn can not be promoted diagonally to the right if capture is available to the left";
+}
+
+TEST(ValidatingPawnMoveTest, Promotion3) {
+    auto game = std::make_unique<Game>();
 
     game->parseFEN("3Q4/4P3/8/8/8/8/8/8 w KQkq - 0 1");
 
     EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 8, .col = 'f' }, .promotion = WHITE_QUEEN }))
         << "Pawn can not be promoted diagonally to the right if blocked by the ally piece on the capture field to the left";
+}
+
+TEST(ValidatingPawnMoveTest, Promotion4) {
+    auto game = std::make_unique<Game>();
 
     game->parseFEN("4q3/4P3/8/8/8/8/8/8 w KQkq - 0 1");
 
     EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 8, .col = 'f' }, .promotion = WHITE_QUEEN }))
         << "Pawn can not be promoted if blocked by the opponent piece ahead";
+}
+
+TEST(ValidatingPawnMoveTest, Promotion5) {
+    auto game = std::make_unique<Game>();
 
     game->parseFEN("4Q3/4P3/8/8/8/8/8/8 w KQkq - 0 1");
 
@@ -221,6 +245,12 @@ TEST(ValidatingKingMoveTest, Castling) {
 
     EXPECT_TRUE(game->isValidMove(*move1))
         << "Short castling for white noted as `O-O` is valid";
+}
+
+TEST(ValidatingKingMoveTest, Castling2) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("rnbqk2r/pp2bppp/2p1pn2/3pP3/8/2PB1N2/PP1P1PPP/RNBQK2R b KQkq - 0 4");
 
     auto move2 = game->parseMove("0-0");
 
@@ -229,6 +259,10 @@ TEST(ValidatingKingMoveTest, Castling) {
 
     EXPECT_TRUE(game->isValidMove(*move2))
         << "Short castling for white noted as `0-0` is valid";
+}
+
+TEST(ValidatingKingMoveTest, Castling3) {
+    auto game = std::make_unique<Game>();
 
     game->parseFEN("rnbqk2r/pp2bppp/2p1pn2/3pP3/8/2PB1N2/PP1P1PPP/RNBQK2R b KQkq - 0 4");
 
@@ -239,6 +273,12 @@ TEST(ValidatingKingMoveTest, Castling) {
 
     EXPECT_TRUE(game->isValidMove(*move3))
         << "Short castling for black noted as `O-O` is valid";
+}
+
+TEST(ValidatingKingMoveTest, Castling4) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("rnbqk2r/pp2bppp/2p1pn2/3pP3/8/2PB1N2/PP1P1PPP/RNBQK2R b KQkq - 0 4");
 
     auto move4 = game->parseMove("0-0");
 
@@ -247,6 +287,10 @@ TEST(ValidatingKingMoveTest, Castling) {
 
     EXPECT_TRUE(game->isValidMove(*move4))
         << "Short castling for black noted as `0-0` is valid";
+}
+
+TEST(ValidatingKingMoveTest, Castling5) {
+    auto game = std::make_unique<Game>();
 
     game->parseFEN("r2qk2r/pp1b1ppp/n1p1pn2/2bp4/N3P3/1P1B1N2/PBPPQPPP/R3K2R w KQkq - 0 8");
 
@@ -257,6 +301,12 @@ TEST(ValidatingKingMoveTest, Castling) {
 
     EXPECT_TRUE(game->isValidMove(*move5))
         << "Short castling for white noted as `0-0` is valid";
+}
+
+TEST(ValidatingKingMoveTest, Castling6) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("rnbqk2r/pp2bppp/2p1pn2/3pP3/8/2PB1N2/PP1P1PPP/RNBQK2R b KQkq - 0 4");
 
     auto move6 = game->parseMove("0-0-0");
 
@@ -265,6 +315,10 @@ TEST(ValidatingKingMoveTest, Castling) {
 
     EXPECT_TRUE(game->isValidMove(*move6))
         << "Long castling for white noted as `0-0-0` is valid";
+}
+
+TEST(ValidatingKingMoveTest, Castling7) {
+    auto game = std::make_unique<Game>();
 
     game->parseFEN("r2qk2r/pp1b1ppp/n1p1pn2/2bp4/4P3/1PNB1N2/PBPPQPPP/R3K2R b KQkq - 0 7");
 
@@ -275,11 +329,21 @@ TEST(ValidatingKingMoveTest, Castling) {
 
     EXPECT_TRUE(game->isValidMove(*move7))
         << "Short castling for black noted as `0-0` is a valid move";
+}
+
+TEST(ValidatingKingMoveTest, Castling8) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("r2qk2r/pp1b1ppp/n1p1pn2/2bp4/4P3/1PNB1N2/PBPPQPPP/R3K2R b KQkq - 0 7");
 
     auto move8 = game->parseMove("0-0-0");
     
     ASSERT_EQ(move8, std::nullopt)
         << "Long castling is an invalid move";
+}
+
+TEST(ValidatingKingMoveTest, Castling9) {
+    auto game = std::make_unique<Game>();
 
     game->parseFEN("r2qk2r/pp1b1ppp/n1p1pn2/2bp4/4P3/1PNB1N2/PBPPQPPP/R3K2R b - - 0 7");
 
@@ -287,10 +351,16 @@ TEST(ValidatingKingMoveTest, Castling) {
 
     ASSERT_EQ(move9, std::nullopt)
         << "Short castling is not available, hence an invalid move";
+}
+
+TEST(ValidatingKingMoveTest, Castling10) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("r2qk2r/pp1b1ppp/n1p1pn2/2bp4/4P3/1PNB1N2/PBPPQPPP/R3K2R b - - 0 7");
 
     auto move10 = game->parseMove("0-0-0");
 
-    ASSERT_EQ(move8, std::nullopt)
+    ASSERT_EQ(move10, std::nullopt)
         << "Long castling is not available, hence an invalid move";
 }
 
@@ -304,6 +374,12 @@ TEST(ValidatingKingMoveTest, Advancement) {
 
     EXPECT_EQ(game->parseMove("O-O-O"), std::nullopt)
         << "On an empty field, long castling is not valid";
+}
+
+TEST(ValidatingKingMoveTest, Advancement1) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("8/8/8/8/4K3/8/8/8 w KQkq - 0 1");
 
     auto move1 = game->parseMove("Kd5");
 
@@ -312,7 +388,13 @@ TEST(ValidatingKingMoveTest, Advancement) {
 
     EXPECT_TRUE(game->isValidMove(*move1))
         << "K e4 - K d5 is a valid move";
-    
+}
+
+TEST(ValidatingKingMoveTest, Advancement2) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("8/8/8/8/4K3/8/8/8 w KQkq - 0 1");
+
     auto move2 = game->parseMove("Ke5");
 
     ASSERT_NE(move2, std::nullopt)
@@ -320,6 +402,12 @@ TEST(ValidatingKingMoveTest, Advancement) {
 
     EXPECT_TRUE(game->isValidMove(*move2))
         << "K e4 - K e5 is a valid move";
+}
+
+TEST(ValidatingKingMoveTest, Advancement3) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("8/8/8/8/4K3/8/8/8 w KQkq - 0 1");
 
     auto move3 = game->parseMove("Kf5");
 
@@ -328,6 +416,12 @@ TEST(ValidatingKingMoveTest, Advancement) {
 
     EXPECT_TRUE(game->isValidMove(*move3))
         << "K e4 - K f5 is a valid move";
+}
+
+TEST(ValidatingKingMoveTest, Advancement4) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("8/8/8/8/4K3/8/8/8 w KQkq - 0 1");
 
     auto move4 = game->parseMove("Kd4");
 
@@ -336,6 +430,12 @@ TEST(ValidatingKingMoveTest, Advancement) {
 
     EXPECT_TRUE(game->isValidMove(*move4))
         << "K e4 - K d4 is a valid move";
+}
+
+TEST(ValidatingKingMoveTest, Advancement5) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("8/8/8/8/4K3/8/8/8 w KQkq - 0 1");
 
     auto move5 = game->parseMove("Kf4");
 
@@ -344,6 +444,12 @@ TEST(ValidatingKingMoveTest, Advancement) {
 
     EXPECT_TRUE(game->isValidMove(*move5))
         << "K e4 - K f4 is a valid move";
+}
+
+TEST(ValidatingKingMoveTest, Advancement7) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("8/8/8/8/4K3/8/8/8 w KQkq - 0 1");
 
     auto move7 = game->parseMove("Kd3");
 
@@ -352,6 +458,12 @@ TEST(ValidatingKingMoveTest, Advancement) {
 
     EXPECT_TRUE(game->isValidMove(*move7))
         << "K e4 - K d3 is a valid move";
+}
+
+TEST(ValidatingKingMoveTest, Advancement8) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("8/8/8/8/4K3/8/8/8 w KQkq - 0 1");
 
     auto move8 = game->parseMove("Ke3");
 
@@ -360,6 +472,12 @@ TEST(ValidatingKingMoveTest, Advancement) {
 
     EXPECT_TRUE(game->isValidMove(*move8))
         << "K e4 - K e3 is a valid move";
+}
+
+TEST(ValidatingKingMoveTest, Advancement9) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("8/8/8/8/4K3/8/8/8 w KQkq - 0 1");
 
     auto move9 = game->parseMove("Kf3");
 
@@ -380,21 +498,45 @@ TEST(ValidatingKingMoveTest, AdvancementUnderAttack) {
 
     EXPECT_EQ(game->parseMove("O-O-O"), std::nullopt)
         << "Long castling is not valid if king is not on its original rank";
+}
+
+TEST(ValidatingKingMoveTest, AdvancementUnderAttack1) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("8/8/8/8/8/2k5/4K3/8 w - - 0 1");
 
     auto move1 = game->parseMove("Kd1");
     
     ASSERT_EQ(move1, std::nullopt)
         << "Kd1 is not a valid move since d1 is under attack by black king";
+}
+
+TEST(ValidatingKingMoveTest, AdvancementUnderAttack2) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("8/8/8/8/8/2k5/4K3/8 w - - 0 1");
 
     auto move2 = game->parseMove("Kd2");
 
     ASSERT_EQ(move2, std::nullopt)
         << "Kd2 is not a valid move since d2 is under attack by black king";
+}
+
+TEST(ValidatingKingMoveTest, AdvancementUnderAttack3) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("8/8/8/8/8/2k5/4K3/8 w - - 0 1");
 
     auto move3 = game->parseMove("Kd3");
 
     ASSERT_EQ(move3, std::nullopt)
         << "Kd3 is not a valid move since d3 is under attack by black king";
+}
+
+TEST(ValidatingKingMoveTest, AdvancementUnderAttack4) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("8/8/8/8/8/2k5/4K3/8 w - - 0 1");
 
     auto move4 = game->parseMove("Ke3");
 
@@ -403,6 +545,12 @@ TEST(ValidatingKingMoveTest, AdvancementUnderAttack) {
 
     EXPECT_TRUE(game->isValidMove(*move4))
         << "Ke3 is a valid move";
+}
+
+TEST(ValidatingKingMoveTest, AdvancementUnderAttack5) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("8/8/8/8/8/2k5/4K3/8 w - - 0 1");
 
     auto move5 = game->parseMove("Kf3");
 
@@ -411,6 +559,12 @@ TEST(ValidatingKingMoveTest, AdvancementUnderAttack) {
 
     EXPECT_TRUE(game->isValidMove(*move5))
         << "Kf3 is a valid move";
+}
+
+TEST(ValidatingKingMoveTest, AdvancementUnderAttack6) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("8/8/8/8/8/2k5/4K3/8 w - - 0 1");
 
     auto move6 = game->parseMove("Kf2");
 
@@ -419,6 +573,12 @@ TEST(ValidatingKingMoveTest, AdvancementUnderAttack) {
 
     EXPECT_TRUE(game->isValidMove(*move6))
         << "Kf2 is a valid move";
+}
+
+TEST(ValidatingKingMoveTest, AdvancementUnderAttack7) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("8/8/8/8/8/2k5/4K3/8 w - - 0 1");
 
     auto move7 = game->parseMove("Kf1");
 
@@ -427,8 +587,10 @@ TEST(ValidatingKingMoveTest, AdvancementUnderAttack) {
 
     EXPECT_TRUE(game->isValidMove(*move7))
         << "Kf1 is a valid move";
+}
 
-    // ------------------------------------------------------------------------
+TEST(ValidatingKingMoveTest, AdvancementUnderAttack8) {
+    auto game = std::make_unique<Game>();
 
     game->parseFEN("8/8/8/8/8/2k5/4K3/8 b - - 0 1");
 
@@ -437,16 +599,34 @@ TEST(ValidatingKingMoveTest, AdvancementUnderAttack) {
 
     EXPECT_EQ(game->parseMove("O-O-O"), std::nullopt)
         << "Long castling is not valid if king is not on its original rank";
+}
+
+TEST(ValidatingKingMoveTest, AdvancementUnderAttack9) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("8/8/8/8/8/2k5/4K3/8 b - - 0 1");
 
     auto move8 = game->parseMove("Kd2");
 
     ASSERT_EQ(move8, std::nullopt)
         << "Kd2 is not a valid move since d2 is under attack by white king";
+}
+
+TEST(ValidatingKingMoveTest, AdvancementUnderAttack10) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("8/8/8/8/8/2k5/4K3/8 b - - 0 1");
 
     auto move9 = game->parseMove("Kd3");
 
     ASSERT_EQ(move9, std::nullopt)
         << "Kd3 is not a valid move since d3 is under attack by white king";
+}
+
+TEST(ValidatingKingMoveTest, AdvancementUnderAttack11) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("8/8/8/8/8/2k5/4K3/8 b - - 0 1");
 
     auto move10 = game->parseMove("Kd4");
 
