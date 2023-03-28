@@ -136,13 +136,16 @@ public:
     void movePiece(Position from, Position to);
 
     bool opponentPieceAt(const Position pos) const;
+    bool opponentPieceAt(const Position pos, const PieceColor currentPlayerColor) const;
+
     bool allyPieceAt(const Position pos) const;
+    bool allyPieceAt(const Position pos, const PieceColor currentPlayerColor) const;
 
     bool canOpponentMoveTo(const Position pos) const;
 
-    bool isValidMove(const Move move, std::map<Move, bool, MoveComparator>& cache) const;
+    bool isValidMove(const Move move, std::map<Move, bool, MoveComparator>& cache, const PieceColor currentPlayerColor) const;
 
-    bool canOpponentMoveTo(const Position pos, std::map<Move, bool, MoveComparator>& cache) const;
+    bool canOpponentMoveTo(const Position pos, std::map<Move, bool, MoveComparator>& cache, const PieceColor currentPlayerColor) const;
 
 public:
     std::array<std::array<Piece, 8>, 8> pieces;

@@ -276,7 +276,7 @@ std::optional<Move> Game::parseMove(const std::string& moveString) const {
             candidateMove.from = Position{ .row = row, .col = static_cast<char>(col) };
 
             if (pieceAt(candidateMove.from) == move.piece) {
-                if (isValidMove(candidateMove, cache))
+                if (isValidMove(candidateMove, cache, currentPlayer))
                     fromCandidates.push_back(candidateMove.from);
             }
         }
@@ -369,9 +369,13 @@ void Game::movePiece(Position from, Position to) {
 }
 
 bool Game::opponentPieceAt(const Position pos) const {
+    return opponentPieceAt(pos, currentPlayer);
+}
+
+bool Game::opponentPieceAt(const Position pos, const PieceColor currentPlayerColor) const {
     auto piece = pieceAt(pos);
 
-    if (currentPlayer == WHITE) {
+    if (currentPlayerColor == WHITE) {
         return piece == BLACK_ROOK ||
             piece == BLACK_KNIGHT ||
             piece == BLACK_BISHOP ||
@@ -390,9 +394,13 @@ bool Game::opponentPieceAt(const Position pos) const {
 }
 
 bool Game::allyPieceAt(const Position pos) const {
+    return allyPieceAt(pos, currentPlayer);
+}
+
+bool Game::allyPieceAt(const Position pos, const PieceColor currentPlayerColor) const {
     auto piece = pieceAt(pos);
 
-    if (currentPlayer == BLACK) {
+    if (currentPlayerColor == BLACK) {
         return piece == BLACK_ROOK ||
             piece == BLACK_KNIGHT ||
             piece == BLACK_BISHOP ||
@@ -413,24 +421,24 @@ bool Game::allyPieceAt(const Position pos) const {
 bool Game::canOpponentMoveTo(const Position pos) const {
     std::map<Move, bool, MoveComparator> cache{};
 
-    return canOpponentMoveTo(pos, cache);
+    return canOpponentMoveTo(pos, cache, currentPlayer);
 }
 
-bool Game::canOpponentMoveTo(const Position pos, std::map<Move, bool, MoveComparator>& cache) const {
+bool Game::canOpponentMoveTo(const Position pos, std::map<Move, bool, MoveComparator>& cache, const PieceColor currentPlayerColor) const {
     for (unsigned int row = 1; row < 8; ++row) {
         for (char col = static_cast<int>('a'); col < static_cast<int>('h'); ++col) {
             auto tmpPos = Position{ .row = row, .col = static_cast<char>(col) };
 
-            if (opponentPieceAt(tmpPos)) {
+            if (opponentPieceAt(tmpPos, currentPlayerColor)) {
                 auto piece = pieceAt(tmpPos);
 
                 auto move = Move{ .piece = piece, .from = tmpPos, .to = pos };
 
-                if (allyPieceAt(pos)) {
+                if (opponentPieceAt(pos, currentPlayerColor)) {
                     move.isCapture = true;
                 }
 
-                if (isValidMove(move, cache)) {
+                if (isValidMove(move, cache, currentPlayerColor == WHITE ? BLACK : WHITE)) {
                     return true;
                 }
             }
@@ -443,15 +451,15 @@ bool Game::canOpponentMoveTo(const Position pos, std::map<Move, bool, MoveCompar
 bool Game::isValidMove(const Move move) const {
     std::map<Move, bool, MoveComparator> cache{};
 
-    return isValidMove(move, cache);
+    return isValidMove(move, cache, currentPlayer);
 }
 
-bool Game::isValidMove(const Move move, std::map<Move, bool, MoveComparator>& cache) const {
+bool Game::isValidMove(const Move move, std::map<Move, bool, MoveComparator>& cache, const PieceColor currentPlayerColor) const {
     if (cache.contains(move)) {
         return cache[move];
     }
 
-    cache[move] = false;
+    // cache[move] = false;
 
     if (move.isCastling) {
         if (currentPlayer == WHITE) {
@@ -462,9 +470,9 @@ bool Game::isValidMove(const Move move, std::map<Move, bool, MoveComparator>& ca
                     pieceAt(1, 'h') == WHITE_ROOK &&
                     pieceAt(1, 'f') == NONE &&
                     pieceAt(1, 'g') == NONE &&
-                    !canOpponentMoveTo(Position{ .row = 1, .col = 'e' }, cache) && // king is not under check
-                    !canOpponentMoveTo(Position{ .row = 1, .col = 'f' }, cache) &&
-                    !canOpponentMoveTo(Position{ .row = 1, .col = 'h' }, cache);
+                    !canOpponentMoveTo(Position{ .row = 1, .col = 'e' }, cache, currentPlayer) && // king is not under check
+                    !canOpponentMoveTo(Position{ .row = 1, .col = 'f' }, cache, currentPlayer) &&
+                    !canOpponentMoveTo(Position{ .row = 1, .col = 'h' }, cache, currentPlayer);
 
                 cache[move] = isValid;
 
@@ -479,10 +487,10 @@ bool Game::isValidMove(const Move move, std::map<Move, bool, MoveComparator>& ca
                     pieceAt(1, 'b') == NONE &&
                     pieceAt(1, 'c') == NONE &&
                     pieceAt(1, 'd') == NONE &&
-                    !canOpponentMoveTo(Position{ .row = 1, .col = 'e' }, cache) && // king is not under check
-                    !canOpponentMoveTo(Position{ .row = 1, .col = 'b' }, cache) &&
-                    !canOpponentMoveTo(Position{ .row = 1, .col = 'c' }, cache) &&
-                    !canOpponentMoveTo(Position{ .row = 1, .col = 'd' }, cache);
+                    !canOpponentMoveTo(Position{ .row = 1, .col = 'e' }, cache, currentPlayer) && // king is not under check
+                    !canOpponentMoveTo(Position{ .row = 1, .col = 'b' }, cache, currentPlayer) &&
+                    !canOpponentMoveTo(Position{ .row = 1, .col = 'c' }, cache, currentPlayer) &&
+                    !canOpponentMoveTo(Position{ .row = 1, .col = 'd' }, cache, currentPlayer);
 
                 cache[move] = isValid;
 
@@ -497,9 +505,9 @@ bool Game::isValidMove(const Move move, std::map<Move, bool, MoveComparator>& ca
                     pieceAt(8, 'h') == BLACK_ROOK &&
                     pieceAt(8, 'f') == NONE &&
                     pieceAt(8, 'g') == NONE &&
-                    !canOpponentMoveTo(Position{ .row = 8, .col = 'e' }, cache) && // king is not under check
-                    !canOpponentMoveTo(Position{ .row = 8, .col = 'f' }, cache) &&
-                    !canOpponentMoveTo(Position{ .row = 8, .col = 'g' }, cache);
+                    !canOpponentMoveTo(Position{ .row = 8, .col = 'e' }, cache, currentPlayer) && // king is not under check
+                    !canOpponentMoveTo(Position{ .row = 8, .col = 'f' }, cache, currentPlayer) &&
+                    !canOpponentMoveTo(Position{ .row = 8, .col = 'g' }, cache, currentPlayer);
 
                 cache[move] = isValid;
 
@@ -514,10 +522,10 @@ bool Game::isValidMove(const Move move, std::map<Move, bool, MoveComparator>& ca
                     pieceAt(8, 'b') == NONE &&
                     pieceAt(8, 'c') == NONE &&
                     pieceAt(8, 'd') == NONE &&
-                    !canOpponentMoveTo(Position{ .row = 8, .col = 'e' }, cache) && // king is not under check
-                    !canOpponentMoveTo(Position{ .row = 8, .col = 'b' }, cache) &&
-                    !canOpponentMoveTo(Position{ .row = 8, .col = 'c' }, cache) &&
-                    !canOpponentMoveTo(Position{ .row = 8, .col = 'd' }, cache);
+                    !canOpponentMoveTo(Position{ .row = 8, .col = 'e' }, cache, currentPlayer) && // king is not under check
+                    !canOpponentMoveTo(Position{ .row = 8, .col = 'b' }, cache, currentPlayer) &&
+                    !canOpponentMoveTo(Position{ .row = 8, .col = 'c' }, cache, currentPlayer) &&
+                    !canOpponentMoveTo(Position{ .row = 8, .col = 'd' }, cache, currentPlayer);
 
                 cache[move] = isValid;
 
@@ -526,8 +534,12 @@ bool Game::isValidMove(const Move move, std::map<Move, bool, MoveComparator>& ca
         }
     }
 
-    if (move.isCapture && move.piece != WHITE_PAWN && move.piece != BLACK_PAWN) {
-        auto isValid = isValidMove(Move{ .piece = move.piece, .from = move.from, .to = move.to }, cache) && opponentPieceAt(move.to);
+    if (move.isCapture && 
+        move.piece != WHITE_PAWN && 
+        move.piece != BLACK_PAWN &&
+        !((move.piece == WHITE_KING && pieceAt(move.to) == BLACK_KING) || (move.piece == BLACK_KING && pieceAt(move.to) == WHITE_KING))
+    ) {
+        auto isValid = isValidMove(Move{ .piece = move.piece, .from = move.from, .to = move.to }, cache, currentPlayerColor) && opponentPieceAt(move.to);
 
         cache[move] = isValid;
 
@@ -538,7 +550,7 @@ bool Game::isValidMove(const Move move, std::map<Move, bool, MoveComparator>& ca
         if (currentPlayer == WHITE) {
             auto isValid = move.piece == WHITE_PAWN &&
                 move.to.row == 8 &&
-                isValidMove(Move{ .piece = move.piece, .from = move.from, .to = move.to, .isCapture = move.isCapture }, cache) &&
+                isValidMove(Move{ .piece = move.piece, .from = move.from, .to = move.to, .isCapture = move.isCapture }, cache, currentPlayerColor) &&
                 (move.promotion == WHITE_QUEEN || move.promotion == WHITE_ROOK || move.promotion == WHITE_BISHOP || move.promotion == WHITE_KNIGHT);
 
             cache[move] = isValid;
@@ -548,7 +560,7 @@ bool Game::isValidMove(const Move move, std::map<Move, bool, MoveComparator>& ca
         else {
             auto isValid = move.piece == BLACK_PAWN &&
                 move.to.row == 1 &&
-                isValidMove(Move{ .piece = move.piece, .from = move.from, .to = move.to, .isCapture = move.isCapture }, cache) &&
+                isValidMove(Move{ .piece = move.piece, .from = move.from, .to = move.to, .isCapture = move.isCapture }, cache, currentPlayerColor) &&
                 (move.promotion == BLACK_QUEEN || move.promotion == BLACK_ROOK || move.promotion == BLACK_BISHOP || move.promotion == BLACK_KNIGHT);
 
             cache[move] = isValid;
@@ -659,7 +671,8 @@ bool Game::isValidMove(const Move move, std::map<Move, bool, MoveComparator>& ca
 
     if (move.piece == WHITE_KING || move.piece == BLACK_KING) {
         // can not move to the square under attack
-        if (!canOpponentMoveTo(move.to, cache)) {
+        // compare currentPlayer and currentPlayerColor to prevent going into recursion for two kings
+        if (currentPlayer != currentPlayerColor && canOpponentMoveTo(move.to, cache, currentPlayerColor)) {
             cache[move] = false;
 
             return false;
