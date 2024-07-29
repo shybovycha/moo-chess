@@ -9,7 +9,7 @@
 
 ## Building
 
-To build client, run `cmake -B build -S .` from the `client` directory, followed by `cmake --build build`.
+To build client, run `cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=$VCPKG_HOME/scripts/buildsystems/vcpkg.cmake`, followed by `cmake --build build`.
 
 ## Configuration
 

@@ -152,36 +152,36 @@ TEST(ValidatingPawnMoveTest, EnPassant) {
     game->applyMove(*game->parseMove("e5"));
     game->applyMove(*game->parseMove("d5"));
 
-    // essentially setting the board in the position of `rnbqkbnr/p1p1pppp/1p6/3pP3/8/8/PPPP1PPP/RNBQKBNR` with the last move by black, `d6`
-
-    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 5, .col = 'e' }, .to = Position{.row = 6, .col = 'e' } }))
-        << "Pawn can perform en passant when the last move is the piece to be captured and it advanced 2 ranks";
+    // essentially setting the board in the position of `rnbqkbnr/p1p1pppp/1p6/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 1` with the last move by black, `d6`
 
     EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 5, .col = 'e' }, .to = Position{.row = 6, .col = 'd' }, .isCapture = true }))
+        << "Pawn can perform en passant when the last move is the piece to be captured and it advanced 2 ranks";
+
+    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 5, .col = 'e' }, .to = Position{.row = 6, .col = 'e' } }))
         << "Pawn can ignore en passant and advance one rank straight";
 }
 
 TEST(ValidatingPawnMoveTest, Promotion) {
     auto game = std::make_unique<Game>();
 
-    game->parseFEN("8/4P3/8/8/8/8/8/8 w KQkq - 0 1");
+    game->parseFEN("8/4P3/8/8/8/8/8/K6k w - - 0 1");
 
-    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 6, .col = 'e' }, .promotion = WHITE_QUEEN }))
+    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 8, .col = 'e' }, .promotion = WHITE_QUEEN }))
         << "Pawn can be promoted to queen on a straight advancement";
 
-    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 6, .col = 'e' }, .promotion = WHITE_ROOK }))
+    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 8, .col = 'e' }, .promotion = WHITE_ROOK }))
         << "Pawn can be promoted to rook on a straight advancement";
 
-    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 6, .col = 'e' }, .promotion = WHITE_KNIGHT }))
+    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 8, .col = 'e' }, .promotion = WHITE_KNIGHT }))
         << "Pawn can be promoted to knight on a straight advancement";
 
-    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 6, .col = 'e' }, .promotion = WHITE_BISHOP }))
+    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 8, .col = 'e' }, .promotion = WHITE_BISHOP }))
         << "Pawn can be promoted to bishop on a straight advancement";
 
-    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 6, .col = 'e' }, .promotion = WHITE_KING }))
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 8, .col = 'e' }, .promotion = WHITE_KING }))
         << "Pawn can not be promoted to king";
 
-    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 6, .col = 'e' }, .promotion = WHITE_PAWN }))
+    EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 8, .col = 'e' }, .promotion = WHITE_PAWN }))
         << "Pawn can not be promoted to pawn";
 
     EXPECT_FALSE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 8, .col = 'd' }, .promotion = WHITE_QUEEN }))
@@ -194,9 +194,9 @@ TEST(ValidatingPawnMoveTest, Promotion) {
 TEST(ValidatingPawnMoveTest, Promotion2) {
     auto game = std::make_unique<Game>();
 
-    game->parseFEN("3q4/4P3/8/8/8/8/8/8 w KQkq - 0 1");
+    game->parseFEN("3q4/4P3/8/8/8/8/8/K6k w - - 0 1");
 
-    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 6, .col = 'e' }, .promotion = WHITE_QUEEN, .isCapture = true }))
+    EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 8, .col = 'e' }, .promotion = WHITE_QUEEN, .isCapture = false }))
         << "Pawn can be promoted to queen on a straight advancement even if capture is available to the left";
 
     EXPECT_TRUE(game->isValidMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 7, .col = 'e' }, .to = Position{.row = 8, .col = 'd' }, .promotion = WHITE_QUEEN, .isCapture = true }))
@@ -334,7 +334,7 @@ TEST(ValidatingKingMoveTest, Castling8) {
     game->parseFEN("r2qk2r/pp1b1ppp/n1p1pn2/2bp4/4P3/1PNB1N2/PBPPQPPP/R3K2R b KQkq - 0 7");
 
     auto move8 = game->parseMove("0-0-0");
-    
+
     ASSERT_EQ(move8, std::nullopt)
         << "Long castling is an invalid move";
 }
@@ -503,9 +503,9 @@ TEST(ValidatingKingMoveTest, AdvancementUnderAttack1) {
     game->parseFEN("8/8/8/8/8/2k5/4K3/8 w - - 0 1");
 
     auto move1 = game->parseMove("Kd1");
-    
-    ASSERT_EQ(move1, std::nullopt)
-        << "Kd1 is not a valid move since d1 is under attack by black king";
+
+    ASSERT_TRUE(game->isValidMove(*move1))
+        << "Kd1 is a valid move since d1 is not under attack";
 }
 
 TEST(ValidatingKingMoveTest, AdvancementUnderAttack2) {
@@ -515,7 +515,7 @@ TEST(ValidatingKingMoveTest, AdvancementUnderAttack2) {
 
     auto move2 = game->parseMove("Kd2");
 
-    ASSERT_EQ(move2, std::nullopt)
+    ASSERT_FALSE(game->isValidMove(*move2))
         << "Kd2 is not a valid move since d2 is under attack by black king";
 }
 
@@ -526,7 +526,7 @@ TEST(ValidatingKingMoveTest, AdvancementUnderAttack3) {
 
     auto move3 = game->parseMove("Kd3");
 
-    ASSERT_EQ(move3, std::nullopt)
+    ASSERT_FALSE(game->isValidMove(*move3))
         << "Kd3 is not a valid move since d3 is under attack by black king";
 }
 

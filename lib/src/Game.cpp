@@ -269,15 +269,29 @@ std::optional<Move> Game::parseMove(const std::string& moveString) const {
 
     std::vector<Position> fromCandidates;
     Move candidateMove = move;
-    std::map<Move, bool, MoveComparator> cache{};
 
-    for (unsigned int row = 1; row <= 8; ++row) {
-        for (auto col = static_cast<int>('a'); col <= static_cast<int>('h'); ++col) {
-            candidateMove.from = Position{ .row = row, .col = static_cast<char>(col) };
+    if (move.piece == WHITE_KING || move.piece == BLACK_KING) {
+        std::map<Move, bool, MoveComparator> cache{};
 
-            if (pieceAt(candidateMove.from) == move.piece) {
-                if (isValidMove(candidateMove, cache, currentPlayer))
-                    fromCandidates.push_back(candidateMove.from);
+        for (unsigned int row = 1; row <= 8; ++row) {
+            for (auto col = static_cast<int>('a'); col <= static_cast<int>('h'); ++col) {
+                candidateMove.from = Position{ .row = row, .col = static_cast<char>(col) };
+
+                if (pieceAt(candidateMove.from) == move.piece) {
+                    if (isValidMove(candidateMove, cache, currentPlayer))
+                        fromCandidates.push_back(candidateMove.from);
+                }
+            }
+        }
+    } else {
+        for (unsigned int row = 1; row <= 8; ++row) {
+            for (auto col = static_cast<int>('a'); col <= static_cast<int>('h'); ++col) {
+                candidateMove.from = Position{ .row = row, .col = static_cast<char>(col) };
+
+                if (pieceAt(candidateMove.from) == move.piece) {
+                    if (isValidMove(candidateMove))
+                        fromCandidates.push_back(candidateMove.from);
+                }
             }
         }
     }
@@ -534,8 +548,8 @@ bool Game::isValidMove(const Move move, std::map<Move, bool, MoveComparator>& ca
         }
     }
 
-    if (move.isCapture && 
-        move.piece != WHITE_PAWN && 
+    if (move.isCapture &&
+        move.piece != WHITE_PAWN &&
         move.piece != BLACK_PAWN &&
         !((move.piece == WHITE_KING && pieceAt(move.to) == BLACK_KING) || (move.piece == BLACK_KING && pieceAt(move.to) == WHITE_KING))
     ) {
@@ -722,7 +736,7 @@ bool Game::isValidMove(const Move move, std::map<Move, bool, MoveComparator>& ca
         }*/
 
         auto it = RookMoveIterator(move.from, move.to);
-        
+
         while (it.hasNext()) {
             if (pieceAt(*it) != NONE) {
                 cache[move] = false;
@@ -772,7 +786,7 @@ bool Game::isValidMove(const Move move, std::map<Move, bool, MoveComparator>& ca
         }*/
 
         auto it = BishopMoveIterator(move.from, move.to);
-            
+
         while (it.hasNext()) {
             if (pieceAt(*it) != NONE) {
                 cache[move] = false;

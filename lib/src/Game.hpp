@@ -9,6 +9,7 @@
 #include <optional>
 #include <ostream>
 #include <vector>
+#include <iostream>
 
 enum PieceColor {
     BLACK = 'b',

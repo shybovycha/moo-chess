@@ -138,7 +138,7 @@ TEST(BoardParsing, ParsingCastlingAvailability2) {
     EXPECT_EQ(game->castlingAvailability.WHITE_KING_SIDE, false);
     EXPECT_EQ(game->castlingAvailability.WHITE_QUEEN_SIDE, false);
 }
- 
+
 TEST(BoardParsing, ParsingCastlingAvailability3) {
     auto game = std::make_unique<Game>();
 
