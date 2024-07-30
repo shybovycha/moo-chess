@@ -513,8 +513,10 @@ TEST(ValidatingKingMoveTest, AdvancementUnderAttack2) {
 
     auto move2 = game->parseMove("Kd2");
 
-    ASSERT_FALSE(game->isValidMove(*move2))
-        << "Kd2 is not a valid move since d2 is under attack by black king";
+    ASSERT_EQ(move2, std::nullopt);
+
+    /*ASSERT_FALSE(game->isValidMove(*move2))
+        << "Kd2 is not a valid move since d2 is under attack by black king";*/
 }
 
 TEST(ValidatingKingMoveTest, AdvancementUnderAttack3) {
@@ -524,8 +526,10 @@ TEST(ValidatingKingMoveTest, AdvancementUnderAttack3) {
 
     auto move3 = game->parseMove("Kd3");
 
-    ASSERT_FALSE(game->isValidMove(*move3))
-        << "Kd3 is not a valid move since d3 is under attack by black king";
+    ASSERT_EQ(move3, std::nullopt);
+
+    /*ASSERT_FALSE(game->isValidMove(*move3))
+        << "Kd3 is not a valid move since d3 is under attack by black king";*/
 }
 
 TEST(ValidatingKingMoveTest, AdvancementUnderAttack4) {
