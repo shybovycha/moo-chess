@@ -1,9 +1,10 @@
 {
-    "name": "moo-chess",
-    "version-string": "0.1.0",
-    "dependencies": [
-        "gtest",
-        "sfml",
-        "tinyxml2"
-    ]
+  "name": "moo-chess",
+  "version-string": "0.1.0",
+  "dependencies": [
+    "gtest",
+    "sfml",
+    "tinyxml2"
+  ],
+  "builtin-baseline": "136a0d8b8c4584e07e5b394d69e492f679d81737"
 }
