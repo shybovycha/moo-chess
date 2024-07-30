@@ -46,6 +46,8 @@ StatusResponse ChessClient::queryServer(const std::string& clientId, sf::Vector2
 }
 
 FindSideResponse ChessClient::findSide() {
+    std::cout << "Sending request to find side...\n";
+
     std::string response = sendRequest(config.server.findSideURI);
 
     int tmp = static_cast<int>(FindSideResponse::UNKNOWN);
@@ -77,6 +79,8 @@ FindSideResponse ChessClient::findSide() {
 //}
 
 PromoteResponse ChessClient::promoteSelf(const PieceColor playerColor) {
+    std::cout << "Sending request to create a game...\n";
+
     std::map<std::string, std::string> params = {
         { "side", playerColor == PieceColor::WHITE ? "white" : "black" }
     };

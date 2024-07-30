@@ -1,7 +1,7 @@
 #include "Game.hpp"
 
 Game::Game() {
-    config = readConfig("config.xml");
+    config = readConfig("assets/config.xml");
     client = std::make_shared<ChessClient>(config);
     loadResources();
 }
@@ -30,6 +30,8 @@ ApplicationConfig Game::readConfig(const std::string& configFilename) {
     ApplicationConfig config;
 
     auto xml = new tinyxml2::XMLDocument();
+
+    std::cout << "Reading config file " << configFilename << "\n";
 
     tinyxml2::XMLError xmlError = xml->LoadFile(configFilename.c_str());
 
@@ -89,6 +91,8 @@ void Game::loadResources() {
         { "board", "board.png" }
     };
 
+    std::cout << "Loading resources\n";
+
     for (auto const& [resourceName, filename] : resourcesToLoad) {
         auto texture = std::make_shared<sf::Texture>();
 
@@ -106,6 +110,8 @@ void Game::loadResources() {
     font = std::make_shared<sf::Font>();
 
     font->loadFromFile(config.game.dataFolderPath + "/" + "arial.ttf");
+
+    std::cout << "Done loading resources\n";
 }
 
 std::array<std::array<Piece, 8>, 8> Game::setupBoard() {

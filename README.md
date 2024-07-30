@@ -9,7 +9,12 @@
 
 ## Building
 
-To build client, run `cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=$VCPKG_HOME/scripts/buildsystems/vcpkg.cmake`, followed by `cmake --build build`.
+Builds require [XMake](https://xmake.io/) and [vcpkg](https://vcpkg.io/).
+
+xmake might require environment variable, `VCPKG_ROOT` defined and pointing to the vcpkg installation directory.
+vcpkg coming with Visual Studio is manifest-mode-only, so it might not be suitable.
+
+To build client, run `xmake` in the project root.
 
 ## Configuration
 
@@ -36,6 +41,6 @@ Then you will need to create database structure - you can easily achieve this by
 
 ## Running
 
-To run client, run it with the side you want to play as (`white`, `black` or `random`): `buck run //client random`.
+To run client, run it with the side you want to play as (`white`, `black` or `random`): `xmake run client random`.
 
 To run server, use the `server.php` file.
