@@ -809,8 +809,8 @@ bool Game::isValidMove(const Move move, std::map<Move, bool, MoveComparator>& ca
             return false;
         }
 
-        auto row = std::min(move.from.row, move.to.row);
-        auto col = std::min(static_cast<unsigned int>(move.from.col), static_cast<unsigned int>(move.to.col));
+        // auto row = std::min(move.from.row, move.to.row);
+        // auto col = std::min(static_cast<unsigned int>(move.from.col), static_cast<unsigned int>(move.to.col));
 
         /*while (row <= std::max(move.from.row, move.to.row) && col <= std::max(static_cast<unsigned int>(move.from.col), static_cast<unsigned int>(move.to.col))) {
             if (row != move.from.row && col != move.to.col && pieceAt(Position{ .row = row, .col = static_cast<char>(col) }) != NONE) {

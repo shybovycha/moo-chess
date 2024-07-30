@@ -4,11 +4,9 @@
 #include <deque>
 #include <format>
 #include <map>
-#include <memory>
 #include <string>
 #include <optional>
 #include <ostream>
-#include <vector>
 #include <iostream>
 
 enum PieceColor {
