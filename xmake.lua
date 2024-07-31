@@ -1,7 +1,7 @@
 set_languages("c++23")
 
 add_requires("gtest", "tinyxml2")
-add_requires("sfml", {configs = {graphics = true, window = true, network = true, system = true, audio = false}})
+add_requires("sfml", {configs = {static = true, shared = false, graphics = true, window = true, network = true, system = true, audio = false}})
 
 add_requires("gtest")
 
