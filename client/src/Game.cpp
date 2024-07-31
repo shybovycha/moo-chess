@@ -9,19 +9,19 @@ Game::Game() {
 void Game::start(const std::string &initialSide) {
     auto playerColor = initialSide == "white" ? PieceColor::WHITE : PieceColor::BLACK;
 
-    if (initialSide == "random") {
-        auto findSideResponse = client->findSide();
+    // if (initialSide == "random") {
+    //     auto findSideResponse = client->findSide();
 
-        if (findSideResponse == FindSideResponse::UNKNOWN) {
-            return;
-        }
+    //     if (findSideResponse == FindSideResponse::UNKNOWN) {
+    //         return;
+    //     }
 
-        playerColor = (findSideResponse == FindSideResponse::WHITE) ? PieceColor::WHITE : PieceColor::BLACK;
-    }
+    //     playerColor = (findSideResponse == FindSideResponse::WHITE) ? PieceColor::WHITE : PieceColor::BLACK;
+    // }
 
-    auto promotionResponse = client->promoteSelf(playerColor);
+    // auto promotionResponse = client->promoteSelf(playerColor);
 
-    clientId = promotionResponse.getClientId();
+    // clientId = promotionResponse.getClientId();
 
     mainLoop(playerColor);
 }
@@ -264,75 +264,75 @@ int Game::mainLoop(const PieceColor playerColor) {
                     break;
 
                 case (sf::Keyboard::Return):
-                case (sf::Keyboard::Space):
-                    if (selected.x > -1 && selected.y > -1) {
-                        MoveValidationResult res = client->validateMove(clientId, selected, cursor);
+                // case (sf::Keyboard::Space):
+                //     if (selected.x > -1 && selected.y > -1) {
+                //         MoveValidationResult res = client->validateMove(clientId, selected, cursor);
 
-                        if (res == MoveValidationResult::NORMAL_MOVE) {
-                            board[cursor.y][cursor.x] = board[selected.y][selected.x];
-                            board[selected.y][selected.x] = Piece::NONE;
-                            selected = sf::Vector2i(-1, -1);
-                            gameStatus = GameState::WAITING_FOR_OPPONENT;
-                        }
-                        else
-                            // castling
-                            if (res == MoveValidationResult::CASTLING_KING_SIDE) {
-                                if (selected.y == 7 && selected.x == 4 && playerColor == PieceColor::WHITE) {
-                                    if (cursor.y == 7 && cursor.x == 2) {
-                                        auto king = board[7][4];
-                                        auto rook = board[7][0];
+                //         if (res == MoveValidationResult::NORMAL_MOVE) {
+                //             board[cursor.y][cursor.x] = board[selected.y][selected.x];
+                //             board[selected.y][selected.x] = Piece::NONE;
+                //             selected = sf::Vector2i(-1, -1);
+                //             gameStatus = GameState::WAITING_FOR_OPPONENT;
+                //         }
+                //         else
+                //             // castling
+                //             if (res == MoveValidationResult::CASTLING_KING_SIDE) {
+                //                 if (selected.y == 7 && selected.x == 4 && playerColor == PieceColor::WHITE) {
+                //                     if (cursor.y == 7 && cursor.x == 2) {
+                //                         auto king = board[7][4];
+                //                         auto rook = board[7][0];
 
-                                        board[7][0] = Piece::NONE;
-                                        board[7][4] = Piece::NONE;
-                                        board[7][2] = king;
-                                        board[7][3] = rook;
-                                    }
-                                    else if (cursor.y == 7 && cursor.x == 6) {
-                                        auto king = board[7][4];
-                                        auto rook = board[7][7];
+                //                         board[7][0] = Piece::NONE;
+                //                         board[7][4] = Piece::NONE;
+                //                         board[7][2] = king;
+                //                         board[7][3] = rook;
+                //                     }
+                //                     else if (cursor.y == 7 && cursor.x == 6) {
+                //                         auto king = board[7][4];
+                //                         auto rook = board[7][7];
 
-                                        board[7][7] = Piece::NONE;
-                                        board[7][4] = Piece::NONE;
-                                        board[7][6] = king;
-                                        board[7][5] = rook;
-                                    }
+                //                         board[7][7] = Piece::NONE;
+                //                         board[7][4] = Piece::NONE;
+                //                         board[7][6] = king;
+                //                         board[7][5] = rook;
+                //                     }
 
-                                    selected = sf::Vector2i(-1, -1);
-                                    gameStatus = GameState::WAITING_FOR_OPPONENT;
-                                }
-                                else if (selected.y == 7 && selected.x == 3 && playerColor == PieceColor::BLACK) {
-                                    if (cursor.y == 7 && cursor.x == 1) {
-                                        auto king = board[7][3];
-                                        auto rook = board[7][0];
+                //                     selected = sf::Vector2i(-1, -1);
+                //                     gameStatus = GameState::WAITING_FOR_OPPONENT;
+                //                 }
+                //                 else if (selected.y == 7 && selected.x == 3 && playerColor == PieceColor::BLACK) {
+                //                     if (cursor.y == 7 && cursor.x == 1) {
+                //                         auto king = board[7][3];
+                //                         auto rook = board[7][0];
 
-                                        board[7][0] = Piece::NONE;
-                                        board[7][3] = Piece::NONE;
-                                        board[7][1] = king;
-                                        board[7][2] = rook;
-                                    }
-                                    else if (cursor.y == 7 && cursor.x == 5) {
-                                        auto king = board[7][3];
-                                        auto rook = board[7][7];
+                //                         board[7][0] = Piece::NONE;
+                //                         board[7][3] = Piece::NONE;
+                //                         board[7][1] = king;
+                //                         board[7][2] = rook;
+                //                     }
+                //                     else if (cursor.y == 7 && cursor.x == 5) {
+                //                         auto king = board[7][3];
+                //                         auto rook = board[7][7];
 
-                                        board[7][7] = Piece::NONE;
-                                        board[7][3] = Piece::NONE;
-                                        board[7][5] = king;
-                                        board[7][4] = rook;
-                                    }
+                //                         board[7][7] = Piece::NONE;
+                //                         board[7][3] = Piece::NONE;
+                //                         board[7][5] = king;
+                //                         board[7][4] = rook;
+                //                     }
 
-                                    selected = sf::Vector2i(-1, -1);
-                                    gameStatus = GameState::WAITING_FOR_OPPONENT;
-                                }
-                            }
-                            else {
-                                selected = sf::Vector2i(-1, -1);
-                            }
-                    }
-                    else {
-                        selected.x = cursor.x;
-                        selected.y = cursor.y;
-                    }
-                    break;
+                //                     selected = sf::Vector2i(-1, -1);
+                //                     gameStatus = GameState::WAITING_FOR_OPPONENT;
+                //                 }
+                //             }
+                //             else {
+                //                 selected = sf::Vector2i(-1, -1);
+                //             }
+                //     }
+                //     else {
+                //         selected.x = cursor.x;
+                //         selected.y = cursor.y;
+                //     }
+                //     break;
 
                 default:
                     break;
@@ -343,58 +343,58 @@ int Game::mainLoop(const PieceColor playerColor) {
         float timeSinceLastUpdate = timer->getElapsedTime().asSeconds();
 
         if (timeSinceLastUpdate > 3.f) {
-            if (gameStatus == GameState::WAITING_FOR_OPPONENT) {
-                sf::Vector2i from, to;
-                StatusResponse res = client->queryServer(clientId, &from, &to);
+            // if (gameStatus == GameState::WAITING_FOR_OPPONENT) {
+            //     sf::Vector2i from, to;
+            //     StatusResponse res = client->queryServer(clientId, &from, &to);
 
-                if (res == StatusResponse::PLAYING_TURN) {
-                    gameStatus = GameState::MAKING_TURN;
+            //     if (res == StatusResponse::PLAYING_TURN) {
+            //         gameStatus = GameState::MAKING_TURN;
 
-                    if (from.x > -1 && from.x < 8 && to.x > -1 && to.x < 8 && from.y > -1 && from.y < 8 && to.y > -1 && to.y < 8) {
-                        board[to.y][to.x] = board[from.y][from.x];
-                        board[from.y][from.x] = Piece::NONE;
-                    }
-                }
-                else if (res == StatusResponse::OPPONENT_CASTLING_KING_SIDE) {
-                    gameStatus = GameState::MAKING_TURN;
+            //         if (from.x > -1 && from.x < 8 && to.x > -1 && to.x < 8 && from.y > -1 && from.y < 8 && to.y > -1 && to.y < 8) {
+            //             board[to.y][to.x] = board[from.y][from.x];
+            //             board[from.y][from.x] = Piece::NONE;
+            //         }
+            //     }
+            //     else if (res == StatusResponse::OPPONENT_CASTLING_KING_SIDE) {
+            //         gameStatus = GameState::MAKING_TURN;
 
-                    auto king = board[from.y][from.x];
-                    auto rook = Piece::NONE;
+            //         auto king = board[from.y][from.x];
+            //         auto rook = Piece::NONE;
 
-                    if (to.x == 1) {
-                        rook = board[0][0];
+            //         if (to.x == 1) {
+            //             rook = board[0][0];
 
-                        board[0][0] = Piece::NONE;
-                        board[from.y][from.x] = Piece::NONE;
-                        board[0][1] = king;
-                        board[0][2] = rook;
-                    }
-                    else if (to.x == 2) {
-                        rook = board[0][0];
+            //             board[0][0] = Piece::NONE;
+            //             board[from.y][from.x] = Piece::NONE;
+            //             board[0][1] = king;
+            //             board[0][2] = rook;
+            //         }
+            //         else if (to.x == 2) {
+            //             rook = board[0][0];
 
-                        board[0][0] = Piece::NONE;
-                        board[from.y][from.x] = Piece::NONE;
-                        board[0][2] = king;
-                        board[0][3] = rook;
-                    }
-                    else if (to.x == 5) {
-                        rook = board[0][7];
+            //             board[0][0] = Piece::NONE;
+            //             board[from.y][from.x] = Piece::NONE;
+            //             board[0][2] = king;
+            //             board[0][3] = rook;
+            //         }
+            //         else if (to.x == 5) {
+            //             rook = board[0][7];
 
-                        board[0][7] = Piece::NONE;
-                        board[from.y][from.x] = Piece::NONE;
-                        board[0][5] = king;
-                        board[0][4] = rook;
-                    }
-                    else if (to.x == 6) {
-                        rook = board[0][7];
+            //             board[0][7] = Piece::NONE;
+            //             board[from.y][from.x] = Piece::NONE;
+            //             board[0][5] = king;
+            //             board[0][4] = rook;
+            //         }
+            //         else if (to.x == 6) {
+            //             rook = board[0][7];
 
-                        board[0][7] = Piece::NONE;
-                        board[from.y][from.x] = Piece::NONE;
-                        board[0][6] = king;
-                        board[0][5] = rook;
-                    }
-                }
-            }
+            //             board[0][7] = Piece::NONE;
+            //             board[from.y][from.x] = Piece::NONE;
+            //             board[0][6] = king;
+            //             board[0][5] = rook;
+            //         }
+            //     }
+            // }
 
             timer->restart();
         }
