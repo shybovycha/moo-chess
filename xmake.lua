@@ -31,3 +31,11 @@ target("client")
     set_configdir("$(buildir)/$(plat)/$(arch)/$(mode)/assets")
     add_configfiles("client/assets/*", {onlycopy = true})
     add_configfiles("client/config.xml", {onlycopy = true})
+
+    if is_plat("macosx") then
+        -- this prevents "-[SFOpenGLView enableKeyRepeat]: unrecognized selector sent to instance 0x7fa5c2507970" runtime exception
+        add_ldflags("-ObjC")
+
+        -- this prevents linker errors
+        add_frameworks("Foundation", "OpenGL", "IOKit", "Cocoa", "Carbon")
+    end
