@@ -2,14 +2,15 @@ set_languages("c++23")
 
 add_requires("gtest", "tinyxml2")
 add_requires("libsdl")
+add_requires("imgui", {configs = {sdl2 = true, freetype = true}})
 
 add_requires("gtest")
 
 target("chesslib")
     set_kind("static")
     add_files("lib/src/*.cpp")
-    add_headerfiles("lib/src/*.hpp", {prefixdir = "chesslib"})
-    add_includedirs("lib/src", {public = true})
+    add_headerfiles("lib/include/**/*.hpp")
+    add_includedirs("lib/include", {public = true})
 
 for _, file in ipairs(os.files("lib/test/*Test.cpp")) do
     local name = path.basename(file)
@@ -29,6 +30,8 @@ target("client")
     add_packages("tinyxml2")
     add_packages("libsdl")
     add_defines("SDL_MAIN_HANDLED")
+    add_packages("imgui")
+    add_defines("IMGUI_ENABLE_FREETYPE")
     set_configdir("$(buildir)/$(plat)/$(arch)/$(mode)/assets")
     add_configfiles("client/assets/*", {onlycopy = true})
     add_configfiles("client/config.xml", {onlycopy = true})
