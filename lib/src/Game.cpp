@@ -1,4 +1,4 @@
-#include "Game.hpp"
+#include "chesslib/Game.hpp"
 
 Game::Game() :
     castlingAvailability{ false, false, false, false },

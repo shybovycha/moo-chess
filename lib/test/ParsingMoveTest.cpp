@@ -13,7 +13,7 @@ using ::testing::IsNull;
 using ::testing::NotNull;
 using ::testing::Ne;
 
-#include "Game.hpp"
+#include "chesslib/Game.hpp"
 
 TEST(ParsingMoveTest, ParsingPawnAdvancement) {
     auto game = std::make_unique<Game>();
