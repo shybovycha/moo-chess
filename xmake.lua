@@ -1,7 +1,7 @@
 set_languages("c++23")
 
 add_requires("gtest", "tinyxml2")
-add_requires("sfml", {configs = {static = true, shared = false, graphics = true, window = true, network = true, system = true, audio = false}})
+add_requires("libsdl")
 
 add_requires("gtest")
 
@@ -24,10 +24,11 @@ end
 
 target("client")
     set_kind("binary")
-    add_files("client/src/*.cpp")
+    add_files("client/src/main.cpp")
     add_deps("chesslib")
     add_packages("tinyxml2")
-    add_packages("sfml", {components = {"graphics", "window", "system", "network"}})
+    add_packages("libsdl")
+    add_defines("SDL_MAIN_HANDLED")
     set_configdir("$(buildir)/$(plat)/$(arch)/$(mode)/assets")
     add_configfiles("client/assets/*", {onlycopy = true})
     add_configfiles("client/config.xml", {onlycopy = true})
