@@ -4,6 +4,15 @@
 
 #include <SDL.h>
 
+enum class ApplicationState {
+    UNKNOWN = 0,
+    NO_CURRENT_GAME,
+    SEARCHING_FOR_GAME,
+    PLAYING,
+    GAME_OVER,
+    QUIT,
+};
+
 int main(int argc, char** argv) {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
     {
@@ -28,9 +37,9 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    bool isOpen = true;
+    ApplicationState state = ApplicationState::UNKNOWN;
 
-    while (isOpen)
+    while (state != ApplicationState::QUIT)
     {
         SDL_Event event;
 
@@ -38,12 +47,12 @@ int main(int argc, char** argv) {
         {
             if (event.type == SDL_QUIT)
             {
-                isOpen = false;
+                state = ApplicationState::QUIT;
             }
 
             if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window))
             {
-                isOpen = false;
+                state = ApplicationState::QUIT;
             }
         }
     }
