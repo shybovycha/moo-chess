@@ -4,6 +4,8 @@
 
 #include <SDL.h>
 
+#include <SDL_image.h>
+
 #include "imgui.h"
 #include "imgui_freetype.h"
 #include "imgui_impl_sdl2.h"
@@ -76,6 +78,27 @@ int main(int argc, char** argv) {
     }
 
     ApplicationState state = ApplicationState::NO_CURRENT_GAME;
+
+    // std::map<std::string, SDL_Texture*> piece_textures;
+
+    auto b_bishop = IMG_LoadTexture(renderer, "assets/b_bishop.png");
+    auto b_king = IMG_LoadTexture(renderer, "assets/b_king.png");
+    auto b_knight = IMG_LoadTexture(renderer, "assets/b_knight.png");
+    auto b_pawn = IMG_LoadTexture(renderer, "assets/b_pawn.png");
+    auto b_queen = IMG_LoadTexture(renderer, "assets/b_queen.png");
+    auto b_rook = IMG_LoadTexture(renderer, "assets/b_rook.png");
+    // auto board = IMG_LoadTexture(renderer, "assets/board.png");
+    auto w_bishop = IMG_LoadTexture(renderer, "assets/w_bishop.png");
+    auto w_king = IMG_LoadTexture(renderer, "assets/w_king.png");
+    auto w_knight = IMG_LoadTexture(renderer, "assets/w_knight.png");
+    auto w_pawn = IMG_LoadTexture(renderer, "assets/w_pawn.png");
+    auto w_queen = IMG_LoadTexture(renderer, "assets/w_queen.png");
+    auto w_rook = IMG_LoadTexture(renderer, "assets/w_rook.png");
+
+    std::array<SDL_Texture*, 8> row1 = { w_rook, w_knight, w_bishop, w_queen, w_king, w_bishop, w_knight, w_rook };
+    std::array<SDL_Texture*, 8> row2 = { w_pawn, w_pawn, w_pawn, w_pawn, w_pawn, w_pawn, w_pawn, w_pawn };
+    std::array<SDL_Texture*, 8> row7 = { b_pawn, b_pawn, b_pawn, b_pawn, b_pawn, b_pawn, b_pawn, b_pawn };
+    std::array<SDL_Texture*, 8> row8 = { b_rook, b_knight, b_bishop, b_queen, b_king, b_bishop, b_knight, b_rook };
 
     while (state != ApplicationState::QUIT)
     {
@@ -244,23 +267,46 @@ int main(int argc, char** argv) {
 
                     auto text = std::format("{0}{1}", static_cast<char>('a' + col), row + 1);
 
-                    if ((row + col) % 2 == 0)
-                    {
-                        // dark square
-                        ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor(173 / 255.f, 138 / 255.f, 104 / 255.f));
-                        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor(173 / 255.f, 138 / 255.f, 104 / 255.f));
-                        ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor(173 / 255.f, 138 / 255.f, 104 / 255.f));
-                    }
-                    else
-                    {
-                        // light square
-                        ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor(237 / 255.f, 219 / 255.f, 185 / 255.f));
-                        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor(237 / 255.f, 219 / 255.f, 185 / 255.f));
-                        ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor(237 / 255.f, 219 / 255.f, 185 / 255.f));
-                    }
+                    auto square_color = ((row + col) % 2 == 0)
+                        ? ImColor(173 / 255.f, 138 / 255.f, 104 / 255.f) // dark square
+                        : ImColor(237 / 255.f, 219 / 255.f, 185 / 255.f); // light square
+
+                    ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4) square_color);
+                    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4) square_color);
+                    ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4) square_color);
 
                     ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(1.0f, 1.0f));
 
+                    if (row == 0)
+                    {
+                        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
+                        ImGui::ImageButton(text.c_str(), row1[col], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), (ImVec4) square_color, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+                        ImGui::PopStyleVar();
+                    }
+                    else if (row == 1)
+                    {
+                        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
+                        ImGui::ImageButton(text.c_str(), row2[col], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), (ImVec4) square_color, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+                        ImGui::PopStyleVar();
+                    }
+                    else if (row == 6)
+                    {
+                        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
+                        ImGui::ImageButton(text.c_str(), row7[col], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), (ImVec4) square_color, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+                        ImGui::PopStyleVar();
+                    }
+                    else if (row == 7)
+                    {
+                        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
+                        ImGui::ImageButton(text.c_str(), row8[col], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), (ImVec4) square_color, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+                        ImGui::PopStyleVar();
+                    }
+                    else
+                    {
+                        ImGui::Button("", ImVec2(60, 60));
+                    }
+
+                    /*
                     if (row == 0 && col == 7)
                     {
                         ImGui::Button(std::format("{0}{1}", static_cast<char>('a' + col), row + 1).c_str(), ImVec2(60, 60));
@@ -277,30 +323,64 @@ int main(int argc, char** argv) {
                     {
                         ImGui::Button("", ImVec2(60, 60));
                     }
+                    */
 
                     ImGui::PopStyleVar();
 
                     ImGui::PopStyleColor(3);
 
                     // Our buttons are both drag sources and drag targets
-                    if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
+                    if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoPreviewTooltip)) // ImGuiDragDropFlags_None))
                     {
+                        ImGui::SetNextWindowPos(ImVec2(io.MousePos.x - 30.0f, io.MousePos.y - 30.0f));
+
+                        ImGui::Begin("##x_tooltip_x_00", nullptr, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+
                         // Set payload to carry the index of our item (could be anything)
                         ImGui::SetDragDropPayload("DND_PIECE", &piece, sizeof(int));
 
-                        // Display preview (could be anything, e.g. when dragging an image we could decide to display
-                        // the filename and a small preview of the image, etc.)
-                        // if (mode == Mode_Copy) { ImGui::Text("Copy %s", names[n]); }
-                        // if (mode == Mode_Move) { ImGui::Text("Move %s", names[n]); }
-                        // if (mode == Mode_Swap) { ImGui::Text("Swap %s", names[n]); }
+                        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
 
-                        ImGui::Text(text.c_str());
+                        // FIXME: can't use SetNextWindowPos because of https://github.com/ocornut/imgui/issues/6973
+                        // ImGui::SetNextWindowPos(io.MousePos, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+                        // ImGui::SetWindowPos("##Tooltip_00", ImVec2(0.0f, 0.0f), ImGuiCond_Always);
 
-                        // texture_id, size, uv_min, uv_max, tint_color (1.f - no tint), border_color
-                        // ImGui::Image(piece_tex_id, ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+                        if (row == 0)
+                        {
+                            ImGui::PushStyleColor(ImGuiCol_PopupBg, (ImVec4) ImColor(0.0f, 0.0f, 0.0f, 1.0f));
+                            ImGui::Image(row1[col], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.0f));
+                            ImGui::PopStyleColor();
+                        }
+                        else if (row == 1)
+                        {
+                            ImGui::PushStyleColor(ImGuiCol_PopupBg, (ImVec4) ImColor(0.0f, 0.0f, 0.0f, 1.0f));
+                            ImGui::Image(row2[col], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.0f));
+                            ImGui::PopStyleColor();
+                        }
+                        else if (row == 6)
+                        {
+                            ImGui::PushStyleColor(ImGuiCol_PopupBg, (ImVec4) ImColor(0.0f, 0.0f, 0.0f, 1.0f));
+                            ImGui::Image(row7[col], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.0f));
+                            ImGui::PopStyleColor();
+                        }
+                        else if (row == 7)
+                        {
+                            ImGui::PushStyleColor(ImGuiCol_PopupBg, (ImVec4) ImColor(0.0f, 0.0f, 0.0f, 1.0f));
+                            ImGui::Image(row8[col], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.0f));
+                            ImGui::PopStyleColor();
+                        }
+                        else
+                        {
+                            ImGui::Text(text.c_str());
+                        }
+
+                        ImGui::PopStyleVar();
+
+                        ImGui::End();
 
                         ImGui::EndDragDropSource();
                     }
+
                     if (ImGui::BeginDragDropTarget())
                     {
                         if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_DEMO_CELL"))

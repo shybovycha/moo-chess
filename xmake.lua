@@ -2,6 +2,7 @@ set_languages("c++23")
 
 add_requires("gtest", "tinyxml2")
 add_requires("libsdl")
+add_requires("libsdl_image")
 add_requires("imgui", {configs = {sdl2 = true, freetype = true}})
 
 add_requires("gtest")
@@ -31,6 +32,8 @@ target("client")
 
     add_packages("libsdl")
     add_defines("SDL_MAIN_HANDLED")
+
+    add_packages("libsdl_image")
 
     add_packages("imgui")
     add_defines("IMGUI_ENABLE_FREETYPE")
