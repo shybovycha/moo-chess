@@ -104,7 +104,7 @@ int main(int argc, char** argv) {
         if (state == ApplicationState::NO_CURRENT_GAME)
         {
 
-            ImGui::Begin("The game of chess", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove);
+            ImGui::Begin("The game of chess", nullptr, ImGuiWindowFlags_NoCollapse);
 
             ImGui::PushItemWidth(-100.f);
             if (ImGui::Button("Find a game"))
@@ -133,7 +133,7 @@ int main(int argc, char** argv) {
 
         if (state == ApplicationState::CONFIGURE_GAME_SEARCH)
         {
-            ImGui::Begin("Find a game", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove);
+            ImGui::Begin("Find a game", nullptr, ImGuiWindowFlags_NoCollapse);
 
             // static int elo = 1000;
             // ImGui::InputInt("Your ELO", &elo);
@@ -147,7 +147,11 @@ int main(int argc, char** argv) {
             ImGui::RadioButton("White", &player_color_idx, 1); ImGui::SameLine();
             ImGui::RadioButton("Random", &player_color_idx, 2);
 
-            if (ImGui::Button("Create")) {}
+            if (ImGui::Button("Create"))
+            {
+                // TODO: add server call
+                state = ApplicationState::PLAYING;
+            }
 
             ImGui::SameLine();
             ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor(240.f / 255.f, 123.f / 255.f, 93.f / 255.f));
@@ -164,7 +168,7 @@ int main(int argc, char** argv) {
 
         if (state == ApplicationState::CONFIGURE_NEW_GAME)
         {
-            ImGui::Begin("Create a game", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove);
+            ImGui::Begin("Create a game", nullptr, ImGuiWindowFlags_NoCollapse);
 
             static char player_name[128] = "";
             ImGui::InputTextWithHint("", "Your name", player_name, IM_ARRAYSIZE(player_name));
@@ -178,7 +182,11 @@ int main(int argc, char** argv) {
             ImGui::RadioButton("White", &player_color_idx, 1); ImGui::SameLine();
             ImGui::RadioButton("Random", &player_color_idx, 2);
 
-            if (ImGui::Button("Create")) {}
+            if (ImGui::Button("Create"))
+            {
+                // TODO: add server call
+                state = ApplicationState::PLAYING;
+            }
 
             ImGui::SameLine();
             ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor(240.f / 255.f, 123.f / 255.f, 93.f / 255.f));
@@ -189,6 +197,40 @@ int main(int argc, char** argv) {
             }
 
             ImGui::PopStyleColor();
+
+            ImGui::End();
+        }
+
+        if (state == ApplicationState::PLAYING)
+        {
+            ImGui::Begin("Current game", nullptr, ImGuiWindowFlags_NoCollapse);
+
+            ImGui::Text(std::format("You play as {0}", "black").c_str());
+
+            // static int time_limit = 5;
+            // ImGui::InputInt("Time limit (min)", &time_limit);
+
+            if (ImGui::Button("Flip the board")) {}
+
+            if (ImGui::Button("Resign"))
+            {
+                state = ApplicationState::NO_CURRENT_GAME;
+            }
+            
+            ImGui::SameLine();
+
+            if (ImGui::Button("Suggest draw"))
+            {
+                state = ApplicationState::NO_CURRENT_GAME;
+            }
+
+            ImGui::End();
+
+            // ----------
+
+            ImGui::Begin("Board", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove);
+
+            // ImGui::Text(std::format("You play as {0}", "black"));
 
             ImGui::End();
         }
