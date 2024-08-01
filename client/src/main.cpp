@@ -11,6 +11,8 @@
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
 
+#include "chesslib/Game.hpp"
+
 enum class ApplicationState {
     UNKNOWN = 0,
     NO_CURRENT_GAME,
@@ -79,26 +81,33 @@ int main(int argc, char** argv) {
 
     ApplicationState state = ApplicationState::NO_CURRENT_GAME;
 
-    // std::map<std::string, SDL_Texture*> piece_textures;
+    std::array<std::array<Piece, 8>, 8> board = {
+        {
+            { WHITE_ROOK, WHITE_KNIGHT, WHITE_BISHOP, WHITE_QUEEN, WHITE_KING, WHITE_BISHOP, WHITE_KNIGHT, WHITE_ROOK },
+            { WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN },
+            { NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE },
+            { NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE },
+            { NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE },
+            { NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE },
+            { BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN },
+            { BLACK_ROOK, BLACK_KNIGHT, BLACK_BISHOP, BLACK_QUEEN, BLACK_KING, BLACK_BISHOP, BLACK_KNIGHT, BLACK_ROOK }
+        }
+    };
 
-    auto b_bishop = IMG_LoadTexture(renderer, "assets/b_bishop.png");
-    auto b_king = IMG_LoadTexture(renderer, "assets/b_king.png");
-    auto b_knight = IMG_LoadTexture(renderer, "assets/b_knight.png");
-    auto b_pawn = IMG_LoadTexture(renderer, "assets/b_pawn.png");
-    auto b_queen = IMG_LoadTexture(renderer, "assets/b_queen.png");
-    auto b_rook = IMG_LoadTexture(renderer, "assets/b_rook.png");
-    // auto board = IMG_LoadTexture(renderer, "assets/board.png");
-    auto w_bishop = IMG_LoadTexture(renderer, "assets/w_bishop.png");
-    auto w_king = IMG_LoadTexture(renderer, "assets/w_king.png");
-    auto w_knight = IMG_LoadTexture(renderer, "assets/w_knight.png");
-    auto w_pawn = IMG_LoadTexture(renderer, "assets/w_pawn.png");
-    auto w_queen = IMG_LoadTexture(renderer, "assets/w_queen.png");
-    auto w_rook = IMG_LoadTexture(renderer, "assets/w_rook.png");
-
-    std::array<SDL_Texture*, 8> row1 = { w_rook, w_knight, w_bishop, w_queen, w_king, w_bishop, w_knight, w_rook };
-    std::array<SDL_Texture*, 8> row2 = { w_pawn, w_pawn, w_pawn, w_pawn, w_pawn, w_pawn, w_pawn, w_pawn };
-    std::array<SDL_Texture*, 8> row7 = { b_pawn, b_pawn, b_pawn, b_pawn, b_pawn, b_pawn, b_pawn, b_pawn };
-    std::array<SDL_Texture*, 8> row8 = { b_rook, b_knight, b_bishop, b_queen, b_king, b_bishop, b_knight, b_rook };
+    std::map<Piece, SDL_Texture*> piece_textures = {
+        { BLACK_BISHOP, IMG_LoadTexture(renderer, "assets/b_bishop.png") },
+        { BLACK_KING, IMG_LoadTexture(renderer, "assets/b_king.png") },
+        { BLACK_KNIGHT, IMG_LoadTexture(renderer, "assets/b_knight.png") },
+        { BLACK_PAWN, IMG_LoadTexture(renderer, "assets/b_pawn.png") },
+        { BLACK_QUEEN, IMG_LoadTexture(renderer, "assets/b_queen.png") },
+        { BLACK_ROOK, IMG_LoadTexture(renderer, "assets/b_rook.png") },
+        { WHITE_BISHOP, IMG_LoadTexture(renderer, "assets/w_bishop.png") },
+        { WHITE_KING, IMG_LoadTexture(renderer, "assets/w_king.png") },
+        { WHITE_KNIGHT, IMG_LoadTexture(renderer, "assets/w_knight.png") },
+        { WHITE_PAWN, IMG_LoadTexture(renderer, "assets/w_pawn.png") },
+        { WHITE_QUEEN, IMG_LoadTexture(renderer, "assets/w_queen.png") },
+        { WHITE_ROOK, IMG_LoadTexture(renderer, "assets/w_rook.png") }
+    };
 
     while (state != ApplicationState::QUIT)
     {
@@ -261,9 +270,8 @@ int main(int argc, char** argv) {
             {
                 for (auto col = 0; col < 8; col++)
                 {
-                    int piece = (row * 8) + col;
-
-                    ImGui::PushID(piece);
+                    Piece piece = board[row][col];
+                    char ch_piece = static_cast<char>(piece);
 
                     auto text = std::format("{0}{1}", static_cast<char>('a' + col), row + 1);
 
@@ -277,28 +285,10 @@ int main(int argc, char** argv) {
 
                     ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(1.0f, 1.0f));
 
-                    if (row == 0)
+                    if (board[row][col] != NONE)
                     {
                         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
-                        ImGui::ImageButton(text.c_str(), row1[col], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), (ImVec4) square_color, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
-                        ImGui::PopStyleVar();
-                    }
-                    else if (row == 1)
-                    {
-                        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
-                        ImGui::ImageButton(text.c_str(), row2[col], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), (ImVec4) square_color, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
-                        ImGui::PopStyleVar();
-                    }
-                    else if (row == 6)
-                    {
-                        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
-                        ImGui::ImageButton(text.c_str(), row7[col], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), (ImVec4) square_color, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
-                        ImGui::PopStyleVar();
-                    }
-                    else if (row == 7)
-                    {
-                        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
-                        ImGui::ImageButton(text.c_str(), row8[col], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), (ImVec4) square_color, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+                        ImGui::ImageButton(text.c_str(), piece_textures[board[row][col]], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), (ImVec4) square_color, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
                         ImGui::PopStyleVar();
                     }
                     else
@@ -332,46 +322,25 @@ int main(int argc, char** argv) {
                     // Our buttons are both drag sources and drag targets
                     if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoPreviewTooltip)) // ImGuiDragDropFlags_None))
                     {
+                        int pos = (row * 8) + col;
+
+                        ImGui::SetDragDropPayload("DND_TARGET_POS", &pos, sizeof(int), ImGuiCond_FirstUseEver);
+
                         ImGui::SetNextWindowPos(ImVec2(io.MousePos.x - 30.0f, io.MousePos.y - 30.0f));
 
                         ImGui::Begin("##x_tooltip_x_00", nullptr, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 
-                        // Set payload to carry the index of our item (could be anything)
-                        ImGui::SetDragDropPayload("DND_PIECE", &piece, sizeof(int));
-
                         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
 
-                        // FIXME: can't use SetNextWindowPos because of https://github.com/ocornut/imgui/issues/6973
-                        // ImGui::SetNextWindowPos(io.MousePos, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-                        // ImGui::SetWindowPos("##Tooltip_00", ImVec2(0.0f, 0.0f), ImGuiCond_Always);
-
-                        if (row == 0)
+                        if (board[row][col] != NONE)
                         {
                             ImGui::PushStyleColor(ImGuiCol_PopupBg, (ImVec4) ImColor(0.0f, 0.0f, 0.0f, 1.0f));
-                            ImGui::Image(row1[col], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.0f));
-                            ImGui::PopStyleColor();
-                        }
-                        else if (row == 1)
-                        {
-                            ImGui::PushStyleColor(ImGuiCol_PopupBg, (ImVec4) ImColor(0.0f, 0.0f, 0.0f, 1.0f));
-                            ImGui::Image(row2[col], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.0f));
-                            ImGui::PopStyleColor();
-                        }
-                        else if (row == 6)
-                        {
-                            ImGui::PushStyleColor(ImGuiCol_PopupBg, (ImVec4) ImColor(0.0f, 0.0f, 0.0f, 1.0f));
-                            ImGui::Image(row7[col], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.0f));
-                            ImGui::PopStyleColor();
-                        }
-                        else if (row == 7)
-                        {
-                            ImGui::PushStyleColor(ImGuiCol_PopupBg, (ImVec4) ImColor(0.0f, 0.0f, 0.0f, 1.0f));
-                            ImGui::Image(row8[col], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.0f));
+                            ImGui::Image(piece_textures[board[row][col]], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.0f));
                             ImGui::PopStyleColor();
                         }
                         else
                         {
-                            ImGui::Text(text.c_str());
+                            // ImGui::Text(text.c_str());
                         }
 
                         ImGui::PopStyleVar();
@@ -383,20 +352,25 @@ int main(int argc, char** argv) {
 
                     if (ImGui::BeginDragDropTarget())
                     {
-                        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_DEMO_CELL"))
+                        // the number of frames is messed up because of non-standard board layout (in terms of UI elements), so this will always be untagged payload
+                        if (const ImGuiPayload* payload = ImGui::GetDragDropPayload())
                         {
+                            // TODO: add strcmp for payload->DataType, "DND_TARGET_POS"
+                            std::cout << std::format("Drop unaccepted payload `{0}`\n", payload->DataType);
+
                             IM_ASSERT(payload->DataSize == sizeof(int));
-                            int payload_piece = *(const int*)payload->Data;
+                            int payload_pos = *(const int*)payload->Data;
 
                             // handle drop at (row, col)
+                            int src_row = payload_pos / 8;
+                            int src_col = (payload_pos - (src_row * 8));
 
-                            std::cout << std::format("Drop piece {0} at ({1}, {2})\n", piece, row, col);
+                            // TODO: change the payload to (source piece, source pos)?
+                            std::cout << std::format("Drop piece {0:c}{1}{2}\n", static_cast<char>(board[src_row][src_col]), static_cast<char>('a' + col), row + 1);
                         }
 
                         ImGui::EndDragDropTarget();
                     }
-
-                    ImGui::PopID();
 
                     if (col < 7)
                     {

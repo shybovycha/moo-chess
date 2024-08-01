@@ -16,7 +16,7 @@ enum PieceColor {
 };
 
 enum Piece {
-    NONE = 0,
+    NONE = '.',
 
     WHITE_PAWN = 'P',
     WHITE_ROOK = 'R',
@@ -97,6 +97,17 @@ struct std::hash<Move> {
         std::size_t h5 = std::hash<bool>{}(move.isCapture);
         std::size_t h6 = std::hash<bool>{}(move.isCastling);
         return h1 ^ (h2 << 1) ^ (h3 << 2) ^ (h4 << 3) ^ (h5 << 4) ^ (h6 << 5); // or use boost::hash_combine
+    }
+};
+
+template <>
+struct std::formatter<Piece> {
+    constexpr auto parse(std::format_parse_context& ctx) {
+        return ctx.begin();
+    }
+
+    auto format(const Piece& piece, std::format_context& ctx) const {
+        return std::format_to(ctx.out(), "{0:c}", static_cast<char>(piece));
     }
 };
 
