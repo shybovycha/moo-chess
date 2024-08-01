@@ -365,8 +365,13 @@ int main(int argc, char** argv) {
                             int src_row = payload_pos / 8;
                             int src_col = (payload_pos - (src_row * 8));
 
+                            // TODO: validate move { .from = { src_row, src_col }, .to = { row, col } }
+                            Piece p = board[src_row][src_col];
+                            board[src_row][src_col] = NONE;
+                            board[row][col] = p;
+
                             // TODO: change the payload to (source piece, source pos)?
-                            std::cout << std::format("Drop piece {0:c}{1}{2}\n", static_cast<char>(board[src_row][src_col]), static_cast<char>('a' + col), row + 1);
+                            std::cout << std::format("Drop piece {0:c}{1}{2}\n", static_cast<char>(p), static_cast<char>('a' + col), row + 1);
                         }
 
                         ImGui::EndDragDropTarget();
