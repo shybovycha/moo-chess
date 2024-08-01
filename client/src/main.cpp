@@ -205,10 +205,9 @@ int main(int argc, char** argv) {
         {
             ImGui::Begin("Current game", nullptr, ImGuiWindowFlags_NoCollapse);
 
-            ImGui::Text(std::format("You play as {0}", "black").c_str());
+            ImGui::ShowDemoWindow(nullptr);
 
-            // static int time_limit = 5;
-            // ImGui::InputInt("Time limit (min)", &time_limit);
+            ImGui::Text(std::format("You play as {0}", "black").c_str());
 
             if (ImGui::Button("Flip the board")) {}
 
@@ -216,7 +215,7 @@ int main(int argc, char** argv) {
             {
                 state = ApplicationState::NO_CURRENT_GAME;
             }
-            
+
             ImGui::SameLine();
 
             if (ImGui::Button("Suggest draw"))
@@ -228,9 +227,106 @@ int main(int argc, char** argv) {
 
             // ----------
 
-            ImGui::Begin("Board", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove);
+            ImGui::Begin("Board", nullptr, ImGuiWindowFlags_NoCollapse);
 
             // ImGui::Text(std::format("You play as {0}", "black"));
+
+            // gap between buttons
+            ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
+
+            for (auto row = 7; row >= 0; row--)
+            {
+                for (auto col = 0; col < 8; col++)
+                {
+                    int piece = (row * 8) + col;
+
+                    ImGui::PushID(piece);
+
+                    auto text = std::format("{0}{1}", static_cast<char>('a' + col), row + 1);
+
+                    if ((row + col) % 2 == 0)
+                    {
+                        // dark square
+                        ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor(173 / 255.f, 138 / 255.f, 104 / 255.f));
+                        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor(173 / 255.f, 138 / 255.f, 104 / 255.f));
+                        ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor(173 / 255.f, 138 / 255.f, 104 / 255.f));
+                    }
+                    else
+                    {
+                        // light square
+                        ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor(237 / 255.f, 219 / 255.f, 185 / 255.f));
+                        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor(237 / 255.f, 219 / 255.f, 185 / 255.f));
+                        ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor(237 / 255.f, 219 / 255.f, 185 / 255.f));
+                    }
+
+                    ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(1.0f, 1.0f));
+
+                    if (row == 0 && col == 7)
+                    {
+                        ImGui::Button(std::format("{0}{1}", static_cast<char>('a' + col), row + 1).c_str(), ImVec2(60, 60));
+                    } else
+                    if (row == 0)
+                    {
+                        ImGui::Button(std::format("{0}", static_cast<char>('a' + col)).c_str(), ImVec2(60, 60));
+                    }
+                    else if (col == 7)
+                    {
+                        ImGui::Button(std::format("{0}", row + 1).c_str(), ImVec2(60, 60));
+                    }
+                    else
+                    {
+                        ImGui::Button("", ImVec2(60, 60));
+                    }
+
+                    ImGui::PopStyleVar();
+
+                    ImGui::PopStyleColor(3);
+
+                    // Our buttons are both drag sources and drag targets
+                    if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
+                    {
+                        // Set payload to carry the index of our item (could be anything)
+                        ImGui::SetDragDropPayload("DND_PIECE", &piece, sizeof(int));
+
+                        // Display preview (could be anything, e.g. when dragging an image we could decide to display
+                        // the filename and a small preview of the image, etc.)
+                        // if (mode == Mode_Copy) { ImGui::Text("Copy %s", names[n]); }
+                        // if (mode == Mode_Move) { ImGui::Text("Move %s", names[n]); }
+                        // if (mode == Mode_Swap) { ImGui::Text("Swap %s", names[n]); }
+
+                        ImGui::Text(text.c_str());
+
+                        // texture_id, size, uv_min, uv_max, tint_color (1.f - no tint), border_color
+                        // ImGui::Image(piece_tex_id, ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+
+                        ImGui::EndDragDropSource();
+                    }
+                    if (ImGui::BeginDragDropTarget())
+                    {
+                        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_DEMO_CELL"))
+                        {
+                            IM_ASSERT(payload->DataSize == sizeof(int));
+                            int payload_piece = *(const int*)payload->Data;
+
+                            // handle drop at (row, col)
+
+                            std::cout << std::format("Drop piece {0} at ({1}, {2})\n", piece, row, col);
+                        }
+
+                        ImGui::EndDragDropTarget();
+                    }
+
+                    ImGui::PopID();
+
+                    if (col < 7)
+                    {
+                        ImGui::SameLine();
+                    }
+                }
+            }
+
+            // gap between buttons
+            ImGui::PopStyleVar(1);
 
             ImGui::End();
         }
