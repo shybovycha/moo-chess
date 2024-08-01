@@ -5,6 +5,7 @@
 #include <SDL.h>
 
 #include "imgui.h"
+#include "imgui_freetype.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
 
@@ -26,6 +27,7 @@ int main(int argc, char** argv) {
        return -1;
     }
 
+    SDL_SetHint(SDL_HINT_WINDOWS_DPI_AWARENESS, "permonitorv2");
     SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
     SDL_Window* window = SDL_CreateWindow("SDL2+SDL_Renderer example", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
 
@@ -55,7 +57,18 @@ int main(int argc, char** argv) {
     ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
     ImGui_ImplSDLRenderer2_Init(renderer);
 
-    ImFont* font_opensans = io.Fonts->AddFontFromFileTTF("assets/OpenSans-Light.ttf", 18.0f);
+    ImFontConfig config;
+    config.FontDataOwnedByAtlas = false;
+    config.RasterizerMultiply = 1.2f;
+    config.GlyphOffset.y = 1.0f;
+    config.PixelSnapH = true;
+
+    // Only if using FreeType with ImGui
+#ifdef IMGUI_ENABLE_FREETYPE
+    config.FontBuilderFlags |= ImGuiFreeTypeBuilderFlags_ForceAutoHint;
+#endif
+
+    ImFont* font_opensans = io.Fonts->AddFontFromFileTTF("assets/OpenSans-Light.ttf", 18.0f, &config);
 
     if (font_opensans == nullptr)
     {
@@ -92,9 +105,6 @@ int main(int argc, char** argv) {
         {
 
             ImGui::Begin("The game of chess", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove);
-
-            // static bool demo_open = true;
-            // ImGui::ShowDemoWindow(&demo_open);
 
             ImGui::PushItemWidth(-100.f);
             if (ImGui::Button("Find a game"))
@@ -183,7 +193,7 @@ int main(int argc, char** argv) {
             ImGui::End();
         }
 
-        static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+        static ImVec4 clear_color = { 0.45f, 0.55f, 0.60f, 1.00f };
 
         ImGui::Render();
         SDL_RenderSetScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
