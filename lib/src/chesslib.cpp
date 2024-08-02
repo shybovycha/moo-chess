@@ -173,6 +173,16 @@ void Board::applyMove(const Piece piece, const Position to) {
         return;
     }
 
+    // remove captured piece
+    pieces.erase(
+        std::remove_if(
+            pieces.begin(),
+            pieces.end(),
+            [&to](const Piece& p) { return p.position == to; }
+        ),
+        pieces.end()
+    );
+
     for (auto& p : pieces) {
         if (p.position != piece.position) {
             continue;
@@ -226,16 +236,6 @@ void Board::applyMove(const Piece piece, const Position to) {
 
         break;
     }
-
-    // remove captured piece
-    pieces.erase(
-        std::remove_if(
-            pieces.begin(),
-            pieces.end(),
-            [&to](const Piece& p) { return p.position == to; }
-        ),
-        pieces.end()
-    );
 }
 
 // static Board parseFEN(const std::string& fenString) {

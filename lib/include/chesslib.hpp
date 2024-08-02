@@ -93,6 +93,25 @@ struct std::formatter<PieceType> {
 };
 
 template <>
+struct std::formatter<Piece> {
+    template<typename ParseContext>
+    constexpr auto parse(ParseContext& ctx) {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext>
+    auto format(const Piece& piece, FormatContext& ctx) const {
+        char p = static_cast<std::underlying_type<PieceType>::type>(piece.type);
+
+        if (piece.color == PieceColor::BLACK) {
+            p = p - 'A';
+        }
+
+        return std::format_to(ctx.out(), "{0:c}", p);
+    }
+};
+
+template <>
 struct std::formatter<Position> {
     template<typename ParseContext>
     constexpr auto parse(ParseContext& ctx) {
@@ -102,38 +121,6 @@ struct std::formatter<Position> {
     template<typename FormatContext>
     auto format(const Position& position, FormatContext& ctx) const {
         return std::format_to(ctx.out(), "{0:c}{1}", position.col, position.row);
-    }
-};
-
-template <>
-struct std::formatter<Move> {
-    template<typename ParseContext>
-    constexpr auto parse(ParseContext& ctx) {
-        return ctx.begin();
-    }
-
-    template<typename FormatContext>
-    auto format(const Move& move, FormatContext& ctx) const {
-        if (move.isCastling)
-        {
-            if (std::abs(move.to.col - move.from.col) > 2)
-            {
-                return std::format_to(ctx.out(), "O-O-O");
-            }
-            else
-            {
-                return std::format_to(ctx.out(), "O-O");
-            }
-        }
-
-        if (move.isCapture)
-        {
-            // TODO: add shortening?
-            return std::format_to(ctx.out(), "{0}{1}x{2}", move.piece, move.from, move.to);
-        }
-
-        // TODO: add distinguishing if two pieces can move to the same square
-        return std::format_to(ctx.out(), "{0}{1}", move.piece, move.to);
     }
 };
 
