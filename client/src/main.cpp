@@ -67,12 +67,15 @@ int main(int argc, char** argv) {
     config.GlyphOffset.y = 1.0f;
     config.PixelSnapH = true;
 
+    // double font size, half the scaling = Multi-sample Anti-Aliasing
+    io.FontGlobalScale = 0.5f;
+
     // Only if using FreeType with ImGui
 #ifdef IMGUI_ENABLE_FREETYPE
     config.FontBuilderFlags |= ImGuiFreeTypeBuilderFlags_ForceAutoHint;
 #endif
 
-    ImFont* font_opensans = io.Fonts->AddFontFromFileTTF("assets/OpenSans-Light.ttf", 18.0f, &config);
+    ImFont* font_opensans = io.Fonts->AddFontFromFileTTF("assets/OpenSans-Light.ttf", 36.0f, &config);
 
     if (font_opensans == nullptr)
     {
