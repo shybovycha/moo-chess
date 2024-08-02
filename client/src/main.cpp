@@ -84,18 +84,7 @@ int main(int argc, char** argv) {
 
     ApplicationState state = ApplicationState::NO_CURRENT_GAME;
 
-    std::array<std::array<Piece, 8>, 8> board = {
-        {
-            { WHITE_ROOK, WHITE_KNIGHT, WHITE_BISHOP, WHITE_QUEEN, WHITE_KING, WHITE_BISHOP, WHITE_KNIGHT, WHITE_ROOK },
-            { WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN },
-            { NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE },
-            { NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE },
-            { NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE },
-            { NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE },
-            { BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN },
-            { BLACK_ROOK, BLACK_KNIGHT, BLACK_BISHOP, BLACK_QUEEN, BLACK_KING, BLACK_BISHOP, BLACK_KNIGHT, BLACK_ROOK }
-        }
-    };
+    std::optional<Game> game;
 
     std::map<Piece, SDL_Texture*> piece_textures = {
         { BLACK_BISHOP, IMG_LoadTexture(renderer, "assets/b_bishop.png") },
@@ -185,6 +174,23 @@ int main(int argc, char** argv) {
             if (ImGui::Button("Create"))
             {
                 // TODO: add server call
+                PieceColor player_color = BLACK;
+
+                if (player_color_idx == 0)
+                {
+                    player_color = WHITE;
+                }
+                else if (player_color_idx == 1)
+                {
+                    player_color = BLACK;
+                }
+                else
+                {
+                    player_color = BLACK;
+                }
+
+                game = Game(player_color);
+
                 state = ApplicationState::PLAYING;
             }
 
@@ -220,6 +226,23 @@ int main(int argc, char** argv) {
             if (ImGui::Button("Create"))
             {
                 // TODO: add server call
+                PieceColor player_color = BLACK;
+
+                if (player_color_idx == 0)
+                {
+                    player_color = BLACK;
+                }
+                else if (player_color_idx == 1)
+                {
+                    player_color = WHITE;
+                }
+                else
+                {
+                    player_color = WHITE;
+                }
+
+                game = Game(player_color);
+
                 state = ApplicationState::PLAYING;
             }
 
@@ -273,8 +296,9 @@ int main(int argc, char** argv) {
             {
                 for (auto col = 0; col < 8; col++)
                 {
-                    Piece piece = board[row][col];
-                    char ch_piece = static_cast<char>(piece);
+                    Position square_position{ static_cast<unsigned int>(row + 1), static_cast<char>('a' + col) };
+
+                    Piece piece = game->pieceAt(square_position);
 
                     auto text = std::format("{0}{1}", static_cast<char>('a' + col), row + 1);
 
@@ -288,35 +312,16 @@ int main(int argc, char** argv) {
 
                     ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(1.0f, 1.0f));
 
-                    if (board[row][col] != NONE)
+                    if (piece != NONE)
                     {
                         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
-                        ImGui::ImageButton(text.c_str(), piece_textures[board[row][col]], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), (ImVec4) square_color, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+                        ImGui::ImageButton(text.c_str(), piece_textures[piece], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), (ImVec4) square_color, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
                         ImGui::PopStyleVar();
                     }
                     else
                     {
                         ImGui::Button("", ImVec2(60, 60));
                     }
-
-                    /*
-                    if (row == 0 && col == 7)
-                    {
-                        ImGui::Button(std::format("{0}{1}", static_cast<char>('a' + col), row + 1).c_str(), ImVec2(60, 60));
-                    } else
-                    if (row == 0)
-                    {
-                        ImGui::Button(std::format("{0}", static_cast<char>('a' + col)).c_str(), ImVec2(60, 60));
-                    }
-                    else if (col == 7)
-                    {
-                        ImGui::Button(std::format("{0}", row + 1).c_str(), ImVec2(60, 60));
-                    }
-                    else
-                    {
-                        ImGui::Button("", ImVec2(60, 60));
-                    }
-                    */
 
                     ImGui::PopStyleVar();
 
@@ -325,9 +330,9 @@ int main(int argc, char** argv) {
                     // Our buttons are both drag sources and drag targets
                     if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoPreviewTooltip)) // ImGuiDragDropFlags_None))
                     {
-                        int pos = (row * 8) + col;
+                        // int pos = (row * 8) + col;
 
-                        ImGui::SetDragDropPayload("DND_TARGET_POS", &pos, sizeof(int), ImGuiCond_FirstUseEver);
+                        ImGui::SetDragDropPayload("DND_TARGET_POS", &square_position, sizeof(Position), ImGuiCond_FirstUseEver);
 
                         ImGui::SetNextWindowPos(ImVec2(io.MousePos.x - 30.0f, io.MousePos.y - 30.0f));
 
@@ -335,10 +340,10 @@ int main(int argc, char** argv) {
 
                         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
 
-                        if (board[row][col] != NONE)
+                        if (piece != NONE)
                         {
                             ImGui::PushStyleColor(ImGuiCol_PopupBg, (ImVec4) ImColor(0.0f, 0.0f, 0.0f, 1.0f));
-                            ImGui::Image(piece_textures[board[row][col]], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.0f));
+                            ImGui::Image(piece_textures[piece], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.0f));
                             ImGui::PopStyleColor();
                         }
                         else
@@ -359,22 +364,26 @@ int main(int argc, char** argv) {
                         if (const ImGuiPayload* payload = ImGui::GetDragDropPayload())
                         {
                             // TODO: add strcmp for payload->DataType, "DND_TARGET_POS"
-                            std::cout << std::format("Drop unaccepted payload `{0}`\n", payload->DataType);
+                            // std::cout << std::format("Drop unaccepted payload `{0}`\n", payload->DataType);
 
-                            IM_ASSERT(payload->DataSize == sizeof(int));
-                            int payload_pos = *(const int*)payload->Data;
+                            IM_ASSERT(payload->DataSize == sizeof(Position));
+                            Position from_pos = *(const Position*)payload->Data;
 
                             // handle drop at (row, col)
-                            int src_row = payload_pos / 8;
-                            int src_col = (payload_pos - (src_row * 8));
+                            // int src_row = payload_pos / 8;
+                            // int src_col = (payload_pos - (src_row * 8));
 
-                            // TODO: validate move { .from = { src_row, src_col }, .to = { row, col } }
-                            Piece p = board[src_row][src_col];
-                            board[src_row][src_col] = NONE;
-                            board[row][col] = p;
+                            Move move = { .piece = game->pieceAt(from_pos), .from = from_pos, .to = square_position, .isCapture = game->opponentPieceAt(square_position) };
 
-                            // TODO: change the payload to (source piece, source pos)?
-                            std::cout << std::format("Drop piece {0:c}{1}{2}\n", static_cast<char>(p), static_cast<char>('a' + col), row + 1);
+                            if (game->isValidMove(move))
+                            {
+                                std::cout << std::format("{0:c}{1}{2}\n", static_cast<char>(game->pieceAt(from_pos)), static_cast<char>('a' + col), row + 1);
+                                game->applyMove(move);
+                            }
+                            else
+                            {
+                                std::cout << std::format("{0:c}{1}{2} {3} is invalid\n", static_cast<char>(game->pieceAt(from_pos)), static_cast<char>('a' + col), row + 1, move.isCapture ? 'x' : ' ');
+                            }
                         }
 
                         ImGui::EndDragDropTarget();
