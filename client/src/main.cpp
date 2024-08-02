@@ -87,18 +87,18 @@ int main(int argc, char** argv) {
     std::optional<Game> game;
 
     std::map<Piece, SDL_Texture*> piece_textures = {
-        { BLACK_BISHOP, IMG_LoadTexture(renderer, "assets/b_bishop.png") },
-        { BLACK_KING, IMG_LoadTexture(renderer, "assets/b_king.png") },
-        { BLACK_KNIGHT, IMG_LoadTexture(renderer, "assets/b_knight.png") },
-        { BLACK_PAWN, IMG_LoadTexture(renderer, "assets/b_pawn.png") },
-        { BLACK_QUEEN, IMG_LoadTexture(renderer, "assets/b_queen.png") },
-        { BLACK_ROOK, IMG_LoadTexture(renderer, "assets/b_rook.png") },
-        { WHITE_BISHOP, IMG_LoadTexture(renderer, "assets/w_bishop.png") },
-        { WHITE_KING, IMG_LoadTexture(renderer, "assets/w_king.png") },
-        { WHITE_KNIGHT, IMG_LoadTexture(renderer, "assets/w_knight.png") },
-        { WHITE_PAWN, IMG_LoadTexture(renderer, "assets/w_pawn.png") },
-        { WHITE_QUEEN, IMG_LoadTexture(renderer, "assets/w_queen.png") },
-        { WHITE_ROOK, IMG_LoadTexture(renderer, "assets/w_rook.png") }
+        { Piece::BLACK_BISHOP, IMG_LoadTexture(renderer, "assets/b_bishop.png") },
+        { Piece::BLACK_KING, IMG_LoadTexture(renderer, "assets/b_king.png") },
+        { Piece::BLACK_KNIGHT, IMG_LoadTexture(renderer, "assets/b_knight.png") },
+        { Piece::BLACK_PAWN, IMG_LoadTexture(renderer, "assets/b_pawn.png") },
+        { Piece::BLACK_QUEEN, IMG_LoadTexture(renderer, "assets/b_queen.png") },
+        { Piece::BLACK_ROOK, IMG_LoadTexture(renderer, "assets/b_rook.png") },
+        { Piece::WHITE_BISHOP, IMG_LoadTexture(renderer, "assets/w_bishop.png") },
+        { Piece::WHITE_KING, IMG_LoadTexture(renderer, "assets/w_king.png") },
+        { Piece::WHITE_KNIGHT, IMG_LoadTexture(renderer, "assets/w_knight.png") },
+        { Piece::WHITE_PAWN, IMG_LoadTexture(renderer, "assets/w_pawn.png") },
+        { Piece::WHITE_QUEEN, IMG_LoadTexture(renderer, "assets/w_queen.png") },
+        { Piece::WHITE_ROOK, IMG_LoadTexture(renderer, "assets/w_rook.png") }
     };
 
     while (state != ApplicationState::QUIT)
@@ -174,19 +174,19 @@ int main(int argc, char** argv) {
             if (ImGui::Button("Create"))
             {
                 // TODO: add server call
-                PieceColor player_color = BLACK;
+                PieceColor player_color = PieceColor::BLACK;
 
                 if (player_color_idx == 0)
                 {
-                    player_color = WHITE;
+                    player_color = PieceColor::WHITE;
                 }
                 else if (player_color_idx == 1)
                 {
-                    player_color = BLACK;
+                    player_color = PieceColor::BLACK;
                 }
                 else
                 {
-                    player_color = BLACK;
+                    player_color = PieceColor::BLACK;
                 }
 
                 game = Game(player_color);
@@ -226,19 +226,19 @@ int main(int argc, char** argv) {
             if (ImGui::Button("Create"))
             {
                 // TODO: add server call
-                PieceColor player_color = BLACK;
+                PieceColor player_color = PieceColor::BLACK;
 
                 if (player_color_idx == 0)
                 {
-                    player_color = BLACK;
+                    player_color = PieceColor::BLACK;
                 }
                 else if (player_color_idx == 1)
                 {
-                    player_color = WHITE;
+                    player_color = PieceColor::WHITE;
                 }
                 else
                 {
-                    player_color = WHITE;
+                    player_color = PieceColor::WHITE;
                 }
 
                 game = Game(player_color);
@@ -300,7 +300,7 @@ int main(int argc, char** argv) {
 
                     Piece piece = game->pieceAt(square_position);
 
-                    auto text = std::format("{0}{1}", static_cast<char>('a' + col), row + 1);
+                    auto text = std::format("{0}", square_position);
 
                     auto square_color = ((row + col) % 2 == 0)
                         ? ImColor(173 / 255.f, 138 / 255.f, 104 / 255.f) // dark square
@@ -312,7 +312,7 @@ int main(int argc, char** argv) {
 
                     ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(1.0f, 1.0f));
 
-                    if (piece != NONE)
+                    if (piece != Piece::NONE)
                     {
                         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
                         ImGui::ImageButton(text.c_str(), piece_textures[piece], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), (ImVec4) square_color, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
@@ -340,7 +340,7 @@ int main(int argc, char** argv) {
 
                         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
 
-                        if (piece != NONE)
+                        if (piece != Piece::NONE)
                         {
                             ImGui::PushStyleColor(ImGuiCol_PopupBg, (ImVec4) ImColor(0.0f, 0.0f, 0.0f, 1.0f));
                             ImGui::Image(piece_textures[piece], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.0f));
@@ -364,25 +364,28 @@ int main(int argc, char** argv) {
                         if (const ImGuiPayload* payload = ImGui::GetDragDropPayload())
                         {
                             // TODO: add strcmp for payload->DataType, "DND_TARGET_POS"
-                            // std::cout << std::format("Drop unaccepted payload `{0}`\n", payload->DataType);
 
                             IM_ASSERT(payload->DataSize == sizeof(Position));
                             Position from_pos = *(const Position*)payload->Data;
-
-                            // handle drop at (row, col)
-                            // int src_row = payload_pos / 8;
-                            // int src_col = (payload_pos - (src_row * 8));
 
                             Move move = { .piece = game->pieceAt(from_pos), .from = from_pos, .to = square_position, .isCapture = game->opponentPieceAt(square_position) };
 
                             if (game->isValidMove(move))
                             {
-                                std::cout << std::format("{0:c}{1}{2}\n", static_cast<char>(game->pieceAt(from_pos)), static_cast<char>('a' + col), row + 1);
+                                std::cout << std::format("{0}\n", move);
                                 game->applyMove(move);
                             }
                             else
                             {
-                                std::cout << std::format("{0:c}{1}{2} {3} is invalid\n", static_cast<char>(game->pieceAt(from_pos)), static_cast<char>('a' + col), row + 1, move.isCapture ? 'x' : ' ');
+                                /*
+                                 * Bugs:
+                                 *
+                                 * - bishop can only move incrementally up-right - iterator issue?
+                                 * - queen can only move down, up-right
+                                 * - king can _sometimes_ move down and up
+                                 * - pieces can capture same player pieces???
+                                 */
+                                std::cout << std::format("{0} is invalid (has opponent piece? {1} ({2}))\n", move, game->opponentPieceAt(move.to), game->pieceAt(move.to));
                             }
                         }
 

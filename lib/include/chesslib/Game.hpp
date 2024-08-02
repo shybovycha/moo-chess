@@ -10,12 +10,12 @@
 #include <iostream>
 #include <vector>
 
-enum PieceColor {
+enum class PieceColor {
     BLACK = 'b',
     WHITE = 'w'
 };
 
-enum Piece {
+enum class Piece {
     NONE = '.',
 
     WHITE_PAWN = 'P',
@@ -74,7 +74,65 @@ struct Move {
 template<>
 struct std::hash<Piece> {
     std::size_t operator()(Piece const& p) const noexcept {
-        return std::hash<char>{}(p);
+        return std::hash<char>{}(static_cast<std::underlying_type<Piece>::type>(p));
+    }
+};
+
+template <>
+struct std::formatter<Piece> {
+    template<typename ParseContext>
+    constexpr auto parse(ParseContext& ctx) {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext>
+    auto format(const Piece& piece, FormatContext& ctx) const {
+        return std::format_to(ctx.out(), "{0:c}", static_cast<std::underlying_type<Piece>::type>(piece));
+    }
+};
+
+template <>
+struct std::formatter<Position> {
+    template<typename ParseContext>
+    constexpr auto parse(ParseContext& ctx) {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext>
+    auto format(const Position& position, FormatContext& ctx) const {
+        return std::format_to(ctx.out(), "{0:c}{1}", position.col, position.row);
+    }
+};
+
+template <>
+struct std::formatter<Move> {
+    template<typename ParseContext>
+    constexpr auto parse(ParseContext& ctx) {
+        return ctx.begin();
+    }
+
+    template<typename FormatContext>
+    auto format(const Move& move, FormatContext& ctx) const {
+        if (move.isCastling)
+        {
+            if (std::abs(move.to.col - move.from.col) > 2)
+            {
+                return std::format_to(ctx.out(), "O-O-O");
+            }
+            else
+            {
+                return std::format_to(ctx.out(), "O-O");
+            }
+        }
+
+        if (move.isCapture)
+        {
+            // TODO: add shortening?
+            return std::format_to(ctx.out(), "{0}{1}x{2}", move.piece, move.from, move.to);
+        }
+
+        // TODO: add distinguishing if two pieces can move to the same square
+        return std::format_to(ctx.out(), "{0}{1}", move.piece, move.to);
     }
 };
 
@@ -97,17 +155,6 @@ struct std::hash<Move> {
         std::size_t h5 = std::hash<bool>{}(move.isCapture);
         std::size_t h6 = std::hash<bool>{}(move.isCastling);
         return h1 ^ (h2 << 1) ^ (h3 << 2) ^ (h4 << 3) ^ (h5 << 4) ^ (h6 << 5); // or use boost::hash_combine
-    }
-};
-
-template <>
-struct std::formatter<Piece> {
-    constexpr auto parse(std::format_parse_context& ctx) {
-        return ctx.begin();
-    }
-
-    auto format(const Piece& piece, std::format_context& ctx) const {
-        return std::format_to(ctx.out(), "{0:c}", static_cast<char>(piece));
     }
 };
 
