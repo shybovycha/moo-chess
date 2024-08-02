@@ -18,79 +18,79 @@ using ::testing::Ne;
 TEST(FENParsingTest, DefaultSetup) {
     auto game = std::make_unique<Game>();
 
-    EXPECT_EQ(game->pieceAt(1, 'a'), WHITE_ROOK);
-    EXPECT_EQ(game->pieceAt(1, 'b'), WHITE_KNIGHT);
-    EXPECT_EQ(game->pieceAt(1, 'c'), WHITE_BISHOP);
-    EXPECT_EQ(game->pieceAt(1, 'd'), WHITE_QUEEN);
-    EXPECT_EQ(game->pieceAt(1, 'e'), WHITE_KING);
-    EXPECT_EQ(game->pieceAt(1, 'f'), WHITE_BISHOP);
-    EXPECT_EQ(game->pieceAt(1, 'g'), WHITE_KNIGHT);
-    EXPECT_EQ(game->pieceAt(1, 'h'), WHITE_ROOK);
+    EXPECT_EQ(game->pieceAt(1, 'a'), Piece::WHITE_ROOK);
+    EXPECT_EQ(game->pieceAt(1, 'b'), Piece::WHITE_KNIGHT);
+    EXPECT_EQ(game->pieceAt(1, 'c'), Piece::WHITE_BISHOP);
+    EXPECT_EQ(game->pieceAt(1, 'd'), Piece::WHITE_QUEEN);
+    EXPECT_EQ(game->pieceAt(1, 'e'), Piece::WHITE_KING);
+    EXPECT_EQ(game->pieceAt(1, 'f'), Piece::WHITE_BISHOP);
+    EXPECT_EQ(game->pieceAt(1, 'g'), Piece::WHITE_KNIGHT);
+    EXPECT_EQ(game->pieceAt(1, 'h'), Piece::WHITE_ROOK);
 
-    EXPECT_EQ(game->pieceAt(8, 'a'), BLACK_ROOK);
-    EXPECT_EQ(game->pieceAt(8, 'b'), BLACK_KNIGHT);
-    EXPECT_EQ(game->pieceAt(8, 'c'), BLACK_BISHOP);
-    EXPECT_EQ(game->pieceAt(8, 'd'), BLACK_QUEEN);
-    EXPECT_EQ(game->pieceAt(8, 'e'), BLACK_KING);
-    EXPECT_EQ(game->pieceAt(8, 'f'), BLACK_BISHOP);
-    EXPECT_EQ(game->pieceAt(8, 'g'), BLACK_KNIGHT);
-    EXPECT_EQ(game->pieceAt(8, 'h'), BLACK_ROOK);
+    EXPECT_EQ(game->pieceAt(8, 'a'), Piece::BLACK_ROOK);
+    EXPECT_EQ(game->pieceAt(8, 'b'), Piece::BLACK_KNIGHT);
+    EXPECT_EQ(game->pieceAt(8, 'c'), Piece::BLACK_BISHOP);
+    EXPECT_EQ(game->pieceAt(8, 'd'), Piece::BLACK_QUEEN);
+    EXPECT_EQ(game->pieceAt(8, 'e'), Piece::BLACK_KING);
+    EXPECT_EQ(game->pieceAt(8, 'f'), Piece::BLACK_BISHOP);
+    EXPECT_EQ(game->pieceAt(8, 'g'), Piece::BLACK_KNIGHT);
+    EXPECT_EQ(game->pieceAt(8, 'h'), Piece::BLACK_ROOK);
 
-    EXPECT_EQ(game->pieceAt(2, 'a'), WHITE_PAWN);
-    EXPECT_EQ(game->pieceAt(2, 'b'), WHITE_PAWN);
-    EXPECT_EQ(game->pieceAt(2, 'c'), WHITE_PAWN);
-    EXPECT_EQ(game->pieceAt(2, 'd'), WHITE_PAWN);
-    EXPECT_EQ(game->pieceAt(2, 'e'), WHITE_PAWN);
-    EXPECT_EQ(game->pieceAt(2, 'f'), WHITE_PAWN);
-    EXPECT_EQ(game->pieceAt(2, 'g'), WHITE_PAWN);
-    EXPECT_EQ(game->pieceAt(2, 'h'), WHITE_PAWN);
+    EXPECT_EQ(game->pieceAt(2, 'a'), Piece::WHITE_PAWN);
+    EXPECT_EQ(game->pieceAt(2, 'b'), Piece::WHITE_PAWN);
+    EXPECT_EQ(game->pieceAt(2, 'c'), Piece::WHITE_PAWN);
+    EXPECT_EQ(game->pieceAt(2, 'd'), Piece::WHITE_PAWN);
+    EXPECT_EQ(game->pieceAt(2, 'e'), Piece::WHITE_PAWN);
+    EXPECT_EQ(game->pieceAt(2, 'f'), Piece::WHITE_PAWN);
+    EXPECT_EQ(game->pieceAt(2, 'g'), Piece::WHITE_PAWN);
+    EXPECT_EQ(game->pieceAt(2, 'h'), Piece::WHITE_PAWN);
 
-    EXPECT_EQ(game->pieceAt(7, 'a'), BLACK_PAWN);
-    EXPECT_EQ(game->pieceAt(7, 'b'), BLACK_PAWN);
-    EXPECT_EQ(game->pieceAt(7, 'c'), BLACK_PAWN);
-    EXPECT_EQ(game->pieceAt(7, 'd'), BLACK_PAWN);
-    EXPECT_EQ(game->pieceAt(7, 'e'), BLACK_PAWN);
-    EXPECT_EQ(game->pieceAt(7, 'f'), BLACK_PAWN);
-    EXPECT_EQ(game->pieceAt(7, 'g'), BLACK_PAWN);
-    EXPECT_EQ(game->pieceAt(7, 'h'), BLACK_PAWN);
+    EXPECT_EQ(game->pieceAt(7, 'a'), Piece::BLACK_PAWN);
+    EXPECT_EQ(game->pieceAt(7, 'b'), Piece::BLACK_PAWN);
+    EXPECT_EQ(game->pieceAt(7, 'c'), Piece::BLACK_PAWN);
+    EXPECT_EQ(game->pieceAt(7, 'd'), Piece::BLACK_PAWN);
+    EXPECT_EQ(game->pieceAt(7, 'e'), Piece::BLACK_PAWN);
+    EXPECT_EQ(game->pieceAt(7, 'f'), Piece::BLACK_PAWN);
+    EXPECT_EQ(game->pieceAt(7, 'g'), Piece::BLACK_PAWN);
+    EXPECT_EQ(game->pieceAt(7, 'h'), Piece::BLACK_PAWN);
 
-    EXPECT_EQ(game->pieceAt(3, 'a'), NONE);
-    EXPECT_EQ(game->pieceAt(3, 'b'), NONE);
-    EXPECT_EQ(game->pieceAt(3, 'c'), NONE);
-    EXPECT_EQ(game->pieceAt(3, 'd'), NONE);
-    EXPECT_EQ(game->pieceAt(3, 'e'), NONE);
-    EXPECT_EQ(game->pieceAt(3, 'f'), NONE);
-    EXPECT_EQ(game->pieceAt(3, 'g'), NONE);
-    EXPECT_EQ(game->pieceAt(3, 'h'), NONE);
+    EXPECT_EQ(game->pieceAt(3, 'a'), Piece::NONE);
+    EXPECT_EQ(game->pieceAt(3, 'b'), Piece::NONE);
+    EXPECT_EQ(game->pieceAt(3, 'c'), Piece::NONE);
+    EXPECT_EQ(game->pieceAt(3, 'd'), Piece::NONE);
+    EXPECT_EQ(game->pieceAt(3, 'e'), Piece::NONE);
+    EXPECT_EQ(game->pieceAt(3, 'f'), Piece::NONE);
+    EXPECT_EQ(game->pieceAt(3, 'g'), Piece::NONE);
+    EXPECT_EQ(game->pieceAt(3, 'h'), Piece::NONE);
 
-    EXPECT_EQ(game->pieceAt(4, 'a'), NONE);
-    EXPECT_EQ(game->pieceAt(4, 'b'), NONE);
-    EXPECT_EQ(game->pieceAt(4, 'c'), NONE);
-    EXPECT_EQ(game->pieceAt(4, 'd'), NONE);
-    EXPECT_EQ(game->pieceAt(4, 'e'), NONE);
-    EXPECT_EQ(game->pieceAt(4, 'f'), NONE);
-    EXPECT_EQ(game->pieceAt(4, 'g'), NONE);
-    EXPECT_EQ(game->pieceAt(4, 'h'), NONE);
+    EXPECT_EQ(game->pieceAt(4, 'a'), Piece::NONE);
+    EXPECT_EQ(game->pieceAt(4, 'b'), Piece::NONE);
+    EXPECT_EQ(game->pieceAt(4, 'c'), Piece::NONE);
+    EXPECT_EQ(game->pieceAt(4, 'd'), Piece::NONE);
+    EXPECT_EQ(game->pieceAt(4, 'e'), Piece::NONE);
+    EXPECT_EQ(game->pieceAt(4, 'f'), Piece::NONE);
+    EXPECT_EQ(game->pieceAt(4, 'g'), Piece::NONE);
+    EXPECT_EQ(game->pieceAt(4, 'h'), Piece::NONE);
 
-    EXPECT_EQ(game->pieceAt(5, 'a'), NONE);
-    EXPECT_EQ(game->pieceAt(5, 'b'), NONE);
-    EXPECT_EQ(game->pieceAt(5, 'c'), NONE);
-    EXPECT_EQ(game->pieceAt(5, 'd'), NONE);
-    EXPECT_EQ(game->pieceAt(5, 'e'), NONE);
-    EXPECT_EQ(game->pieceAt(5, 'f'), NONE);
-    EXPECT_EQ(game->pieceAt(5, 'g'), NONE);
-    EXPECT_EQ(game->pieceAt(5, 'h'), NONE);
+    EXPECT_EQ(game->pieceAt(5, 'a'), Piece::NONE);
+    EXPECT_EQ(game->pieceAt(5, 'b'), Piece::NONE);
+    EXPECT_EQ(game->pieceAt(5, 'c'), Piece::NONE);
+    EXPECT_EQ(game->pieceAt(5, 'd'), Piece::NONE);
+    EXPECT_EQ(game->pieceAt(5, 'e'), Piece::NONE);
+    EXPECT_EQ(game->pieceAt(5, 'f'), Piece::NONE);
+    EXPECT_EQ(game->pieceAt(5, 'g'), Piece::NONE);
+    EXPECT_EQ(game->pieceAt(5, 'h'), Piece::NONE);
 
-    EXPECT_EQ(game->pieceAt(6, 'a'), NONE);
-    EXPECT_EQ(game->pieceAt(6, 'b'), NONE);
-    EXPECT_EQ(game->pieceAt(6, 'c'), NONE);
-    EXPECT_EQ(game->pieceAt(6, 'd'), NONE);
-    EXPECT_EQ(game->pieceAt(6, 'e'), NONE);
-    EXPECT_EQ(game->pieceAt(6, 'f'), NONE);
-    EXPECT_EQ(game->pieceAt(6, 'g'), NONE);
-    EXPECT_EQ(game->pieceAt(6, 'h'), NONE);
+    EXPECT_EQ(game->pieceAt(6, 'a'), Piece::NONE);
+    EXPECT_EQ(game->pieceAt(6, 'b'), Piece::NONE);
+    EXPECT_EQ(game->pieceAt(6, 'c'), Piece::NONE);
+    EXPECT_EQ(game->pieceAt(6, 'd'), Piece::NONE);
+    EXPECT_EQ(game->pieceAt(6, 'e'), Piece::NONE);
+    EXPECT_EQ(game->pieceAt(6, 'f'), Piece::NONE);
+    EXPECT_EQ(game->pieceAt(6, 'g'), Piece::NONE);
+    EXPECT_EQ(game->pieceAt(6, 'h'), Piece::NONE);
 
-    EXPECT_EQ(game->currentPlayer, WHITE);
+    EXPECT_EQ(game->currentPlayer, PieceColor::WHITE);
 
     EXPECT_EQ(game->castlingAvailability.BLACK_KING_SIDE, false);
     EXPECT_EQ(game->castlingAvailability.BLACK_QUEEN_SIDE, false);
@@ -158,7 +158,7 @@ TEST(FENParsingTest, ParsingCurrentPlayerBlack) {
 
     game->parseFEN("r3k2r/pp1b1ppp/nqp1pn2/2bp4/N1P1P3/1P1B1N2/PB1PQPPP/R3K2R b kq - 0 8");
 
-    EXPECT_EQ(game->currentPlayer, BLACK);
+    EXPECT_EQ(game->currentPlayer, PieceColor::BLACK);
 }
 
 TEST(FENParsingTest, ParsingCurrentPlayerWhite) {
@@ -166,5 +166,5 @@ TEST(FENParsingTest, ParsingCurrentPlayerWhite) {
 
     game->parseFEN("r3k2r/pp1b1ppp/nqp1pn2/2bp4/N1P1P3/1P1B1N2/PB1PQPPP/R3K2R w Qq - 0 8");
 
-    EXPECT_EQ(game->currentPlayer, WHITE);
+    EXPECT_EQ(game->currentPlayer, PieceColor::WHITE);
 }

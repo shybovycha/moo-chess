@@ -267,6 +267,48 @@ TEST(ValidatingKingMoveTest, Advancement9) {
         << "K e4 - K f3 is a valid move";
 }
 
+TEST(ValidatingKingMoveTest, Advancement10) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("rnbqkbnr/ppp1p1pp/3p1p2/8/8/4PP2/PPPP2PP/RNBQKBNR w KQkq - 0 1");
+
+    auto move10 = game->parseMove("Ke2");
+
+    ASSERT_NE(move10, std::nullopt)
+        << "Ke2 is valid notation";
+
+    EXPECT_TRUE(game->isValidMove(*move10))
+        << "K e1 - K e2 is a valid move";
+}
+
+TEST(ValidatingKingMoveTest, Advancement11) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("rnbqkbnr/ppp1p1pp/3p1p2/8/8/4PP2/PPPP2PP/RNBQKBNR w KQkq - 0 1");
+
+    auto move11 = game->parseMove("Kf2");
+
+    ASSERT_NE(move11, std::nullopt)
+        << "Kf2 is valid notation";
+
+    EXPECT_TRUE(game->isValidMove(*move11))
+        << "K e1 - K f2 is a valid move";
+}
+
+TEST(ValidatingKingMoveTest, Advancement12) {
+    auto game = std::make_unique<Game>();
+
+    game->parseFEN("rnbqkbnr/ppp1p1pp/3p1p2/8/8/4PP2/PPPP2PP/RNBQKBNR w KQkq - 0 1");
+
+    auto move12 = game->parseMove("Ke2");
+
+    ASSERT_NE(move12, std::nullopt)
+        << "Ke2 is valid notation";
+
+    EXPECT_FALSE(game->isValidMove(*move12))
+        << "K e1 - K e2 is not a valid move";
+}
+
 TEST(ValidatingKingMoveTest, AdvancementUnderAttack) {
     auto game = std::make_unique<Game>();
 
@@ -424,7 +466,7 @@ TEST(ApplyingMoveTest, PawnAdvancement) {
     auto game = std::make_unique<Game>();
 
     // game->applyMove(game->parseMove("e4"));
-    game->applyMove(Move{ .piece = WHITE_PAWN, .from = Position{.row = 2, .col = 'e' }, .to = Position{.row = 4, .col = 'e' } });
+    game->applyMove(Move{ .piece = Piece::WHITE_PAWN, .from = Position{.row = 2, .col = 'e' }, .to = Position{.row = 4, .col = 'e' } });
 
     EXPECT_EQ(game->serializeAsFEN(), "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b - - 0 1")
         << "Serialized board after applying a e4 move";

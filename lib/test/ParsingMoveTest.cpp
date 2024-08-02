@@ -24,7 +24,7 @@ TEST(ParsingMoveTest, ParsingPawnAdvancement) {
 
     EXPECT_EQ(move->isCastling, false);
     EXPECT_EQ(move->isCapture, false);
-    EXPECT_EQ(move->piece, WHITE_PAWN);
+    EXPECT_EQ(move->piece, Piece::WHITE_PAWN);
     EXPECT_THAT(move->from, FieldsAre(Eq(2), Eq('e')));
     EXPECT_THAT(move->to, FieldsAre(Eq(4), Eq('e')));
 }
@@ -38,7 +38,7 @@ TEST(ParsingMoveTest, ParsingPawnAdvancement2) {
 
     EXPECT_EQ(move2->isCastling, false);
     EXPECT_EQ(move2->isCapture, false);
-    EXPECT_EQ(move2->piece, WHITE_PAWN);
+    EXPECT_EQ(move2->piece, Piece::WHITE_PAWN);
     EXPECT_THAT(move2->from, FieldsAre(Eq(2), Eq('e')));
     EXPECT_THAT(move2->to, FieldsAre(Eq(3), Eq('e')));
 }
@@ -52,7 +52,7 @@ TEST(ParsingMoveTest, ParsingPawnCapture) {
 
     EXPECT_EQ(move->isCastling, false);
     EXPECT_EQ(move->isCapture, true);
-    EXPECT_EQ(move->piece, WHITE_PAWN);
+    EXPECT_EQ(move->piece, Piece::WHITE_PAWN);
     EXPECT_THAT(move->from, FieldsAre(Eq(4), Eq('e')));
     EXPECT_THAT(move->to, FieldsAre(Eq(5), Eq('d')));
 }
@@ -71,7 +71,7 @@ TEST(ParsingMoveTest, ParsingEnPassant) {
 
     EXPECT_EQ(move->isCastling, false);
     EXPECT_EQ(move->isCapture, true);
-    EXPECT_EQ(move->piece, WHITE_PAWN);
+    EXPECT_EQ(move->piece, Piece::WHITE_PAWN);
     EXPECT_THAT(move->from, FieldsAre(Eq(5), Eq('e')));
     EXPECT_THAT(move->to, FieldsAre(Eq(6), Eq('d')));
 
@@ -89,7 +89,7 @@ TEST(ParsingMoveTest, DisambiguishingPawnMove) {
 
     EXPECT_EQ(move1->isCastling, false);
     EXPECT_EQ(move1->isCapture, true);
-    EXPECT_EQ(move1->piece, WHITE_PAWN);
+    EXPECT_EQ(move1->piece, Piece::WHITE_PAWN);
     EXPECT_THAT(move1->to, FieldsAre(Eq(5), Eq('d')));
     EXPECT_THAT(move1->from, FieldsAre(Eq(4), Eq('e')));
 }
@@ -105,7 +105,7 @@ TEST(ParsingMoveTest, DisambiguishingPawnMove2) {
 
     EXPECT_EQ(move2->isCastling, false);
     EXPECT_EQ(move2->isCapture, true);
-    EXPECT_EQ(move2->piece, WHITE_PAWN);
+    EXPECT_EQ(move2->piece, Piece::WHITE_PAWN);
     EXPECT_THAT(move2->to, FieldsAre(Eq(5), Eq('d')));
     EXPECT_THAT(move2->from, FieldsAre(Eq(4), Eq('c')));
 }
@@ -121,7 +121,7 @@ TEST(ParsingMoveTest, DisambiguishingPawnMove3) {
 
     EXPECT_EQ(move3->isCastling, false);
     EXPECT_EQ(move3->isCapture, true);
-    EXPECT_EQ(move3->piece, BLACK_PAWN);
+    EXPECT_EQ(move3->piece, Piece::BLACK_PAWN);
     EXPECT_THAT(move3->to, FieldsAre(Eq(4), Eq('e')));
     EXPECT_THAT(move3->from, FieldsAre(Eq(5), Eq('d')));
 }
@@ -137,7 +137,7 @@ TEST(ParsingMoveTest, DisambiguishingPawnMove4) {
 
     EXPECT_EQ(move4->isCastling, false);
     EXPECT_EQ(move4->isCapture, true);
-    EXPECT_EQ(move4->piece, BLACK_PAWN);
+    EXPECT_EQ(move4->piece, Piece::BLACK_PAWN);
     EXPECT_THAT(move4->to, FieldsAre(Eq(4), Eq('c')));
     EXPECT_THAT(move4->from, FieldsAre(Eq(5), Eq('d')));
 }
@@ -153,7 +153,7 @@ TEST(ParsingMoveTest, ParsingCastling) {
 
     EXPECT_EQ(move1->isCastling, true);
     EXPECT_EQ(move1->isCapture, false);
-    EXPECT_EQ(move1->piece, WHITE_KING);
+    EXPECT_EQ(move1->piece, Piece::WHITE_KING);
     EXPECT_THAT(move1->from, FieldsAre(Eq(1), Eq('e')));
     EXPECT_THAT(move1->to, FieldsAre(Eq(1), Eq('g')));
 }
@@ -169,7 +169,7 @@ TEST(ParsingMoveTest, ParsingCastling2) {
 
     EXPECT_EQ(move2->isCastling, true);
     EXPECT_EQ(move2->isCapture, false);
-    EXPECT_EQ(move2->piece, WHITE_KING);
+    EXPECT_EQ(move2->piece, Piece::WHITE_KING);
     EXPECT_THAT(move2->from, FieldsAre(Eq(1), Eq('e')));
     EXPECT_THAT(move2->to, FieldsAre(Eq(1), Eq('g')));
 }
@@ -186,7 +186,7 @@ TEST(ParsingMoveTest, ParsingCastling3) {
 
     EXPECT_EQ(move3->isCastling, true);
     EXPECT_EQ(move3->isCapture, false);
-    EXPECT_EQ(move3->piece, BLACK_KING);
+    EXPECT_EQ(move3->piece, Piece::BLACK_KING);
     EXPECT_THAT(move3->from, FieldsAre(Eq(8), Eq('e')));
     EXPECT_THAT(move3->to, FieldsAre(Eq(8), Eq('g')));
 }
@@ -202,7 +202,7 @@ TEST(ParsingMoveTest, ParsingCastling4) {
 
     EXPECT_EQ(move4->isCastling, true);
     EXPECT_EQ(move4->isCapture, false);
-    EXPECT_EQ(move4->piece, BLACK_KING);
+    EXPECT_EQ(move4->piece, Piece::BLACK_KING);
     EXPECT_THAT(move4->from, FieldsAre(Eq(8), Eq('e')));
     EXPECT_THAT(move4->to, FieldsAre(Eq(8), Eq('b')));
 }
