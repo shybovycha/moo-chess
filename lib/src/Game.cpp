@@ -1,23 +1,41 @@
 #include "chesslib/Game.hpp"
 
-Game::Game() :
-    castlingAvailability{ false, false, false, false },
-    currentPlayer(WHITE)
-{
-    std::array<std::array<Piece, 8>, 8> standardBoard{
-        {
-            { WHITE_ROOK, WHITE_KNIGHT, WHITE_BISHOP, WHITE_QUEEN, WHITE_KING, WHITE_BISHOP, WHITE_KNIGHT, WHITE_ROOK },
-            { WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN },
-            { NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE },
-            { NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE },
-            { NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE },
-            { NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE },
-            { BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN },
-            { BLACK_ROOK, BLACK_KNIGHT, BLACK_BISHOP, BLACK_QUEEN, BLACK_KING, BLACK_BISHOP, BLACK_KNIGHT, BLACK_ROOK }
-        }
-    };
+Game::Game() : Game(WHITE) {}
 
-    pieces = standardBoard;
+Game::Game(PieceColor playerColor) :
+    castlingAvailability{ false, false, false, false },
+    currentPlayer(playerColor)
+{
+    if (playerColor == WHITE)
+    {
+        pieces = {
+            {
+                { WHITE_ROOK, WHITE_KNIGHT, WHITE_BISHOP, WHITE_QUEEN, WHITE_KING, WHITE_BISHOP, WHITE_KNIGHT, WHITE_ROOK },
+                { WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN },
+                { NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE },
+                { NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE },
+                { NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE },
+                { NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE },
+                { BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN },
+                { BLACK_ROOK, BLACK_KNIGHT, BLACK_BISHOP, BLACK_QUEEN, BLACK_KING, BLACK_BISHOP, BLACK_KNIGHT, BLACK_ROOK }
+            }
+        };
+    }
+    else
+    {
+        pieces = {
+            {
+                { BLACK_ROOK, BLACK_KNIGHT, BLACK_BISHOP, BLACK_QUEEN, BLACK_KING, BLACK_BISHOP, BLACK_KNIGHT, BLACK_ROOK },
+                { BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN, BLACK_PAWN },
+                { NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE },
+                { NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE },
+                { NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE },
+                { NONE, NONE, NONE, NONE, NONE, NONE, NONE, NONE },
+                { WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN, WHITE_PAWN },
+                { WHITE_ROOK, WHITE_KNIGHT, WHITE_BISHOP, WHITE_QUEEN, WHITE_KING, WHITE_BISHOP, WHITE_KNIGHT, WHITE_ROOK }
+            }
+        };
+    }
 }
 
 void Game::parseFEN(const std::string& fenString) {

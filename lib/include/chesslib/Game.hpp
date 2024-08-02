@@ -228,6 +228,8 @@ class Game {
 public:
     Game();
 
+    Game(PieceColor playerColor);
+
     ~Game() = default;
 
     void parseFEN(const std::string& FENstring);
