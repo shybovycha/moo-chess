@@ -10,7 +10,7 @@ add_requires("gtest")
 target("chesslib")
     set_kind("static")
     add_files("lib/src/*.cpp")
-    add_headerfiles("lib/include/**/*.hpp")
+    add_headerfiles("lib/include/*.hpp")
     add_includedirs("lib/include", {public = true})
 
 for _, file in ipairs(os.files("lib/test/*Test.cpp")) do

@@ -167,247 +167,27 @@ struct MoveComparator {
 
 class Board {
 public:
-    Board() {
-        pieces = {
-            Piece{ PieceType::ROOK,   PieceColor::WHITE, Position{ 1, 'a' } },
-            Piece{ PieceType::KNIGHT, PieceColor::WHITE, Position{ 1, 'b' } },
-            Piece{ PieceType::BISHOP, PieceColor::WHITE, Position{ 1, 'c' } },
-            Piece{ PieceType::QUEEN,  PieceColor::WHITE, Position{ 1, 'd' } },
-            Piece{ PieceType::KING,   PieceColor::WHITE, Position{ 1, 'e' } },
-            Piece{ PieceType::BISHOP, PieceColor::WHITE, Position{ 1, 'f' } },
-            Piece{ PieceType::KNIGHT, PieceColor::WHITE, Position{ 1, 'g' } },
-            Piece{ PieceType::ROOK,   PieceColor::WHITE, Position{ 1, 'h' } },
+    Board();
 
-            Piece{ PieceType::PAWN, PieceColor::WHITE, Position{ 2, 'a' } },
-            Piece{ PieceType::PAWN, PieceColor::WHITE, Position{ 2, 'b' } },
-            Piece{ PieceType::PAWN, PieceColor::WHITE, Position{ 2, 'c' } },
-            Piece{ PieceType::PAWN, PieceColor::WHITE, Position{ 2, 'd' } },
-            Piece{ PieceType::PAWN, PieceColor::WHITE, Position{ 2, 'e' } },
-            Piece{ PieceType::PAWN, PieceColor::WHITE, Position{ 2, 'f' } },
-            Piece{ PieceType::PAWN, PieceColor::WHITE, Position{ 2, 'g' } },
-            Piece{ PieceType::PAWN, PieceColor::WHITE, Position{ 2, 'h' } },
-
-            Piece{ PieceType::PAWN, PieceColor::BLACK, Position{ 7, 'a' } },
-            Piece{ PieceType::PAWN, PieceColor::BLACK, Position{ 7, 'b' } },
-            Piece{ PieceType::PAWN, PieceColor::BLACK, Position{ 7, 'c' } },
-            Piece{ PieceType::PAWN, PieceColor::BLACK, Position{ 7, 'd' } },
-            Piece{ PieceType::PAWN, PieceColor::BLACK, Position{ 7, 'e' } },
-            Piece{ PieceType::PAWN, PieceColor::BLACK, Position{ 7, 'f' } },
-            Piece{ PieceType::PAWN, PieceColor::BLACK, Position{ 7, 'g' } },
-            Piece{ PieceType::PAWN, PieceColor::BLACK, Position{ 7, 'h' } },
-
-            Piece{ PieceType::ROOK,   PieceColor::BLACK, Position{ 8, 'a' } },
-            Piece{ PieceType::KNIGHT, PieceColor::BLACK, Position{ 8, 'b' } },
-            Piece{ PieceType::BISHOP, PieceColor::BLACK, Position{ 8, 'c' } },
-            Piece{ PieceType::QUEEN,  PieceColor::BLACK, Position{ 8, 'd' } },
-            Piece{ PieceType::KING,   PieceColor::BLACK, Position{ 8, 'e' } },
-            Piece{ PieceType::BISHOP, PieceColor::BLACK, Position{ 8, 'f' } },
-            Piece{ PieceType::KNIGHT, PieceColor::BLACK, Position{ 8, 'g' } },
-            Piece{ PieceType::ROOK,   PieceColor::BLACK, Position{ 8, 'h' } },
-        };
-    }
+    Board(std::vector<Piece> pieces) : pieces(pieces) {}
 
     ~Board() = default;
 
+    // static Board* parseFEN(const std::string& fenString);
+
 public:
 
-    const Piece* getPieceAt(const Position& pos) const {
-        for (const auto& piece : pieces) {
-            if (piece.position == pos) {
-                return &piece;
-            }
-        }
+    const Piece* getPieceAt(const Position& pos) const;
 
-        return nullptr;
-    }
+    bool isPathClear(const Position& start, const Position& end) const;
 
-    bool isPathClear(const Position& start, const Position& end) const {
-        int dcol = end.col - start.col;
-        int drow = end.row - start.row;
+    bool isKingInCheck(const Piece king) const;
 
-        int steps = std::max(std::abs(dcol), std::abs(drow));
+    bool canCastle(const Piece king, const Position to) const;
 
-        int colStep = (dcol != 0) ? dcol / std::abs(dcol) : 0;
-        int rowStep = (drow != 0) ? drow / std::abs(drow) : 0;
+    bool isValidMove(const Piece piece, const Position to, bool checkCastling = true) const;
 
-        for (int i = 1; i < steps; ++i) {
-            Position pos = { start.col + i * colStep, start.row + i * rowStep };
-
-            if (getPieceAt(pos) != nullptr) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    bool isKingInCheck(const Piece king) const {
-        for (const auto& piece : pieces) {
-            if (piece.color != king.color && isValidMove(piece, king.position, false)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    bool canCastle(const Piece king, const Position to) const {
-        if (king.hasMoved || to.row != king.position.row || std::abs(to.col - king.position.col) != 2) {
-            return false;
-        }
-
-        int direction = (to.col > king.position.col) ? 1 : -1;
-
-        Position rookPos = { king.position.row, direction > 0 ? 8 : 1 };
-        const Piece* rook = getPieceAt(rookPos);
-
-        if (rook == nullptr || rook->type != PieceType::ROOK || rook->hasMoved) {
-            return false;
-        }
-
-        for (int i = 1; i <= 2; ++i) {
-            Position pos = { king.position.row, king.position.col + i * direction };
-
-            if (!isPathClear(king.position, pos) || isKingInCheck(Piece{ king.type, king.color, pos, king.hasMoved })) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    bool isValidMove(const Piece piece, const Position to, bool checkCastling = true) const {
-        if (to.row < 1 || to.row > 8 || to.col < 'a' || to.col > 'h') {
-            return false;
-        }
-
-        if (to == piece.position) {
-            return false;
-        }
-
-        const Piece* target = getPieceAt(to);
-
-        if (target && target->color == piece.color) {
-            return false;
-        }
-
-        int dcol = to.col - piece.position.col;
-        int drow = to.row - piece.position.row;
-
-        switch (piece.type) {
-            case PieceType::KING:
-                return (std::abs(dcol) <= 1 && std::abs(drow) <= 1) || (checkCastling && canCastle(piece, to));
-
-            case PieceType::QUEEN:
-                return (dcol == 0 || drow == 0 || std::abs(dcol) == std::abs(drow)) && isPathClear(piece.position, to);
-
-            case PieceType::BISHOP:
-                return (std::abs(dcol) == std::abs(drow)) && isPathClear(piece.position, to);
-
-            case PieceType::ROOK:
-                return (dcol == 0 || drow == 0) && isPathClear(piece.position, to);
-
-            case PieceType::KNIGHT:
-                return (std::abs(dcol) == 2 && std::abs(drow) == 1) || (std::abs(dcol) == 1 && std::abs(drow) == 2);
-
-            case PieceType::PAWN: {
-                int pawnForward = (piece.color == PieceColor::WHITE) ? 1 : -1;
-
-                if (dcol == 0 && drow == pawnForward && !target) {
-                    return true;
-                }
-
-                if (dcol == 0 && drow == 2 * pawnForward && !piece.hasMoved && !getPieceAt({ piece.position.row + pawnForward, piece.position.col }) && !target) {
-                    return true;
-                }
-
-                if (std::abs(dcol) == 1 && drow == pawnForward) {
-                    // regular capture
-                    if (target) {
-                        return true;
-                    }
-
-                    // en passant
-                    const Piece* adjacent = getPieceAt({ piece.position.row, static_cast<char>(piece.position.col + dcol) });
-
-                    return (adjacent && adjacent->type == PieceType::PAWN && adjacent->color != piece.color && adjacent->justMadeDoubleMove);
-                }
-            }
-
-            default:
-                return false;
-        }
-    }
-
-    void applyMove(const Piece piece, const Position to) {
-        if (!isValidMove(piece, to)) {
-            return;
-        }
-
-        for (auto& p : pieces) {
-            if (p.position != piece.position) {
-                continue;
-            }
-
-            Position from = p.position;
-
-            p.position = to;
-            p.hasMoved = true;
-
-            // castling
-            if (p.type == PieceType::KING && std::abs(to.col - piece.position.col) == 2) {
-                int direction = (to.col > piece.position.col) ? 1 : -1;
-                Position oldRookPos = { piece.position.row, direction > 0 ? 8 : 1 };
-                Position newRookPos = { piece.position.row, piece.position.col + direction };
-
-                for (auto& rook : pieces) {
-                    if (rook.position != oldRookPos) {
-                        continue;
-                    }
-
-                    rook.position = newRookPos;
-                    rook.hasMoved = true;
-                    break;
-                }
-            }
-
-            // pawn
-            if (p.type == PieceType::PAWN) {
-                if (std::abs(to.row - from.row) == 2) {
-                    p.justMadeDoubleMove = true;
-                }
-
-                int pawnForward = (piece.color == PieceColor::WHITE) ? 1 : -1;
-
-                if (std::abs(to.col - from.col) == 1 && to.row - from.row == pawnForward && !getPieceAt(to)) {
-                    Position capturedPawnPosition = { to.row, from.col };
-
-                    pieces.erase(
-                        std::remove_if(
-                            pieces.begin(),
-                            pieces.end(),
-                            [&capturedPawnPosition](const Piece& p) {
-                                return p.position.col == capturedPawnPosition.col && p.position.row == capturedPawnPosition.row;
-                            }
-                        ),
-                        pieces.end()
-                    );
-                }
-            }
-
-            break;
-        }
-
-        // remove captured piece
-        pieces.erase(
-            std::remove_if(
-                pieces.begin(),
-                pieces.end(),
-                [&to](const Piece& p) { return p.position == to; }
-            ),
-            pieces.end()
-        );
-    }
+    void applyMove(const Piece piece, const Position to);
 
 public:
     std::vector<Piece> pieces;
