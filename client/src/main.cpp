@@ -11,7 +11,7 @@
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
 
-#include "chesslib/Game.hpp"
+#include "chesslib.hpp"
 
 enum class ApplicationState {
     UNKNOWN = 0,
@@ -84,21 +84,21 @@ int main(int argc, char** argv) {
 
     ApplicationState state = ApplicationState::NO_CURRENT_GAME;
 
-    std::optional<Game> game;
+    std::optional<Board> game;
 
-    std::map<Piece, SDL_Texture*> piece_textures = {
-        { Piece::BLACK_BISHOP, IMG_LoadTexture(renderer, "assets/b_bishop.png") },
-        { Piece::BLACK_KING, IMG_LoadTexture(renderer, "assets/b_king.png") },
-        { Piece::BLACK_KNIGHT, IMG_LoadTexture(renderer, "assets/b_knight.png") },
-        { Piece::BLACK_PAWN, IMG_LoadTexture(renderer, "assets/b_pawn.png") },
-        { Piece::BLACK_QUEEN, IMG_LoadTexture(renderer, "assets/b_queen.png") },
-        { Piece::BLACK_ROOK, IMG_LoadTexture(renderer, "assets/b_rook.png") },
-        { Piece::WHITE_BISHOP, IMG_LoadTexture(renderer, "assets/w_bishop.png") },
-        { Piece::WHITE_KING, IMG_LoadTexture(renderer, "assets/w_king.png") },
-        { Piece::WHITE_KNIGHT, IMG_LoadTexture(renderer, "assets/w_knight.png") },
-        { Piece::WHITE_PAWN, IMG_LoadTexture(renderer, "assets/w_pawn.png") },
-        { Piece::WHITE_QUEEN, IMG_LoadTexture(renderer, "assets/w_queen.png") },
-        { Piece::WHITE_ROOK, IMG_LoadTexture(renderer, "assets/w_rook.png") }
+    std::map<std::tuple<PieceType, PieceColor>, SDL_Texture*> piece_textures = {
+        { { PieceType::BISHOP, PieceColor::BLACK }, IMG_LoadTexture(renderer, "assets/b_bishop.png") },
+        { { PieceType::KING, PieceColor::BLACK }, IMG_LoadTexture(renderer, "assets/b_king.png") },
+        { { PieceType::KNIGHT, PieceColor::BLACK }, IMG_LoadTexture(renderer, "assets/b_knight.png") },
+        { { PieceType::PAWN, PieceColor::BLACK }, IMG_LoadTexture(renderer, "assets/b_pawn.png") },
+        { { PieceType::QUEEN, PieceColor::BLACK }, IMG_LoadTexture(renderer, "assets/b_queen.png") },
+        { { PieceType::ROOK, PieceColor::BLACK }, IMG_LoadTexture(renderer, "assets/b_rook.png") },
+        { { PieceType::BISHOP, PieceColor::WHITE }, IMG_LoadTexture(renderer, "assets/w_bishop.png") },
+        { { PieceType::KING, PieceColor::WHITE }, IMG_LoadTexture(renderer, "assets/w_king.png") },
+        { { PieceType::KNIGHT, PieceColor::WHITE }, IMG_LoadTexture(renderer, "assets/w_knight.png") },
+        { { PieceType::PAWN, PieceColor::WHITE }, IMG_LoadTexture(renderer, "assets/w_pawn.png") },
+        { { PieceType::QUEEN, PieceColor::WHITE }, IMG_LoadTexture(renderer, "assets/w_queen.png") },
+        { { PieceType::ROOK, PieceColor::WHITE }, IMG_LoadTexture(renderer, "assets/w_rook.png") }
     };
 
     while (state != ApplicationState::QUIT)
@@ -174,22 +174,9 @@ int main(int argc, char** argv) {
             if (ImGui::Button("Create"))
             {
                 // TODO: add server call
-                PieceColor player_color = PieceColor::BLACK;
+                // PieceColor player_color = PieceColor::BLACK;
 
-                if (player_color_idx == 0)
-                {
-                    player_color = PieceColor::WHITE;
-                }
-                else if (player_color_idx == 1)
-                {
-                    player_color = PieceColor::BLACK;
-                }
-                else
-                {
-                    player_color = PieceColor::BLACK;
-                }
-
-                game = Game(player_color);
+                game = Board();
 
                 state = ApplicationState::PLAYING;
             }
@@ -226,22 +213,9 @@ int main(int argc, char** argv) {
             if (ImGui::Button("Create"))
             {
                 // TODO: add server call
-                PieceColor player_color = PieceColor::BLACK;
+                // PieceColor player_color = PieceColor::BLACK;
 
-                if (player_color_idx == 0)
-                {
-                    player_color = PieceColor::BLACK;
-                }
-                else if (player_color_idx == 1)
-                {
-                    player_color = PieceColor::WHITE;
-                }
-                else
-                {
-                    player_color = PieceColor::WHITE;
-                }
-
-                game = Game(player_color);
+                game = Board();
 
                 state = ApplicationState::PLAYING;
             }
@@ -296,9 +270,9 @@ int main(int argc, char** argv) {
             {
                 for (auto col = 0; col < 8; col++)
                 {
-                    Position square_position{ static_cast<unsigned int>(row + 1), static_cast<char>('a' + col) };
+                    Position square_position{ row + 1, static_cast<char>('a' + col) };
 
-                    Piece piece = game->pieceAt(square_position);
+                    const Piece* piece = game->getPieceAt(square_position);
 
                     auto text = std::format("{0}", square_position);
 
@@ -312,10 +286,10 @@ int main(int argc, char** argv) {
 
                     ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, ImVec2(1.0f, 1.0f));
 
-                    if (piece != Piece::NONE)
+                    if (piece)
                     {
                         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
-                        ImGui::ImageButton(text.c_str(), piece_textures[piece], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), (ImVec4) square_color, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+                        ImGui::ImageButton(text.c_str(), piece_textures[std::make_tuple(piece->type, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), (ImVec4) square_color, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
                         ImGui::PopStyleVar();
                     }
                     else
@@ -340,10 +314,10 @@ int main(int argc, char** argv) {
 
                         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
 
-                        if (piece != Piece::NONE)
+                        if (piece)
                         {
                             ImGui::PushStyleColor(ImGuiCol_PopupBg, (ImVec4) ImColor(0.0f, 0.0f, 0.0f, 1.0f));
-                            ImGui::Image(piece_textures[piece], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.0f));
+                            ImGui::Image(piece_textures[std::make_tuple(piece->type, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.0f));
                             ImGui::PopStyleColor();
                         }
                         else
@@ -368,24 +342,16 @@ int main(int argc, char** argv) {
                             IM_ASSERT(payload->DataSize == sizeof(Position));
                             Position from_pos = *(const Position*)payload->Data;
 
-                            Move move = { .piece = game->pieceAt(from_pos), .from = from_pos, .to = square_position, .isCapture = game->opponentPieceAt(square_position) };
+                            // Move move = { .piece = game->pieceAt(from_pos), .from = from_pos, .to = square_position, .isCapture = game->opponentPieceAt(square_position) };
 
-                            if (game->isValidMove(move))
+                            if (game->isValidMove(*game->getPieceAt(from_pos), square_position))
                             {
-                                std::cout << std::format("{0}\n", move);
-                                game->applyMove(move);
+                                std::cout << std::format("{0}{1}\n", *game->getPieceAt(from_pos), square_position);
+                                game->applyMove(*game->getPieceAt(from_pos), square_position);
                             }
                             else
                             {
-                                /*
-                                 * Bugs:
-                                 *
-                                 * - bishop can only move incrementally up-right - iterator issue?
-                                 * - queen can only move down, up-right
-                                 * - king can _sometimes_ move down and up
-                                 * - pieces can capture same player pieces???
-                                 */
-                                std::cout << std::format("{0} is invalid (has opponent piece? {1} ({2}))\n", move, game->opponentPieceAt(move.to), game->pieceAt(move.to));
+                                std::cout << std::format("{0}{1} is invalid\n", *game->getPieceAt(from_pos), square_position);
                             }
                         }
 
