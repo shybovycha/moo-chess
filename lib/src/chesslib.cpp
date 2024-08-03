@@ -76,7 +76,7 @@ bool Board::isPathClear(const Position& start, const Position& end) const {
     int rowStep = (drow != 0) ? drow / std::abs(drow) : 0;
 
     for (int i = 1; i < steps; ++i) {
-        Position pos = { start.col + i * colStep, static_cast<char>(start.row + i * rowStep) };
+        Position pos = { start.row + i * rowStep, static_cast<char>(start.col + i * colStep) };
 
         if (getPieceAt(pos) != nullptr) {
             return false;
@@ -141,7 +141,7 @@ bool Board::isValidMove(const Piece piece, const Position to, bool checkCastling
 
     switch (piece.type) {
         case PieceType::KING:
-            return (std::abs(dcol) <= 1 && std::abs(drow) <= 1) || (checkCastling && canCastle(piece, to));
+            return ((std::abs(dcol) <= 1 && std::abs(drow) <= 1) || (checkCastling && canCastle(piece, to))) && (!isKingInCheck({ piece.type, piece.color, to }));
 
         case PieceType::QUEEN:
             return (dcol == 0 || drow == 0 || std::abs(dcol) == std::abs(drow)) && isPathClear(piece.position, to);
