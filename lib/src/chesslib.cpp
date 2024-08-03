@@ -199,9 +199,6 @@ void Board::applyMove(const Piece piece, const Position to) {
 
         Position from = p.position;
 
-        p.position = to;
-        p.hasMoved = true;
-
         // castling
         if (p.type == PieceType::KING && std::abs(to.col - piece.position.col) == 2) {
             int direction = (to.col > piece.position.col) ? 1 : -1;
@@ -228,11 +225,14 @@ void Board::applyMove(const Piece piece, const Position to) {
             int pawnForward = (piece.color == PieceColor::WHITE) ? 1 : -1;
 
             if (std::abs(to.col - from.col) == 1 && to.row - from.row == pawnForward && !getPieceAt(to)) {
-                Position capturedPawnPosition = { to.row, from.col };
+                Position capturedPawnPosition = { from.row, to.col };
 
                 removePieceAt(capturedPawnPosition);
             }
         }
+
+        p.position = to;
+        p.hasMoved = true;
 
         break;
     }
