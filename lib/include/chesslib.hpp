@@ -104,7 +104,7 @@ struct std::formatter<Piece> {
         char p = static_cast<std::underlying_type<PieceType>::type>(piece.type);
 
         if (piece.color == PieceColor::BLACK) {
-            p = p - 'A';
+            p = p - 'A' + 'a';
         }
 
         return std::format_to(ctx.out(), "{0:c}", p);
