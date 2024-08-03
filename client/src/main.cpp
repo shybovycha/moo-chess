@@ -1,6 +1,7 @@
 #include <iostream>
 #include <format>
 #include <string>
+#include <print>
 
 #include <SDL.h>
 
@@ -27,7 +28,7 @@ enum class ApplicationState {
 int main(int argc, char** argv) {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
     {
-       std::cerr << std::format("Error: {0}\n", SDL_GetError());
+       std::println(stderr, "Error: {0}", SDL_GetError());
        return -1;
     }
 
@@ -37,7 +38,7 @@ int main(int argc, char** argv) {
 
     if (window == nullptr)
     {
-        std::cerr << std::format("Error: SDL_CreateWindow(): {0}\n", SDL_GetError());
+        std::println(stderr, "Error: SDL_CreateWindow(): {0}", SDL_GetError());
         return -1;
     }
 
@@ -79,7 +80,7 @@ int main(int argc, char** argv) {
 
     if (font_opensans == nullptr)
     {
-        std::cerr << std::format("Could not load font\n");
+        std::println(stderr, "Could not load font");
     }
 
     ApplicationState state = ApplicationState::NO_CURRENT_GAME;
@@ -359,12 +360,12 @@ int main(int argc, char** argv) {
 
                             if (game->isValidMove(*game->getPieceAt(from_pos), square_position))
                             {
-                                std::cout << std::format("{0}{1}\n", *game->getPieceAt(from_pos), square_position);
+                                std::println("{0}{1}", *game->getPieceAt(from_pos), square_position);
                                 game->applyMove(*game->getPieceAt(from_pos), square_position);
                             }
                             else
                             {
-                                std::cout << std::format("{0}{1} is invalid\n", *game->getPieceAt(from_pos), square_position);
+                                std::println("{0}{1} is invalid", *game->getPieceAt(from_pos), square_position);
 
                                 // TODO: add piece back to the board
                             }
