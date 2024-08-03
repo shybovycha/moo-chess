@@ -166,6 +166,10 @@ public:
 
     const Piece* getPieceAt(const Position& pos) const;
 
+    void removePieceAt(const Position& pos);
+
+    void setPieceAt(const Piece piece, const Position& pos);
+
     bool isPathClear(const Position& start, const Position& end) const;
 
     bool isKingInCheck(const Piece king) const;

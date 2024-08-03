@@ -50,6 +50,22 @@ const Piece* Board::getPieceAt(const Position& pos) const {
     return nullptr;
 }
 
+void Board::removePieceAt(const Position& pos) {
+    pieces.erase(
+        std::remove_if(
+            pieces.begin(),
+            pieces.end(),
+            [&pos](const Piece& p) { return p.position == pos; }
+        ),
+        pieces.end()
+    );
+}
+
+void Board::setPieceAt(const Piece piece, const Position& pos) {
+    Piece p{ piece.type, piece.color, pos, piece.hasMoved, piece.justMadeDoubleMove};
+    pieces.push_back(p);
+}
+
 bool Board::isPathClear(const Position& start, const Position& end) const {
     int dcol = end.col - start.col;
     int drow = end.row - start.row;
@@ -174,14 +190,7 @@ void Board::applyMove(const Piece piece, const Position to) {
     }
 
     // remove captured piece
-    pieces.erase(
-        std::remove_if(
-            pieces.begin(),
-            pieces.end(),
-            [&to](const Piece& p) { return p.position == to; }
-        ),
-        pieces.end()
-    );
+    removePieceAt(to);
 
     for (auto& p : pieces) {
         if (p.position != piece.position) {
@@ -221,16 +230,7 @@ void Board::applyMove(const Piece piece, const Position to) {
             if (std::abs(to.col - from.col) == 1 && to.row - from.row == pawnForward && !getPieceAt(to)) {
                 Position capturedPawnPosition = { to.row, from.col };
 
-                pieces.erase(
-                    std::remove_if(
-                        pieces.begin(),
-                        pieces.end(),
-                        [&capturedPawnPosition](const Piece& p) {
-                            return p.position.col == capturedPawnPosition.col && p.position.row == capturedPawnPosition.row;
-                        }
-                    ),
-                    pieces.end()
-                );
+                removePieceAt(capturedPawnPosition);
             }
         }
 

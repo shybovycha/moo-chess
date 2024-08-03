@@ -125,6 +125,8 @@ int main(int argc, char** argv) {
         ImGui_ImplSDL2_NewFrame();
         ImGui::NewFrame();
 
+        static bool flipBoard = false;
+
         if (state == ApplicationState::NO_CURRENT_GAME)
         {
 
@@ -213,7 +215,11 @@ int main(int argc, char** argv) {
             if (ImGui::Button("Create"))
             {
                 // TODO: add server call
-                // PieceColor player_color = PieceColor::BLACK;
+                if (player_color_idx == 0)
+                {
+                    // play as black
+                    flipBoard = true;
+                }
 
                 game = Board();
 
@@ -232,8 +238,6 @@ int main(int argc, char** argv) {
 
             ImGui::End();
         }
-
-        static bool flipBoard = false;
 
         if (state == ApplicationState::PLAYING)
         {
@@ -329,6 +333,9 @@ int main(int argc, char** argv) {
                             ImGui::PushStyleColor(ImGuiCol_PopupBg, (ImVec4) ImColor(0.0f, 0.0f, 0.0f, 1.0f));
                             ImGui::Image(piece_textures[std::make_tuple(piece->type, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.0f));
                             ImGui::PopStyleColor();
+
+                            // TODO: remove piece from the board, but remember it in a variable
+                            // board->removePieceAt(piece->position);
                         }
 
                         ImGui::PopStyleVar();
@@ -358,6 +365,8 @@ int main(int argc, char** argv) {
                             else
                             {
                                 std::cout << std::format("{0}{1} is invalid\n", *game->getPieceAt(from_pos), square_position);
+
+                                // TODO: add piece back to the board
                             }
                         }
 
