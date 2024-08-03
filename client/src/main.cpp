@@ -102,6 +102,9 @@ int main(int argc, char** argv) {
         { { PieceType::ROOK, PieceColor::WHITE }, IMG_LoadTexture(renderer, "assets/w_rook.png") }
     };
 
+    bool flipBoard = false;
+    std::optional<Piece> draggingPiece = {};
+
     while (state != ApplicationState::QUIT)
     {
         SDL_Event event;
@@ -125,8 +128,6 @@ int main(int argc, char** argv) {
         ImGui_ImplSDLRenderer2_NewFrame();
         ImGui_ImplSDL2_NewFrame();
         ImGui::NewFrame();
-
-        static bool flipBoard = false;
 
         if (state == ApplicationState::NO_CURRENT_GAME)
         {
@@ -306,7 +307,16 @@ int main(int argc, char** argv) {
                     if (piece)
                     {
                         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
-                        ImGui::ImageButton(text.c_str(), piece_textures[std::make_tuple(piece->type, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), (ImVec4) square_color, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+
+                        if (draggingPiece != std::nullopt && draggingPiece->position == square_position)
+                        {
+                            ImGui::ImageButton(text.c_str(), piece_textures[std::make_tuple(piece->type, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), (ImVec4) square_color, ImVec4(1.0f, 1.0f, 1.0f, 0.25f));
+                        }
+                        else
+                        {
+                            ImGui::ImageButton(text.c_str(), piece_textures[std::make_tuple(piece->type, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), (ImVec4) square_color, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+                        }
+
                         ImGui::PopStyleVar();
                     }
                     else
@@ -331,12 +341,14 @@ int main(int argc, char** argv) {
 
                         if (piece)
                         {
+                            if (draggingPiece == std::nullopt)
+                            {
+                                draggingPiece = Piece{ piece->type, piece->color, piece->position };
+                            }
+
                             ImGui::PushStyleColor(ImGuiCol_PopupBg, (ImVec4) ImColor(0.0f, 0.0f, 0.0f, 1.0f));
                             ImGui::Image(piece_textures[std::make_tuple(piece->type, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.0f));
                             ImGui::PopStyleColor();
-
-                            // TODO: remove piece from the board, but remember it in a variable
-                            // board->removePieceAt(piece->position);
                         }
 
                         ImGui::PopStyleVar();
@@ -356,8 +368,6 @@ int main(int argc, char** argv) {
                             IM_ASSERT(payload->DataSize == sizeof(Position));
                             Position from_pos = *(const Position*)payload->Data;
 
-                            // Move move = { .piece = game->pieceAt(from_pos), .from = from_pos, .to = square_position, .isCapture = game->opponentPieceAt(square_position) };
-
                             if (game->isValidMove(*game->getPieceAt(from_pos), square_position))
                             {
                                 std::println("{0}{1}", *game->getPieceAt(from_pos), square_position);
@@ -366,9 +376,9 @@ int main(int argc, char** argv) {
                             else
                             {
                                 std::println("{0}{1} is invalid", *game->getPieceAt(from_pos), square_position);
-
-                                // TODO: add piece back to the board
                             }
+
+                            draggingPiece = {};
                         }
 
                         ImGui::EndDragDropTarget();
