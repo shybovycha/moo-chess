@@ -233,6 +233,8 @@ int main(int argc, char** argv) {
             ImGui::End();
         }
 
+        static bool flipBoard = false;
+
         if (state == ApplicationState::PLAYING)
         {
             ImGui::Begin("Current game", nullptr, ImGuiWindowFlags_NoCollapse);
@@ -241,7 +243,10 @@ int main(int argc, char** argv) {
 
             ImGui::Text(std::format("You play as {0}", "black").c_str());
 
-            if (ImGui::Button("Flip the board")) {}
+            if (ImGui::Button("Flip the board"))
+            {
+                flipBoard = !flipBoard;
+            }
 
             if (ImGui::Button("Resign"))
             {
@@ -266,8 +271,15 @@ int main(int argc, char** argv) {
             // gap between buttons
             ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
 
-            for (auto row = 7; row >= 0; row--)
+            for (auto m_row = 7; m_row >= 0; m_row--)
             {
+                int row = m_row;
+
+                if (flipBoard)
+                {
+                    row = 7 - m_row;
+                }
+
                 for (auto col = 0; col < 8; col++)
                 {
                     Position square_position{ row + 1, static_cast<char>('a' + col) };
@@ -302,10 +314,8 @@ int main(int argc, char** argv) {
                     ImGui::PopStyleColor(3);
 
                     // Our buttons are both drag sources and drag targets
-                    if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoPreviewTooltip)) // ImGuiDragDropFlags_None))
+                    if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoPreviewTooltip))
                     {
-                        // int pos = (row * 8) + col;
-
                         ImGui::SetDragDropPayload("DND_TARGET_POS", &square_position, sizeof(Position), ImGuiCond_FirstUseEver);
 
                         ImGui::SetNextWindowPos(ImVec2(io.MousePos.x - 30.0f, io.MousePos.y - 30.0f));
@@ -319,10 +329,6 @@ int main(int argc, char** argv) {
                             ImGui::PushStyleColor(ImGuiCol_PopupBg, (ImVec4) ImColor(0.0f, 0.0f, 0.0f, 1.0f));
                             ImGui::Image(piece_textures[std::make_tuple(piece->type, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.0f));
                             ImGui::PopStyleColor();
-                        }
-                        else
-                        {
-                            // ImGui::Text(text.c_str());
                         }
 
                         ImGui::PopStyleVar();
