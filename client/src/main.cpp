@@ -298,6 +298,18 @@ int main(int argc, char** argv) {
                         ? ImColor(173 / 255.f, 138 / 255.f, 104 / 255.f) // dark square
                         : ImColor(237 / 255.f, 219 / 255.f, 185 / 255.f); // light square
 
+                    if (draggingPiece != std::nullopt && game->isValidMove(*draggingPiece, square_position))
+                    {
+                        if ((row + col) % 2 == 0)
+                        {
+                            square_color = ImColor(137 / 255.f, 140 / 255.f, 104 / 255.f, 0.8f); // dark square highlight
+                        }
+                        else
+                        {
+                            square_color = ImColor(173 / 255.f, 178 / 255.f, 104 / 255.f, 0.8f); // light square highlight
+                        }
+                    }
+
                     ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4) square_color);
                     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4) square_color);
                     ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4) square_color);
@@ -343,7 +355,7 @@ int main(int argc, char** argv) {
                         {
                             if (draggingPiece == std::nullopt)
                             {
-                                draggingPiece = Piece{ piece->type, piece->color, piece->position };
+                                draggingPiece = Piece{ piece->type, piece->color, piece->position, piece->hasMoved, piece->justMadeDoubleMove };
                             }
 
                             ImGui::PushStyleColor(ImGuiCol_PopupBg, (ImVec4) ImColor(0.0f, 0.0f, 0.0f, 1.0f));
@@ -368,6 +380,8 @@ int main(int argc, char** argv) {
                             IM_ASSERT(payload->DataSize == sizeof(Position));
                             Position from_pos = *(const Position*)payload->Data;
 
+                            std::println(">> drop");
+
                             if (game->isValidMove(*game->getPieceAt(from_pos), square_position))
                             {
                                 std::println("{0}{1}", *game->getPieceAt(from_pos), square_position);
@@ -387,6 +401,11 @@ int main(int argc, char** argv) {
                     if (col < 7)
                     {
                         ImGui::SameLine();
+                    }
+
+                    if (!ImGui::GetDragDropPayload() && draggingPiece != std::nullopt)
+                    {
+                        draggingPiece = {};
                     }
                 }
             }
