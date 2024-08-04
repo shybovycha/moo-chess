@@ -244,9 +244,11 @@ int main(int argc, char** argv) {
 
         if (state == ApplicationState::PLAYING)
         {
-            ImGui::Begin("Current game", nullptr, ImGuiWindowFlags_NoCollapse);
+            ImGui::Begin("Game", nullptr, ImGuiWindowFlags_NoCollapse);
 
-            ImGui::ShowDemoWindow(nullptr);
+            // ImGui::ShowDemoWindow(nullptr);
+
+            ImGui::BeginChild("Game options", ImVec2(200, 100));
 
             ImGui::Text(std::format("You play as {0}", "black").c_str());
 
@@ -267,11 +269,13 @@ int main(int argc, char** argv) {
                 state = ApplicationState::NO_CURRENT_GAME;
             }
 
-            ImGui::End();
+            ImGui::EndChild();
 
             // ----------
 
-            ImGui::Begin("Board", nullptr, ImGuiWindowFlags_NoCollapse);
+            ImGui::SameLine();
+
+            ImGui::BeginChild("Board", ImVec2(500, 500));
 
             // ImGui::Text(std::format("You play as {0}", "black"));
 
@@ -433,22 +437,47 @@ int main(int argc, char** argv) {
                         ImGui::EndDragDropTarget();
                     }
 
+                    ImGui::PopID();
+
                     if (col < 7)
                     {
                         ImGui::SameLine();
+                    }
+                    else
+                    {
+                        auto labelBackgroundColor = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
+                        ImGui::SameLine();
+                        ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4) labelBackgroundColor);
+                        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4) labelBackgroundColor);
+                        ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4) labelBackgroundColor);
+                        ImGui::Button(std::format("{0}", row + 1).c_str(), ImVec2(20, 60));
+                        ImGui::PopStyleColor(3);
                     }
 
                     if (!ImGui::GetDragDropPayload() && draggingPiece != std::nullopt)
                     {
                         draggingPiece = {};
                     }
-
-                    ImGui::PopID();
                 }
+            }
+
+            ImGui::NewLine();
+
+            for (int col = 0; col < 8; ++col)
+            {
+                auto labelBackgroundColor = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
+                ImGui::SameLine();
+                ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4) labelBackgroundColor);
+                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4) labelBackgroundColor);
+                ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4) labelBackgroundColor);
+                ImGui::Button(std::format("{0:c}", static_cast<char>('A' + col)).c_str(), ImVec2(60, 20));
+                ImGui::PopStyleColor(3);
             }
 
             // gap between buttons
             ImGui::PopStyleVar(1);
+
+            ImGui::EndChild();
 
             ImGui::End();
         }
