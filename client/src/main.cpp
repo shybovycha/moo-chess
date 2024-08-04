@@ -104,6 +104,7 @@ int main(int argc, char** argv) {
 
     bool flipBoard = false;
     std::optional<Piece> draggingPiece = {};
+    std::optional<Piece> selectedPiece = {};
 
     while (state != ApplicationState::QUIT)
     {
@@ -294,11 +295,13 @@ int main(int argc, char** argv) {
 
                     auto text = std::format("{0}", square_position);
 
+                    ImGui::PushID(text.c_str());
+
                     auto square_color = ((row + col) % 2 == 0)
                         ? ImColor(173 / 255.f, 138 / 255.f, 104 / 255.f) // dark square
                         : ImColor(237 / 255.f, 219 / 255.f, 185 / 255.f); // light square
 
-                    if (draggingPiece != std::nullopt && game->isValidMove(*draggingPiece, square_position))
+                    if ((draggingPiece != std::nullopt && game->isValidMove(*draggingPiece, square_position)) || (selectedPiece != std::nullopt && game->isValidMove(*selectedPiece, square_position)))
                     {
                         if ((row + col) % 2 == 0)
                         {
@@ -320,20 +323,52 @@ int main(int argc, char** argv) {
                     {
                         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
 
-                        if (draggingPiece != std::nullopt && draggingPiece->position == square_position)
+                        auto tint = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+                        if ((draggingPiece != std::nullopt && draggingPiece->position == square_position) || (selectedPiece != std::nullopt && selectedPiece->position == square_position))
                         {
-                            ImGui::ImageButton(text.c_str(), piece_textures[std::make_tuple(piece->type, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), (ImVec4) square_color, ImVec4(1.0f, 1.0f, 1.0f, 0.25f));
+                            tint = ImVec4(1.0f, 1.0f, 1.0f, 0.25f);
                         }
-                        else
+
+                        if (ImGui::ImageButton(text.c_str(), piece_textures[std::make_tuple(piece->type, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), (ImVec4) square_color, tint))
                         {
-                            ImGui::ImageButton(text.c_str(), piece_textures[std::make_tuple(piece->type, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), (ImVec4) square_color, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+                            // TODO: check current player color
+                            if (draggingPiece != std::nullopt)
+                            {
+                                draggingPiece = {};
+                            }
+
+                            if (selectedPiece != std::nullopt)
+                            {
+                                if (selectedPiece->position != square_position)
+                                {
+                                    if (game->isValidMove(*selectedPiece, square_position))
+                                    {
+                                        game->applyMove(*selectedPiece, square_position);
+                                    }
+                                }
+
+                                selectedPiece = {};
+                            }
+                            else
+                            {
+                                selectedPiece = Piece{ piece->type, piece->color, piece->position, piece->hasMoved, piece->justMadeDoubleMove };
+                            }
                         }
 
                         ImGui::PopStyleVar();
                     }
                     else
                     {
-                        ImGui::Button("", ImVec2(60, 60));
+                        if (ImGui::Button("", ImVec2(60, 60)))
+                        {
+                            if (selectedPiece != std::nullopt && game->isValidMove(*selectedPiece, square_position))
+                            {
+                                game->applyMove(*selectedPiece, square_position);
+                            }
+
+                            selectedPiece = {};
+                        }
                     }
 
                     ImGui::PopStyleVar();
@@ -407,6 +442,8 @@ int main(int argc, char** argv) {
                     {
                         draggingPiece = {};
                     }
+
+                    ImGui::PopID();
                 }
             }
 
