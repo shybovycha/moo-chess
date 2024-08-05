@@ -238,6 +238,35 @@ void Board::applyMove(const Piece piece, const Position to) {
     }
 }
 
+std::string Board::moveToStr(const Piece piece, const Position to) {
+    if (piece.type == PieceType::KING && std::abs(to.col - piece.position.col) == 2) {
+        int direction = (to.col > piece.position.col) ? 1 : -1;
+
+        if (direction == 1) {
+            return "O-O";
+        }
+        else {
+            return "O-O-O";
+        }
+    }
+
+    const Piece* target = getPieceAt(to);
+
+    if (target != nullptr) {
+        if (piece.type == PieceType::PAWN) {
+            return std::format("{0}x{1}", piece.position, to);
+        }
+
+        return std::format("{0}{1}x{2}", piece.type, piece.position, to);
+    }
+
+    if (piece.type == PieceType::PAWN) {
+        return std::format("{0}", to);
+    }
+    
+    return std::format("{0}{1}", piece.type, to);
+}
+
 // static Board parseFEN(const std::string& fenString) {
 //     auto boardStringEnd = fenString.find(' ');
 

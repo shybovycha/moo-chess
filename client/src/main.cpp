@@ -14,7 +14,8 @@
 
 #include "chesslib.hpp"
 
-enum class ApplicationState {
+enum class ApplicationState
+{
     UNKNOWN = 0,
     NO_CURRENT_GAME,
     CONFIGURE_NEW_GAME,
@@ -25,7 +26,8 @@ enum class ApplicationState {
     QUIT,
 };
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
     {
        std::println(stderr, "Error: {0}", SDL_GetError());
@@ -106,6 +108,7 @@ int main(int argc, char** argv) {
     PieceColor currentPlayer = PieceColor::BLACK;
     std::optional<Piece> draggingPiece = {};
     std::optional<Piece> selectedPiece = {};
+    std::vector<std::string> moveHistory;
 
     while (state != ApplicationState::QUIT)
     {
@@ -276,7 +279,7 @@ int main(int argc, char** argv) {
         {
             ImGui::Begin("Game", nullptr, ImGuiWindowFlags_NoCollapse);
 
-            // ImGui::ShowDemoWindow(nullptr);
+            ImGui::ShowDemoWindow(nullptr);
 
             ImGui::BeginChild("Game options", ImVec2(200, 100));
 
@@ -301,6 +304,38 @@ int main(int argc, char** argv) {
 
             ImGui::EndChild();
 
+            // ----------
+            
+            ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
+
+            ImGui::BeginChild("Move history", ImVec2(150, 260), ImGuiChildFlags_Border, ImGuiWindowFlags_None);
+
+            if (ImGui::BeginTable("split", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_NoSavedSettings))
+            {
+                for (auto i = 0; i < moveHistory.size(); ++i)
+                {
+                    const auto& move = moveHistory.at(i);
+
+                    if (i % 2 == 0)
+                    {
+                        std::string whiteStr = std::format("{0}. {1}", i + 1, move);
+                        ImGui::TableNextColumn();
+                        ImGui::Button(whiteStr.c_str(), ImVec2(-FLT_MIN, 0.0f));
+                    }
+                    else
+                    {
+                        std::string blackStr = std::format("{0}", move);
+                        ImGui::TableNextColumn();
+                        ImGui::Button(blackStr.c_str(), ImVec2(-FLT_MIN, 0.0f));
+                    }
+                }
+
+                ImGui::EndTable();
+            }
+
+            ImGui::EndChild();
+            ImGui::PopStyleVar();
+            
             // ----------
 
             ImGui::SameLine();
@@ -378,6 +413,7 @@ int main(int argc, char** argv) {
                                 {
                                     if (game->isValidMove(*selectedPiece, square_position))
                                     {
+                                        moveHistory.push_back(game->moveToStr(*selectedPiece, square_position));
                                         game->applyMove(*selectedPiece, square_position);
                                     }
                                 }
@@ -398,6 +434,7 @@ int main(int argc, char** argv) {
                         {
                             if (selectedPiece != std::nullopt && game->isValidMove(*selectedPiece, square_position))
                             {
+                                moveHistory.push_back(game->moveToStr(*selectedPiece, square_position));
                                 game->applyMove(*selectedPiece, square_position);
                             }
 
@@ -453,7 +490,7 @@ int main(int argc, char** argv) {
 
                             if (game->isValidMove(*game->getPieceAt(from_pos), square_position))
                             {
-                                std::println("{0}{1}", *game->getPieceAt(from_pos), square_position);
+                                moveHistory.push_back(game->moveToStr(*game->getPieceAt(from_pos), square_position));
                                 game->applyMove(*game->getPieceAt(from_pos), square_position);
                             }
                             else

@@ -180,6 +180,8 @@ public:
 
     void applyMove(const Piece piece, const Position to);
 
+    std::string moveToStr(const Piece piece, const Position to);
+
 public:
     std::vector<Piece> pieces;
 };
