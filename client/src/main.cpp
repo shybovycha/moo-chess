@@ -279,7 +279,7 @@ int main(int argc, char** argv)
         {
             ImGui::Begin("Game", nullptr, ImGuiWindowFlags_NoCollapse);
 
-            ImGui::ShowDemoWindow(nullptr);
+            // ImGui::ShowDemoWindow(nullptr);
 
             ImGui::BeginChild("Game options", ImVec2(200, 100));
 
@@ -341,8 +341,6 @@ int main(int argc, char** argv)
             ImGui::SameLine();
 
             ImGui::BeginChild("Board", ImVec2(500, 500));
-
-            // ImGui::Text(std::format("You play as {0}", "black"));
 
             // gap between buttons
             ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
@@ -420,7 +418,7 @@ int main(int argc, char** argv)
 
                                 selectedPiece = {};
                             }
-                            else if (piece->color == currentPlayer)
+                            else // TODO: testing // if (piece->color == currentPlayer)
                             {
                                 selectedPiece = Piece{ piece->type, piece->color, piece->position, piece->hasMoved, piece->justMadeDoubleMove };
                             }
@@ -447,7 +445,7 @@ int main(int argc, char** argv)
                     ImGui::PopStyleColor(3);
 
                     // Our buttons are both drag sources and drag targets
-                    if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoPreviewTooltip) && piece->color == currentPlayer)
+                    if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoPreviewTooltip)) // TODO: testing // && piece->color == currentPlayer)
                     {
                         ImGui::SetDragDropPayload("DND_TARGET_POS", &square_position, sizeof(Position), ImGuiCond_FirstUseEver);
 

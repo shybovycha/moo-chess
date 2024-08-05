@@ -250,20 +250,44 @@ std::string Board::moveToStr(const Piece piece, const Position to) {
         }
     }
 
+    int candidates = 1;
+
+    for (const auto& p : pieces) {
+        if (p.position != piece.position && p.type == piece.type && isValidMove(p, to, false)) {
+            ++candidates;
+        }
+    }
+
     const Piece* target = getPieceAt(to);
+
+    if (candidates > 1) {
+        if (target != nullptr) {
+            if (piece.type == PieceType::PAWN) {
+                return std::format("{0}x{1}", piece.position, to);
+            }
+
+            return std::format("{0}{1}x{2}", piece.type, piece.position, to);
+        }
+
+        if (piece.type == PieceType::PAWN) {
+            return std::format("{0}{1}", piece.position, to);
+        }
+
+        return std::format("{0}{1}{2}", piece.type, piece.position, to);
+    }
 
     if (target != nullptr) {
         if (piece.type == PieceType::PAWN) {
             return std::format("{0}x{1}", piece.position, to);
         }
 
-        return std::format("{0}{1}x{2}", piece.type, piece.position, to);
+        return std::format("{0}x{1}", piece.type, to);
     }
 
     if (piece.type == PieceType::PAWN) {
         return std::format("{0}", to);
     }
-    
+
     return std::format("{0}{1}", piece.type, to);
 }
 
