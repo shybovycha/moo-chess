@@ -103,6 +103,7 @@ int main(int argc, char** argv) {
     };
 
     bool flipBoard = false;
+    PieceColor currentPlayer = PieceColor::BLACK;
     std::optional<Piece> draggingPiece = {};
     std::optional<Piece> selectedPiece = {};
 
@@ -179,11 +180,26 @@ int main(int argc, char** argv) {
             if (ImGui::Button("Create"))
             {
                 // TODO: add server call
-                // PieceColor player_color = PieceColor::BLACK;
+                
+                switch (player_color_idx)
+                {
+                case 0:
+                    currentPlayer = PieceColor::BLACK;
+                    break;
+
+                case 1:
+                    currentPlayer = PieceColor::WHITE;
+                    break;
+
+                default:
+                    currentPlayer = std::rand() % 2 ? PieceColor::BLACK : PieceColor::WHITE;
+                }
 
                 game = Board();
 
                 state = ApplicationState::PLAYING;
+
+                flipBoard = currentPlayer == PieceColor::BLACK;
             }
 
             ImGui::SameLine();
@@ -218,11 +234,25 @@ int main(int argc, char** argv) {
             if (ImGui::Button("Create"))
             {
                 // TODO: add server call
-                if (player_color_idx == 0)
+                switch (player_color_idx)
                 {
-                    // play as black
-                    flipBoard = true;
+                case 0:
+                    currentPlayer = PieceColor::BLACK;
+                    break;
+
+                case 1:
+                    currentPlayer = PieceColor::WHITE;
+                    break;
+
+                default:
+                    currentPlayer = std::rand() % 2 ? PieceColor::BLACK : PieceColor::WHITE;
                 }
+
+                game = Board();
+
+                state = ApplicationState::PLAYING;
+
+                flipBoard = currentPlayer == PieceColor::BLACK;
 
                 game = Board();
 
@@ -336,7 +366,7 @@ int main(int argc, char** argv) {
 
                         if (ImGui::ImageButton(text.c_str(), piece_textures[std::make_tuple(piece->type, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), (ImVec4) square_color, tint))
                         {
-                            // TODO: check current player color
+                            // TODO: check current player turn
                             if (draggingPiece != std::nullopt)
                             {
                                 draggingPiece = {};
@@ -354,7 +384,7 @@ int main(int argc, char** argv) {
 
                                 selectedPiece = {};
                             }
-                            else
+                            else if (piece->color == currentPlayer)
                             {
                                 selectedPiece = Piece{ piece->type, piece->color, piece->position, piece->hasMoved, piece->justMadeDoubleMove };
                             }
@@ -380,7 +410,7 @@ int main(int argc, char** argv) {
                     ImGui::PopStyleColor(3);
 
                     // Our buttons are both drag sources and drag targets
-                    if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoPreviewTooltip))
+                    if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoPreviewTooltip) && piece->color == currentPlayer)
                     {
                         ImGui::SetDragDropPayload("DND_TARGET_POS", &square_position, sizeof(Position), ImGuiCond_FirstUseEver);
 
