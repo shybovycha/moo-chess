@@ -281,36 +281,13 @@ int main(int argc, char** argv)
 
             // ImGui::ShowDemoWindow(nullptr);
 
-            ImGui::BeginChild("Game options", ImVec2(200, 100));
-
-            ImGui::Text(std::format("You play as {0}", "black").c_str());
-
-            if (ImGui::Button("Flip the board"))
-            {
-                flipBoard = !flipBoard;
-            }
-
-            if (ImGui::Button("Resign"))
-            {
-                state = ApplicationState::NO_CURRENT_GAME;
-            }
-
-            ImGui::SameLine();
-
-            if (ImGui::Button("Suggest draw"))
-            {
-                state = ApplicationState::NO_CURRENT_GAME;
-            }
-
-            ImGui::EndChild();
-
             // ----------
             
             ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
 
             ImGui::BeginChild("Move history", ImVec2(150, 260), ImGuiChildFlags_Border, ImGuiWindowFlags_None);
 
-            if (ImGui::BeginTable("split", 2, ImGuiTableFlags_Resizable | ImGuiTableFlags_NoSavedSettings))
+            if (ImGui::BeginTable("split", 3, ImGuiTableFlags_Resizable | ImGuiTableFlags_NoSavedSettings))
             {
                 for (auto i = 0; i < moveHistory.size(); ++i)
                 {
@@ -318,7 +295,10 @@ int main(int argc, char** argv)
 
                     if (i % 2 == 0)
                     {
-                        std::string whiteStr = std::format("{0}. {1}", i + 1, move);
+                        ImGui::TableNextColumn();
+                        ImGui::Text("%d", i + 1);
+
+                        std::string whiteStr = std::format("{0}", move);
                         ImGui::TableNextColumn();
                         ImGui::Button(whiteStr.c_str(), ImVec2(-FLT_MIN, 0.0f));
                     }
@@ -541,6 +521,31 @@ int main(int argc, char** argv)
 
             // gap between buttons
             ImGui::PopStyleVar(1);
+
+            ImGui::EndChild();
+
+            // ---------------
+
+            ImGui::BeginChild("Game options", ImVec2(200, 100));
+
+            ImGui::Text(std::format("You play as {0}", "black").c_str());
+
+            if (ImGui::Button("Flip the board"))
+            {
+                flipBoard = !flipBoard;
+            }
+
+            if (ImGui::Button("Resign"))
+            {
+                state = ApplicationState::NO_CURRENT_GAME;
+            }
+
+            ImGui::SameLine();
+
+            if (ImGui::Button("Suggest draw"))
+            {
+                state = ApplicationState::NO_CURRENT_GAME;
+            }
 
             ImGui::EndChild();
 
