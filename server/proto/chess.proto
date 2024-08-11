@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+service Chess {
+  rpc CreateGame(CreateGameRequest) returns (CreateGameResponse) {}
+
+  rpc ListGames(ListGamesRequest) returns (stream GameResponse) {}
+}
+
+message CreateGameRequest {
+  PieceColor play_as = 1;
+  string name = 2;
+}
+
+enum PieceColor {
+  UNDEFINED = 0;
+  BLACK = 1;
+  WHITE = 2;
+}
+
+message CreateGameResponse {
+  string game_id = 1;
+  string player_id = 2;
+}
+
+message ListGamesRequest {
+}
+
+message GameResponse {
+  string game_id = 1;
+  optional string white_player_id = 2;
+  optional string black_player_id = 3;
+  // string fen = 4;
+  // repeated string moves = 5;
+}

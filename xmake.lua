@@ -5,6 +5,8 @@ add_requires("libsdl")
 add_requires("libsdl_image")
 add_requires("imgui", {configs = {sdl2 = true, freetype = true}})
 
+add_requires("protobuf-cpp")
+
 add_requires("gtest")
 
 target("chesslib")
@@ -42,3 +44,10 @@ target("client")
         os.cp("client/assets/*", "$(buildir)/$(plat)/$(arch)/$(mode)/assets")
         os.cp("client/config.xml", "$(buildir)/$(plat)/$(arch)/$(mode)/assets")
     end)
+
+target("server")
+     set_kind("binary")
+     add_packages("protobuf-cpp")
+     add_rules("protobuf.cpp")
+     add_files("server/src/*.cpp")
+     add_files("server/proto/*.proto")
