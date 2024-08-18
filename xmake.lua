@@ -26,7 +26,7 @@ end
 
 target("client")
     set_kind("binary")
-    add_files("client/src/main.cpp")
+    add_files("client/src/main.cpp", "client/src/Application.cpp")
     add_deps("chesslib")
     add_packages("tinyxml2")
 
