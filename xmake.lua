@@ -38,6 +38,8 @@ target("client")
     add_packages("imgui")
     add_defines("IMGUI_ENABLE_FREETYPE")
 
+    set_symbols("debug", "embed")
+
     after_build(function (target)
         os.cp("client/assets/*", "$(buildir)/$(plat)/$(arch)/$(mode)/assets")
         os.cp("client/config.xml", "$(buildir)/$(plat)/$(arch)/$(mode)/assets")
