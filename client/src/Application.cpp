@@ -37,8 +37,8 @@ void Application::initializeImGUI()
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
 
-    io = ImGui::GetIO(); // (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io = &ImGui::GetIO(); // (void)io;
+    io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
     // ImGui::StyleColorsDark();
     ImGui::StyleColorsLight();
@@ -56,14 +56,14 @@ void Application::loadFont()
     config.PixelSnapH = true;
 
     // double font size, half the scaling = Multi-sample Anti-Aliasing
-    io.FontGlobalScale = 0.5f;
+    io->FontGlobalScale = 0.5f;
 
     // Only if using FreeType with ImGui
 #ifdef IMGUI_ENABLE_FREETYPE
     config.FontBuilderFlags |= ImGuiFreeTypeBuilderFlags_ForceAutoHint;
 #endif
 
-    ImFont* font_opensans = io.Fonts->AddFontFromFileTTF("assets/OpenSans-Light.ttf", 18.0f, &config);
+    ImFont* font_opensans = io->Fonts->AddFontFromFileTTF("assets/OpenSans-Light.ttf", 36.0f, &config);
 
     if (font_opensans == nullptr)
     {
@@ -403,34 +403,40 @@ void Application::renderUI()
 
                 ImGui::PopStyleVar();
 
-                ImGui::PopStyleColor(3);
+                ImGui::PopStyleColor(4);
+
+                if (draggingPiece != std::nullopt)
+                {
+                    ImGui::SetNextWindowPos(ImVec2(io->MousePos.x - 30.0f, io->MousePos.y - 30.0f));
+                    ImGui::SetNextWindowSize(ImVec2(60.0f, 60.0f));
+
+                    ImGui::Begin("##x_tooltip_x_00", nullptr, ImGuiWindowFlags_Tooltip | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+
+                    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
+
+                    ImGui::PushStyleColor(ImGuiCol_PopupBg, (ImVec4)ImColor(0.0f, 0.0f, 0.0f, 1.0f));
+                    ImGui::Image(piece_textures[std::make_tuple(draggingPiece->type, draggingPiece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.0f));
+                    ImGui::PopStyleColor();
+
+                    ImGui::PopStyleVar();
+
+                    ImGui::End();
+                }
 
                 // Our buttons are both drag sources and drag targets
                 if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoPreviewTooltip) && piece) // TODO: testing // && piece->color == currentPlayer)
                 {
                     ImGui::SetDragDropPayload("DND_TARGET_POS", &square_position, sizeof(Position), ImGuiCond_Always);
 
-                    ImGui::SetNextWindowPos(ImVec2(io.MousePos.x - 30.0f, io.MousePos.y - 30.0f));
-
-                    ImGui::Begin("##x_tooltip_x_00", nullptr, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-
-                    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
-
                     if (draggingPiece == std::nullopt)
                     {
                         draggingPiece = Piece{ piece->type, piece->color, piece->position, piece->hasMoved, piece->justMadeDoubleMove };
                     }
 
-                    ImGui::PushStyleColor(ImGuiCol_PopupBg, (ImVec4)ImColor(0.0f, 0.0f, 0.0f, 1.0f));
-                    ImGui::Image(piece_textures[std::make_tuple(piece->type, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.0f));
-                    ImGui::PopStyleColor();
-
-                    ImGui::PopStyleVar();
-
-                    ImGui::End();
-
                     ImGui::EndDragDropSource();
                 }
+
+                ImGui::PushStyleColor(ImGuiCol_DragDropTarget, ImVec4(0.f, 0.f, 0.f, 0.f));
 
                 if (ImGui::BeginDragDropTarget())
                 {
@@ -462,6 +468,8 @@ void Application::renderUI()
                     ImGui::EndDragDropTarget();
                 }
 
+                ImGui::PopStyleColor();
+
                 ImGui::PopID();
 
                 if (col < 7)
@@ -481,7 +489,6 @@ void Application::renderUI()
 
                 if (!ImGui::GetDragDropPayload() && draggingPiece != std::nullopt)
                 {
-                    std::println("no drag, resetting");
                     draggingPiece = {};
                 }
             }
@@ -540,7 +547,7 @@ void Application::display()
 {
     static ImVec4 clear_color = { 0.45f, 0.55f, 0.60f, 1.00f };
 
-    SDL_RenderSetScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
+    SDL_RenderSetScale(renderer, io->DisplayFramebufferScale.x, io->DisplayFramebufferScale.y);
     SDL_SetRenderDrawColor(renderer, (Uint8)(clear_color.x * 255), (Uint8)(clear_color.y * 255), (Uint8)(clear_color.z * 255), (Uint8)(clear_color.w * 255));
     SDL_RenderClear(renderer);
     ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), renderer);
