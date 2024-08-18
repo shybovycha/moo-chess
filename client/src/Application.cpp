@@ -406,9 +406,9 @@ void Application::renderUI()
                 ImGui::PopStyleColor(3);
 
                 // Our buttons are both drag sources and drag targets
-                if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoPreviewTooltip)) // TODO: testing // && piece->color == currentPlayer)
+                if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceNoPreviewTooltip) && piece) // TODO: testing // && piece->color == currentPlayer)
                 {
-                    ImGui::SetDragDropPayload("DND_TARGET_POS", &square_position, sizeof(Position), ImGuiCond_FirstUseEver);
+                    ImGui::SetDragDropPayload("DND_TARGET_POS", &square_position, sizeof(Position), ImGuiCond_Always);
 
                     ImGui::SetNextWindowPos(ImVec2(io.MousePos.x - 30.0f, io.MousePos.y - 30.0f));
 
@@ -416,17 +416,14 @@ void Application::renderUI()
 
                     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
 
-                    if (piece)
+                    if (draggingPiece == std::nullopt)
                     {
-                        if (draggingPiece == std::nullopt)
-                        {
-                            draggingPiece = Piece{ piece->type, piece->color, piece->position, piece->hasMoved, piece->justMadeDoubleMove };
-                        }
-
-                        ImGui::PushStyleColor(ImGuiCol_PopupBg, (ImVec4)ImColor(0.0f, 0.0f, 0.0f, 1.0f));
-                        ImGui::Image(piece_textures[std::make_tuple(piece->type, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.0f));
-                        ImGui::PopStyleColor();
+                        draggingPiece = Piece{ piece->type, piece->color, piece->position, piece->hasMoved, piece->justMadeDoubleMove };
                     }
+
+                    ImGui::PushStyleColor(ImGuiCol_PopupBg, (ImVec4)ImColor(0.0f, 0.0f, 0.0f, 1.0f));
+                    ImGui::Image(piece_textures[std::make_tuple(piece->type, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 1.0f), ImVec4(1.0f, 1.0f, 1.0f, 0.0f));
+                    ImGui::PopStyleColor();
 
                     ImGui::PopStyleVar();
 
@@ -438,26 +435,28 @@ void Application::renderUI()
                 if (ImGui::BeginDragDropTarget())
                 {
                     // the number of frames is messed up because of non-standard board layout (in terms of UI elements), so this will always be untagged payload
-                    if (const ImGuiPayload* payload = ImGui::GetDragDropPayload())
+                    if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_TARGET_POS"))
                     {
-                        // TODO: add strcmp for payload->DataType, "DND_TARGET_POS"
-
                         IM_ASSERT(payload->DataSize == sizeof(Position));
+
                         Position from_pos = *(const Position*)payload->Data;
 
-                        std::println(">> drop");
+                        const Piece* src_piece = game->getPieceAt(from_pos);
 
-                        if (game->isValidMove(*game->getPieceAt(from_pos), square_position))
+                        if (src_piece)
                         {
-                            moveHistory.push_back(game->moveToStr(*game->getPieceAt(from_pos), square_position));
-                            game->applyMove(*game->getPieceAt(from_pos), square_position);
+                            if (game->isValidMove(*src_piece, square_position))
+                            {
+                                moveHistory.push_back(game->moveToStr(*src_piece, square_position));
+                                game->applyMove(*src_piece, square_position);
+                            }
+                            else
+                            {
+                                std::println("{0}{1} is invalid", *src_piece, square_position);
+                            }
+                        
+                            draggingPiece = {};
                         }
-                        else
-                        {
-                            std::println("{0}{1} is invalid", *game->getPieceAt(from_pos), square_position);
-                        }
-
-                        draggingPiece = {};
                     }
 
                     ImGui::EndDragDropTarget();
@@ -482,6 +481,7 @@ void Application::renderUI()
 
                 if (!ImGui::GetDragDropPayload() && draggingPiece != std::nullopt)
                 {
+                    std::println("no drag, resetting");
                     draggingPiece = {};
                 }
             }
