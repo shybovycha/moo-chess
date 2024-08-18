@@ -14,7 +14,7 @@ void Application::initializeSDL()
 
     SDL_SetHint(SDL_HINT_WINDOWS_DPI_AWARENESS, "permonitorv2");
     SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-    
+
     window = SDL_CreateWindow("mooChess", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
 
     if (window == nullptr)
@@ -454,7 +454,7 @@ void Application::handleGame()
                         {
                             std::println("{0}{1} is invalid", *src_piece, square_position);
                         }
-                    
+
                         draggingPiece = {};
                     }
                 }
