@@ -21,3 +21,19 @@ To build client, run `xmake` in the project root.
 ## Running
 
 To run client, run it with `xmake run client`.
+
+## XMake VSCode integration
+
+XMake has a nice [integration with VSCode](https://github.com/xmake-io/xmake-vscode?tab=readme-ov-file#intellisense), but requires one manual step to fully support IntelliSense: add a `.vscode/c_cpp_properties.json` file with the following content:
+
+```json
+{
+    "configurations": [
+        {
+            "name": "default",
+            "compileCommands": ".vscode/compile_commands.json"
+        }
+    ],
+    "version": 4
+}
+```
