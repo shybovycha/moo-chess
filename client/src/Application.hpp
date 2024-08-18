@@ -59,6 +59,15 @@ private:
     void initialize();
 
 private:
+    void handleMainMenu();
+
+    void handleCreateGameMenu();
+
+    void handleFindGameMenu();
+
+    void handleGame();
+
+private:
     ApplicationState state;
 
     std::optional<Board> game;
