@@ -19,3 +19,4 @@ CTestTestfile.cmake
 CMakeCache*
 *.log
 cmake_install.cmake
+vsxmake2022/

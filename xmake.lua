@@ -7,6 +7,8 @@ add_requires("imgui", {configs = {sdl2 = true, freetype = true}})
 
 add_requires("gtest")
 
+add_rules("plugin.vsxmake.autoupdate")
+
 target("chesslib")
     set_kind("static")
     add_files("lib/src/*.cpp")
