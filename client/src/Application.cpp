@@ -499,6 +499,52 @@ void Application::handleGame()
 
             ImGui::PopID();
 
+            if (piece && piece->type == PieceType::PAWN)
+            {
+                if ((piece->color == PieceColor::WHITE && row == 7) || (piece->color == PieceColor::BLACK && row == 0))
+                {
+                    // draw promotion selector
+                    // ImGui::SetNextWindowPos(ImVec2(io->MousePos.x - 30.0f, io->MousePos.y - 30.0f));
+                    // ImGui::SetNextWindowSize(ImVec2(60.0f, 60.0f));
+
+                    ImGui::Begin("Promote white pawn", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+
+                    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
+
+                    if (ImGui::ImageButton("promote to rook", piece_textures[std::make_tuple(PieceType::ROOK, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)))
+                    {
+                        std::print("promote to rook at {0}\n", square_position);
+                        game->removePieceAt(square_position);
+                        game->setPieceAt(Piece { PieceType::ROOK, piece->color, square_position, false, false }, square_position);
+                    }
+
+                    if (ImGui::ImageButton("promote to knight", piece_textures[std::make_tuple(PieceType::KNIGHT, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)))
+                    {
+                        std::print("promote to knight at {0}\n", square_position);
+                        game->removePieceAt(square_position);
+                        game->setPieceAt(Piece { PieceType::KNIGHT, piece->color, square_position, false, false }, square_position);
+                    }
+
+                    if (ImGui::ImageButton("promote to bishop", piece_textures[std::make_tuple(PieceType::BISHOP, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)))
+                    {
+                        std::print("promote to bishop at {0}\n", square_position);
+                        game->removePieceAt(square_position);
+                        game->setPieceAt(Piece { PieceType::BISHOP, piece->color, square_position, false, false }, square_position);
+                    }
+
+                    if (ImGui::ImageButton("promote to queen", piece_textures[std::make_tuple(PieceType::QUEEN, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)))
+                    {
+                        std::print("promote to queen at {0}\n", square_position);
+                        game->removePieceAt(square_position);
+                        game->setPieceAt(Piece { PieceType::QUEEN, piece->color, square_position, false, false }, square_position);
+                    }
+
+                    ImGui::PopStyleVar();
+
+                    ImGui::End();
+                }
+            }
+
             if (col < 7)
             {
                 ImGui::SameLine();
