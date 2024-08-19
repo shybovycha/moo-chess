@@ -87,6 +87,25 @@ void Application::loadPieceTextures()
         { { PieceType::QUEEN, PieceColor::WHITE }, IMG_LoadTexture(renderer, "assets/w_queen.png") },
         { { PieceType::ROOK, PieceColor::WHITE }, IMG_LoadTexture(renderer, "assets/w_rook.png") }
     };
+
+    auto kingCheckHighlightTexture = IMG_LoadTexture(renderer, "assets/check_king.png");
+
+    white_kingCheckHighlightTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 60, 60);
+    black_kingCheckHighlightTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 60, 60);
+
+    SDL_SetTextureBlendMode(white_kingCheckHighlightTexture, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderTarget(renderer, white_kingCheckHighlightTexture);
+    SDL_RenderCopy(renderer, kingCheckHighlightTexture, nullptr, nullptr);
+    SDL_RenderCopy(renderer, piece_textures[std::make_pair(PieceType::KING, PieceColor::WHITE)], nullptr, nullptr);
+
+    SDL_SetTextureBlendMode(black_kingCheckHighlightTexture, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderTarget(renderer, black_kingCheckHighlightTexture);
+    SDL_RenderCopy(renderer, kingCheckHighlightTexture, nullptr, nullptr);
+    SDL_RenderCopy(renderer, piece_textures[std::make_pair(PieceType::KING, PieceColor::BLACK)], nullptr, nullptr);
+
+    SDL_SetRenderTarget(renderer, nullptr);
+
+    SDL_DestroyTexture(kingCheckHighlightTexture);
 }
 
 void Application::handleSDLEvents()
@@ -352,7 +371,21 @@ void Application::handleGame()
                     tint = ImVec4(1.0f, 1.0f, 1.0f, 0.25f);
                 }
 
-                if (ImGui::ImageButton(text.c_str(), piece_textures[std::make_tuple(piece->type, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), (ImVec4)square_color, tint))
+                auto piece_texture = piece_textures[std::make_tuple(piece->type, piece->color)];
+
+                if (piece->type == PieceType::KING && game->isKingInCheck(*piece))
+                {
+                    if (piece->color == PieceColor::WHITE)
+                    {
+                        piece_texture = white_kingCheckHighlightTexture;
+                    }
+                    else
+                    {
+                        piece_texture = black_kingCheckHighlightTexture;
+                    }
+                }
+
+                if (ImGui::ImageButton(text.c_str(), piece_texture, ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), (ImVec4)square_color, tint))
                 {
                     // TODO: check current player turn
                     if (draggingPiece != std::nullopt)

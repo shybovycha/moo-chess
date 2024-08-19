@@ -83,5 +83,8 @@ private:
     SDL_Window* window;
     SDL_Renderer* renderer;
 
+    SDL_Texture* white_kingCheckHighlightTexture;
+    SDL_Texture* black_kingCheckHighlightTexture;
+
     ImGuiIO* io;
 };
