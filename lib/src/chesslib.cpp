@@ -192,6 +192,8 @@ void Board::applyMove(const Piece piece, const Position to) {
     // remove captured piece
     removePieceAt(to);
 
+    Piece* enPassantCapture = nullptr;
+
     for (auto& p : pieces) {
         if (p.position != piece.position) {
             continue;
@@ -227,7 +229,11 @@ void Board::applyMove(const Piece piece, const Position to) {
             if (std::abs(to.col - from.col) == 1 && to.row - from.row == pawnForward && !getPieceAt(to)) {
                 Position capturedPawnPosition = { from.row, to.col };
 
-                removePieceAt(capturedPawnPosition);
+                auto capturedPiece = getPieceAt(capturedPawnPosition);
+
+                if (capturedPiece && capturedPiece->type == PieceType::PAWN && capturedPiece->color != piece.color && capturedPiece->justMadeDoubleMove) {
+                    enPassantCapture = const_cast<Piece*>(capturedPiece);
+                }
             }
         }
 
@@ -235,6 +241,10 @@ void Board::applyMove(const Piece piece, const Position to) {
         p.hasMoved = true;
 
         break;
+    }
+
+    if (enPassantCapture) {
+        removePieceAt(enPassantCapture->position);
     }
 }
 
