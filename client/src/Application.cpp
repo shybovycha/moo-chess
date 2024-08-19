@@ -513,28 +513,24 @@ void Application::handleGame()
 
                     if (ImGui::ImageButton("promote to rook", piece_textures[std::make_tuple(PieceType::ROOK, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)))
                     {
-                        std::print("promote to rook at {0}\n", square_position);
                         game->removePieceAt(square_position);
                         game->setPieceAt(Piece { PieceType::ROOK, piece->color, square_position, false, false }, square_position);
                     }
 
                     if (ImGui::ImageButton("promote to knight", piece_textures[std::make_tuple(PieceType::KNIGHT, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)))
                     {
-                        std::print("promote to knight at {0}\n", square_position);
                         game->removePieceAt(square_position);
                         game->setPieceAt(Piece { PieceType::KNIGHT, piece->color, square_position, false, false }, square_position);
                     }
 
                     if (ImGui::ImageButton("promote to bishop", piece_textures[std::make_tuple(PieceType::BISHOP, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)))
                     {
-                        std::print("promote to bishop at {0}\n", square_position);
                         game->removePieceAt(square_position);
                         game->setPieceAt(Piece { PieceType::BISHOP, piece->color, square_position, false, false }, square_position);
                     }
 
                     if (ImGui::ImageButton("promote to queen", piece_textures[std::make_tuple(PieceType::QUEEN, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)))
                     {
-                        std::print("promote to queen at {0}\n", square_position);
                         game->removePieceAt(square_position);
                         game->setPieceAt(Piece { PieceType::QUEEN, piece->color, square_position, false, false }, square_position);
                     }
