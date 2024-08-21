@@ -467,7 +467,6 @@ void Application::handleGame()
 
             if (ImGui::BeginDragDropTarget())
             {
-                // the number of frames is messed up because of non-standard board layout (in terms of UI elements), so this will always be untagged payload
                 if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_TARGET_POS"))
                 {
                     IM_ASSERT(payload->DataSize == sizeof(Position));
@@ -504,9 +503,6 @@ void Application::handleGame()
                 if ((piece->color == PieceColor::WHITE && row == 7) || (piece->color == PieceColor::BLACK && row == 0))
                 {
                     // draw promotion selector
-                    // ImGui::SetNextWindowPos(ImVec2(io->MousePos.x - 30.0f, io->MousePos.y - 30.0f));
-                    // ImGui::SetNextWindowSize(ImVec2(60.0f, 60.0f));
-
                     ImGui::Begin("Promote white pawn", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 
                     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));

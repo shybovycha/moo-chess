@@ -1,5 +1,3 @@
-set_languages("c++23")
-
 add_requires("gtest", "tinyxml2")
 add_requires("libsdl")
 add_requires("libsdl_image")
@@ -8,10 +6,9 @@ add_requires("asio")
 
 add_requires("gtest")
 
-add_rules("plugin.vsxmake.autoupdate")
-
 target("chesslib")
     set_kind("static")
+    set_languages("c++23")
     add_files("lib/src/*.cpp")
     add_headerfiles("lib/include/*.hpp")
     add_includedirs("lib/include", {public = true})
@@ -29,6 +26,7 @@ target("chesslib")
 
 target("client")
     set_kind("binary")
+    set_languages("c++23")
     add_files("client/src/main.cpp", "client/src/Application.cpp")
     add_deps("chesslib")
     add_packages("tinyxml2")
