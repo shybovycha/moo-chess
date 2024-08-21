@@ -56,19 +56,21 @@ void Application::loadFont()
     config.PixelSnapH = true;
 
     // double font size, half the scaling = Multi-sample Anti-Aliasing
-    io->FontGlobalScale = 0.5f;
+    // io->FontGlobalScale = 0.5f;
 
     // Only if using FreeType with ImGui
 #ifdef IMGUI_ENABLE_FREETYPE
     config.FontBuilderFlags |= ImGuiFreeTypeBuilderFlags_ForceAutoHint;
 #endif
 
-    ImFont* font_opensans = io->Fonts->AddFontFromFileTTF("assets/OpenSans-Light.ttf", 36.0f, &config);
+    font_opensans_18px = io->Fonts->AddFontFromFileTTF("assets/OpenSans-Light.ttf", 18.0f, &config);
 
-    if (font_opensans == nullptr)
+    if (font_opensans_18px == nullptr)
     {
         std::println(stderr, "Could not load font");
     }
+
+    font_opensans_36px = io->Fonts->AddFontFromFileTTF("assets/OpenSans-Light.ttf", 36.0f, &config);
 }
 
 void Application::loadPieceTextures()
@@ -132,139 +134,43 @@ void Application::handleMainMenu()
 {
     ImGui::Begin("The game of chess", nullptr, ImGuiWindowFlags_NoCollapse);
 
-    ImGui::PushItemWidth(-100.f);
-
-    if (ImGui::Button("Find a game"))
-    {
-        state = ApplicationState::CONFIGURE_GAME_SEARCH;
-    }
-
-    if (ImGui::Button("Create a new game"))
-    {
-        state = ApplicationState::CONFIGURE_NEW_GAME;
-    }
-
-    ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor(240.f / 255.f, 123.f / 255.f, 93.f / 255.f));
-
-    if (ImGui::Button("Quit"))
-    {
-        state = ApplicationState::QUIT;
-    }
-
-    ImGui::PopStyleColor();
-
-    ImGui::PopItemWidth();
-
-    ImGui::End();
-}
-
-void Application::handleCreateGameMenu()
-{
-    ImGui::Begin("Create a game", nullptr, ImGuiWindowFlags_NoCollapse);
-
-    static char player_name[128] = "";
-    ImGui::InputTextWithHint("", "Your name", player_name, IM_ARRAYSIZE(player_name));
-
-    // static int time_limit = 5;
-    // ImGui::InputInt("Time limit (min)", &time_limit);
-
-    ImGui::Text("Create a game to play as");
-    static int player_color_idx = 0;
-    ImGui::RadioButton("Black", &player_color_idx, 0); ImGui::SameLine();
-    ImGui::RadioButton("White", &player_color_idx, 1); ImGui::SameLine();
-    ImGui::RadioButton("Random", &player_color_idx, 2);
-
-    if (ImGui::Button("Create"))
-    {
-        // TODO: add server call
-        switch (player_color_idx)
+    static std::vector<TimeMode> time_modes {
         {
-        case 0:
-            currentPlayer = PieceColor::BLACK;
-            break;
+            { 1, 0, "Bullet" },
+            { 1, 1, "Bullet" },
+            { 2, 1, "Bullet" },
+            { 3, 0, "Blitz" },
+            { 3, 2, "Blitz" },
+            { 5, 0, "Blitz" },
+            { 10, 0, "Rapid" },
+            { 15, 10, "Rapid" },
+            { 30, 0, "Rapid" },
+        }
+    };
 
-        case 1:
-            currentPlayer = PieceColor::WHITE;
-            break;
+    ImGui::PushFont(font_opensans_36px);
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(5, 5));
 
-        default:
+    for (auto i = 0; i < time_modes.size(); ++i)
+    {
+        if (ImGui::Button(std::format("{0}:{1}", time_modes[i].time_limit_min, time_modes[i].time_increment_sec).c_str(), ImVec2(90, 90)))
+        {
             currentPlayer = std::rand() % 2 ? PieceColor::BLACK : PieceColor::WHITE;
+            flipBoard = currentPlayer == PieceColor::BLACK;
+
+            game = Board();
+
+            state = ApplicationState::PLAYING;
         }
 
-        game = Board();
-
-        state = ApplicationState::PLAYING;
-
-        flipBoard = currentPlayer == PieceColor::BLACK;
-
-        game = Board();
-
-        state = ApplicationState::PLAYING;
-    }
-
-    ImGui::SameLine();
-    ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor(240.f / 255.f, 123.f / 255.f, 93.f / 255.f));
-
-    if (ImGui::Button("Cancel"))
-    {
-        state = ApplicationState::NO_CURRENT_GAME;
-    }
-
-    ImGui::PopStyleColor();
-
-    ImGui::End();
-}
-
-void Application::handleFindGameMenu()
-{
-    ImGui::Begin("Find a game", nullptr, ImGuiWindowFlags_NoCollapse);
-
-    // static int elo = 1000;
-    // ImGui::InputInt("Your ELO", &elo);
-
-    static char str0[128] = "";
-    ImGui::InputTextWithHint("", "Your name", str0, IM_ARRAYSIZE(str0));
-
-    ImGui::Text("Find a game to play as");
-    static int player_color_idx = 0;
-    ImGui::RadioButton("Black", &player_color_idx, 0); ImGui::SameLine();
-    ImGui::RadioButton("White", &player_color_idx, 1); ImGui::SameLine();
-    ImGui::RadioButton("Random", &player_color_idx, 2);
-
-    if (ImGui::Button("Create"))
-    {
-        // TODO: add server call
-
-        switch (player_color_idx)
+        if ((i + 1) % 3 != 0)
         {
-        case 0:
-            currentPlayer = PieceColor::BLACK;
-            break;
-
-        case 1:
-            currentPlayer = PieceColor::WHITE;
-            break;
-
-        default:
-            currentPlayer = std::rand() % 2 ? PieceColor::BLACK : PieceColor::WHITE;
+            ImGui::SameLine();
         }
-
-        game = Board();
-
-        state = ApplicationState::PLAYING;
-
-        flipBoard = currentPlayer == PieceColor::BLACK;
     }
 
-    ImGui::SameLine();
-    ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor(240.f / 255.f, 123.f / 255.f, 93.f / 255.f));
-
-    if (ImGui::Button("Cancel"))
-    {
-        state = ApplicationState::NO_CURRENT_GAME;
-    }
-
-    ImGui::PopStyleColor();
+    ImGui::PopStyleVar();
+    ImGui::PopFont();
 
     ImGui::End();
 }
@@ -620,16 +526,6 @@ void Application::renderUI()
     if (state == ApplicationState::NO_CURRENT_GAME)
     {
         handleMainMenu();
-    }
-
-    if (state == ApplicationState::CONFIGURE_GAME_SEARCH)
-    {
-        handleFindGameMenu();
-    }
-
-    if (state == ApplicationState::CONFIGURE_NEW_GAME)
-    {
-        handleCreateGameMenu();
     }
 
     if (state == ApplicationState::PLAYING)

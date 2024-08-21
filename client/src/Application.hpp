@@ -21,11 +21,16 @@ enum class ApplicationState
     UNKNOWN = 0,
     NO_CURRENT_GAME,
     CONFIGURE_NEW_GAME,
-    CONFIGURE_GAME_SEARCH,
-    SEARCHING_FOR_GAME,
     PLAYING,
     GAME_OVER,
     QUIT,
+};
+
+struct TimeMode
+{
+    unsigned short time_limit_min;
+    unsigned short time_increment_sec;
+    std::string name;
 };
 
 class Application
@@ -61,10 +66,6 @@ private:
 private:
     void handleMainMenu();
 
-    void handleCreateGameMenu();
-
-    void handleFindGameMenu();
-
     void handleGame();
 
 private:
@@ -85,6 +86,9 @@ private:
 
     SDL_Texture* white_kingCheckHighlightTexture;
     SDL_Texture* black_kingCheckHighlightTexture;
+
+    ImFont* font_opensans_18px;
+    ImFont* font_opensans_36px;
 
     ImGuiIO* io;
 };
