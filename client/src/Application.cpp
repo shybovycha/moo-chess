@@ -148,29 +148,46 @@ void Application::handleMainMenu()
         }
     };
 
-    ImGui::PushFont(font_opensans_36px);
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(5, 5));
-
-    for (auto i = 0; i < time_modes.size(); ++i)
+    if (ImGui::BeginTabBar("##tabs", ImGuiTabBarFlags_None))
     {
-        if (ImGui::Button(std::format("{0}:{1}", time_modes[i].time_limit_min, time_modes[i].time_increment_sec).c_str(), ImVec2(90, 90)))
+        if (ImGui::BeginTabItem("Quick match"))
         {
-            currentPlayer = std::rand() % 2 ? PieceColor::BLACK : PieceColor::WHITE;
-            flipBoard = currentPlayer == PieceColor::BLACK;
+            ImGui::PushFont(font_opensans_36px);
+            ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(5, 5));
 
-            game = Board();
+            for (auto i = 0; i < time_modes.size(); ++i)
+            {
+                if (ImGui::Button(std::format("{0}:{1}", time_modes[i].time_limit_min, time_modes[i].time_increment_sec).c_str(), ImVec2(90, 90)))
+                {
+                    currentPlayer = std::rand() % 2 ? PieceColor::BLACK : PieceColor::WHITE;
+                    flipBoard = currentPlayer == PieceColor::BLACK;
 
-            state = ApplicationState::PLAYING;
+                    game = Board();
+
+                    state = ApplicationState::PLAYING;
+                }
+
+                if ((i + 1) % 3 != 0)
+                {
+                    ImGui::SameLine();
+                }
+            }
+
+            ImGui::PopStyleVar();
+            ImGui::PopFont();
+
+            ImGui::EndTabItem();
         }
 
-        if ((i + 1) % 3 != 0)
+        if (ImGui::BeginTabItem("Lobby"))
         {
-            ImGui::SameLine();
+            ImGui::Text("TODO");
+
+            ImGui::EndTabItem();
         }
+
+        ImGui::EndTabBar();
     }
-
-    ImGui::PopStyleVar();
-    ImGui::PopFont();
 
     ImGui::End();
 }
