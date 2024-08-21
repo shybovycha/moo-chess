@@ -41,10 +41,14 @@ target("client")
 
     set_symbols("debug", "embed")
 
-    after_build(function (target)
-        os.cp("client/assets/*", "$(buildir)/$(plat)/$(arch)/$(mode)/assets")
-        os.cp("client/config.xml", "$(buildir)/$(plat)/$(arch)/$(mode)/assets")
-    end)
+    -- the following will only work on OS with cp command
+    -- after_build(function (target)
+    --     os.cp("client/assets/*", "$(buildir)/$(plat)/$(arch)/$(mode)/assets")
+    --     os.cp("client/config.xml", "$(buildir)/$(plat)/$(arch)/$(mode)/assets")
+    -- end)
+
+    set_configdir("$(buildir)/$(plat)/$(arch)/$(mode)/assets")
+    add_configfiles("client/assets/*", {onlycopy = true})
 
 target("server")
     set_kind("binary")
