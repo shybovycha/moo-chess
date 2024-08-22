@@ -185,6 +185,7 @@ void GameScene::render()
                         }
 
                         selectedPiece = {};
+                        draggingPiece = {};
                     }
                     else // TODO: testing // if (piece->color == currentPlayer)
                     {
@@ -205,6 +206,7 @@ void GameScene::render()
                     }
 
                     selectedPiece = {};
+                    draggingPiece = {};
                 }
             }
 
@@ -267,6 +269,7 @@ void GameScene::render()
                             std::println("{0}{1} is invalid", *src_piece, square_position);
                         }
 
+                        selectedPiece = {};
                         draggingPiece = {};
                     }
                 }
@@ -340,6 +343,7 @@ void GameScene::render()
 
             if (!ImGui::GetDragDropPayload() && draggingPiece != std::nullopt)
             {
+                selectedPiece = {};
                 draggingPiece = {};
             }
         }
