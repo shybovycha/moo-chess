@@ -6,32 +6,39 @@
 #include <asio.hpp>
 #include <cstdint>
 
-struct Message {
+struct Message
+{
     std::vector<uint8_t> data;
 };
 
-class TcpServer {
+class TcpServer
+{
 public:
-    TcpServer(asio::io_context& io_context, short port)
-        : acceptor_(io_context, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)) {
+    TcpServer(asio::io_context &io_context, short port)
+        : acceptor_(io_context, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port))
+    {
         start_accept();
     }
 
 private:
-    void start_accept() {
+    void start_accept()
+    {
         auto socket = std::make_shared<asio::ip::tcp::socket>(acceptor_.get_executor());
-        acceptor_.async_accept(*socket, [this, socket](std::error_code ec) {
+        acceptor_.async_accept(*socket, [this, socket](std::error_code ec)
+                               {
             if (!ec) {
                 std::cout << "New client connected: " << socket->remote_endpoint() << std::endl;
                 std::thread(&TcpServer::handle_client, this, socket).detach();
             }
-            start_accept();
-        });
+            start_accept(); });
     }
 
-    void handle_client(std::shared_ptr<asio::ip::tcp::socket> socket) {
-        try {
-            for (;;) {
+    void handle_client(std::shared_ptr<asio::ip::tcp::socket> socket)
+    {
+        try
+        {
+            for (;;)
+            {
                 Message received_msg = read_message(socket);
                 std::cout << "Received message of " << received_msg.data.size() << " bytes" << std::endl;
 
@@ -39,12 +46,14 @@ private:
                 write_message(socket, received_msg);
             }
         }
-        catch (std::exception& e) {
+        catch (std::exception &e)
+        {
             std::cerr << "Exception in thread: " << e.what() << std::endl;
         }
     }
 
-    Message read_message(std::shared_ptr<asio::ip::tcp::socket> socket) {
+    Message read_message(std::shared_ptr<asio::ip::tcp::socket> socket)
+    {
         // Read message header
         uint32_t message_size;
         asio::read(*socket, asio::buffer(&message_size, sizeof(message_size)));
@@ -58,7 +67,8 @@ private:
         return msg;
     }
 
-    void write_message(std::shared_ptr<asio::ip::tcp::socket> socket, const Message& msg) {
+    void write_message(std::shared_ptr<asio::ip::tcp::socket> socket, const Message &msg)
+    {
         // Write message header
         uint32_t message_size = htonl(static_cast<uint32_t>(msg.data.size()));
         asio::write(*socket, asio::buffer(&message_size, sizeof(message_size)));
@@ -70,13 +80,16 @@ private:
     asio::ip::tcp::acceptor acceptor_;
 };
 
-int main() {
-    try {
+int main()
+{
+    try
+    {
         asio::io_context io_context;
         TcpServer server(io_context, 12345);
         io_context.run();
     }
-    catch (std::exception& e) {
+    catch (std::exception &e)
+    {
         std::cerr << "Exception: " << e.what() << std::endl;
     }
 

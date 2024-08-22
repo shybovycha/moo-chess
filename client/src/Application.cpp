@@ -76,19 +76,18 @@ void Application::loadFont()
 void Application::loadPieceTextures()
 {
     piece_textures = {
-        { { PieceType::BISHOP, PieceColor::BLACK }, IMG_LoadTexture(renderer, "assets/b_bishop.png") },
-        { { PieceType::KING, PieceColor::BLACK }, IMG_LoadTexture(renderer, "assets/b_king.png") },
-        { { PieceType::KNIGHT, PieceColor::BLACK }, IMG_LoadTexture(renderer, "assets/b_knight.png") },
-        { { PieceType::PAWN, PieceColor::BLACK }, IMG_LoadTexture(renderer, "assets/b_pawn.png") },
-        { { PieceType::QUEEN, PieceColor::BLACK }, IMG_LoadTexture(renderer, "assets/b_queen.png") },
-        { { PieceType::ROOK, PieceColor::BLACK }, IMG_LoadTexture(renderer, "assets/b_rook.png") },
-        { { PieceType::BISHOP, PieceColor::WHITE }, IMG_LoadTexture(renderer, "assets/w_bishop.png") },
-        { { PieceType::KING, PieceColor::WHITE }, IMG_LoadTexture(renderer, "assets/w_king.png") },
-        { { PieceType::KNIGHT, PieceColor::WHITE }, IMG_LoadTexture(renderer, "assets/w_knight.png") },
-        { { PieceType::PAWN, PieceColor::WHITE }, IMG_LoadTexture(renderer, "assets/w_pawn.png") },
-        { { PieceType::QUEEN, PieceColor::WHITE }, IMG_LoadTexture(renderer, "assets/w_queen.png") },
-        { { PieceType::ROOK, PieceColor::WHITE }, IMG_LoadTexture(renderer, "assets/w_rook.png") }
-    };
+        {{PieceType::BISHOP, PieceColor::BLACK}, IMG_LoadTexture(renderer, "assets/b_bishop.png")},
+        {{PieceType::KING, PieceColor::BLACK}, IMG_LoadTexture(renderer, "assets/b_king.png")},
+        {{PieceType::KNIGHT, PieceColor::BLACK}, IMG_LoadTexture(renderer, "assets/b_knight.png")},
+        {{PieceType::PAWN, PieceColor::BLACK}, IMG_LoadTexture(renderer, "assets/b_pawn.png")},
+        {{PieceType::QUEEN, PieceColor::BLACK}, IMG_LoadTexture(renderer, "assets/b_queen.png")},
+        {{PieceType::ROOK, PieceColor::BLACK}, IMG_LoadTexture(renderer, "assets/b_rook.png")},
+        {{PieceType::BISHOP, PieceColor::WHITE}, IMG_LoadTexture(renderer, "assets/w_bishop.png")},
+        {{PieceType::KING, PieceColor::WHITE}, IMG_LoadTexture(renderer, "assets/w_king.png")},
+        {{PieceType::KNIGHT, PieceColor::WHITE}, IMG_LoadTexture(renderer, "assets/w_knight.png")},
+        {{PieceType::PAWN, PieceColor::WHITE}, IMG_LoadTexture(renderer, "assets/w_pawn.png")},
+        {{PieceType::QUEEN, PieceColor::WHITE}, IMG_LoadTexture(renderer, "assets/w_queen.png")},
+        {{PieceType::ROOK, PieceColor::WHITE}, IMG_LoadTexture(renderer, "assets/w_rook.png")}};
 
     auto kingCheckHighlightTexture = IMG_LoadTexture(renderer, "assets/check_king.png");
 
@@ -134,19 +133,18 @@ void Application::handleMainMenu()
 {
     ImGui::Begin("The game of chess", nullptr, ImGuiWindowFlags_NoCollapse);
 
-    static std::vector<TimeMode> time_modes {
+    static std::vector<TimeMode> time_modes{
         {
-            { 1, 0, "Bullet" },
-            { 1, 1, "Bullet" },
-            { 2, 1, "Bullet" },
-            { 3, 0, "Blitz" },
-            { 3, 2, "Blitz" },
-            { 5, 0, "Blitz" },
-            { 10, 0, "Rapid" },
-            { 15, 10, "Rapid" },
-            { 30, 0, "Rapid" },
-        }
-    };
+            {1, 0, "Bullet"},
+            {1, 1, "Bullet"},
+            {2, 1, "Bullet"},
+            {3, 0, "Blitz"},
+            {3, 2, "Blitz"},
+            {5, 0, "Blitz"},
+            {10, 0, "Rapid"},
+            {15, 10, "Rapid"},
+            {30, 0, "Rapid"},
+        }};
 
     if (ImGui::BeginTabBar("##tabs", ImGuiTabBarFlags_None))
     {
@@ -208,7 +206,7 @@ void Application::handleGame()
     {
         for (auto i = 0; i < moveHistory.size(); ++i)
         {
-            const auto& move = moveHistory.at(i);
+            const auto &move = moveHistory.at(i);
 
             if (i % 2 == 0)
             {
@@ -253,17 +251,17 @@ void Application::handleGame()
 
         for (auto col = 0; col < 8; col++)
         {
-            Position square_position{ row + 1, static_cast<char>('a' + col) };
+            Position square_position{row + 1, static_cast<char>('a' + col)};
 
-            const Piece* piece = game->getPieceAt(square_position);
+            const Piece *piece = game->getPieceAt(square_position);
 
             auto text = std::format("{0}", square_position);
 
             ImGui::PushID(text.c_str());
 
             auto square_color = ((row + col) % 2 == 0)
-                ? ImColor(173 / 255.f, 138 / 255.f, 104 / 255.f) // dark square
-                : ImColor(237 / 255.f, 219 / 255.f, 185 / 255.f); // light square
+                                    ? ImColor(173 / 255.f, 138 / 255.f, 104 / 255.f)  // dark square
+                                    : ImColor(237 / 255.f, 219 / 255.f, 185 / 255.f); // light square
 
             if ((draggingPiece != std::nullopt && game->isValidMove(*draggingPiece, square_position)) || (selectedPiece != std::nullopt && game->isValidMove(*selectedPiece, square_position)))
             {
@@ -331,7 +329,7 @@ void Application::handleGame()
                     }
                     else // TODO: testing // if (piece->color == currentPlayer)
                     {
-                        selectedPiece = Piece{ piece->type, piece->color, piece->position, piece->hasMoved, piece->justMadeDoubleMove };
+                        selectedPiece = Piece{piece->type, piece->color, piece->position, piece->hasMoved, piece->justMadeDoubleMove};
                     }
                 }
 
@@ -380,7 +378,7 @@ void Application::handleGame()
 
                 if (draggingPiece == std::nullopt)
                 {
-                    draggingPiece = Piece{ piece->type, piece->color, piece->position, piece->hasMoved, piece->justMadeDoubleMove };
+                    draggingPiece = Piece{piece->type, piece->color, piece->position, piece->hasMoved, piece->justMadeDoubleMove};
                 }
 
                 ImGui::EndDragDropSource();
@@ -390,13 +388,13 @@ void Application::handleGame()
 
             if (ImGui::BeginDragDropTarget())
             {
-                if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_TARGET_POS"))
+                if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("DND_TARGET_POS"))
                 {
                     IM_ASSERT(payload->DataSize == sizeof(Position));
 
-                    Position from_pos = *(const Position*)payload->Data;
+                    Position from_pos = *(const Position *)payload->Data;
 
-                    const Piece* src_piece = game->getPieceAt(from_pos);
+                    const Piece *src_piece = game->getPieceAt(from_pos);
 
                     if (src_piece)
                     {
@@ -433,7 +431,7 @@ void Application::handleGame()
                     if (ImGui::ImageButton("promote to rook", piece_textures[std::make_tuple(PieceType::ROOK, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)))
                     {
                         game->removePieceAt(square_position);
-                        game->setPieceAt(Piece { PieceType::ROOK, piece->color, square_position, false, false }, square_position);
+                        game->setPieceAt(Piece{PieceType::ROOK, piece->color, square_position, false, false}, square_position);
                     }
 
                     ImGui::SameLine();
@@ -441,7 +439,7 @@ void Application::handleGame()
                     if (ImGui::ImageButton("promote to knight", piece_textures[std::make_tuple(PieceType::KNIGHT, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)))
                     {
                         game->removePieceAt(square_position);
-                        game->setPieceAt(Piece { PieceType::KNIGHT, piece->color, square_position, false, false }, square_position);
+                        game->setPieceAt(Piece{PieceType::KNIGHT, piece->color, square_position, false, false}, square_position);
                     }
 
                     ImGui::SameLine();
@@ -449,7 +447,7 @@ void Application::handleGame()
                     if (ImGui::ImageButton("promote to bishop", piece_textures[std::make_tuple(PieceType::BISHOP, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)))
                     {
                         game->removePieceAt(square_position);
-                        game->setPieceAt(Piece { PieceType::BISHOP, piece->color, square_position, false, false }, square_position);
+                        game->setPieceAt(Piece{PieceType::BISHOP, piece->color, square_position, false, false}, square_position);
                     }
 
                     ImGui::SameLine();
@@ -457,7 +455,7 @@ void Application::handleGame()
                     if (ImGui::ImageButton("promote to queen", piece_textures[std::make_tuple(PieceType::QUEEN, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)))
                     {
                         game->removePieceAt(square_position);
-                        game->setPieceAt(Piece { PieceType::QUEEN, piece->color, square_position, false, false }, square_position);
+                        game->setPieceAt(Piece{PieceType::QUEEN, piece->color, square_position, false, false}, square_position);
                     }
 
                     ImGui::PopStyleVar();
@@ -510,7 +508,7 @@ void Application::handleGame()
 
     ImGui::BeginChild("Game options", ImVec2(200, 100));
 
-    ImGui::Text(std::format("You play as {0}", "black").c_str());
+    ImGui::Text("You play as %s", "black");
 
     if (ImGui::Button("Flip the board"))
     {
@@ -555,7 +553,7 @@ void Application::renderUI()
 
 void Application::display()
 {
-    static ImVec4 clear_color = { 0.45f, 0.55f, 0.60f, 1.00f };
+    static ImVec4 clear_color = {0.45f, 0.55f, 0.60f, 1.00f};
 
     SDL_RenderSetScale(renderer, io->DisplayFramebufferScale.x, io->DisplayFramebufferScale.y);
     SDL_SetRenderDrawColor(renderer, (Uint8)(clear_color.x * 255), (Uint8)(clear_color.y * 255), (Uint8)(clear_color.z * 255), (Uint8)(clear_color.w * 255));

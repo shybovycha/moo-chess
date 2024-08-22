@@ -5,9 +5,9 @@
 
 #include "Application.hpp"
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
-    Application* app = new Application();
+    Application *app = new Application();
 
     app->run();
 

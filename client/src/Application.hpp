@@ -36,16 +36,16 @@ struct TimeMode
 class Application
 {
 public:
-	Application();
+    Application();
 
-	~Application() = default;
+    ~Application() = default;
 
     void run();
 
 private:
-	void initializeSDL();
+    void initializeSDL();
 
-	void initializeImGUI();
+    void initializeImGUI();
 
     void loadResources();
 
@@ -73,7 +73,7 @@ private:
 
     std::optional<Board> game;
 
-    std::map<std::tuple<PieceType, PieceColor>, SDL_Texture*> piece_textures;
+    std::map<std::tuple<PieceType, PieceColor>, SDL_Texture *> piece_textures;
 
     bool flipBoard;
     PieceColor currentPlayer;
@@ -81,14 +81,14 @@ private:
     std::optional<Piece> selectedPiece;
     std::vector<std::string> moveHistory;
 
-    SDL_Window* window;
-    SDL_Renderer* renderer;
+    SDL_Window *window;
+    SDL_Renderer *renderer;
 
-    SDL_Texture* white_kingCheckHighlightTexture;
-    SDL_Texture* black_kingCheckHighlightTexture;
+    SDL_Texture *white_kingCheckHighlightTexture;
+    SDL_Texture *black_kingCheckHighlightTexture;
 
-    ImFont* font_opensans_18px;
-    ImFont* font_opensans_36px;
+    ImFont *font_opensans_18px;
+    ImFont *font_opensans_36px;
 
-    ImGuiIO* io;
+    ImGuiIO *io;
 };
