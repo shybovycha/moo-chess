@@ -40,6 +40,8 @@ target("client")
 
     set_symbols("debug", "embed")
 
+    add_cxxflags("-fmodules", { tools = "clang" })
+
     -- the following will only work on OS with cp command
     -- after_build(function (target)
     --     os.cp("client/assets/*", "$(buildir)/$(plat)/$(arch)/$(mode)/assets")
