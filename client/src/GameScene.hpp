@@ -27,6 +27,14 @@ public:
 private:
     void loadTextures();
 
+    void renderMoveHistory();
+
+    void renderBoard();
+
+    void renderSquare(int row, int col);
+
+    void renderGameControls();
+
 private:
     std::function<void()> suggestDraw;
     std::function<void()> resign;
