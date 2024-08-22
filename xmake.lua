@@ -27,7 +27,7 @@ target("chesslib")
 target("client")
     set_kind("binary")
     set_languages("c++23")
-    add_files("client/src/main.cpp", "client/src/Application.cpp")
+    add_files("client/src/main.cpp", "client/src/Application.cpp", "client/src/MainMenuScene.cpp", "client/src/GameScene.cpp")
     add_deps("chesslib")
 
     add_packages("libsdl")

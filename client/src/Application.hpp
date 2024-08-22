@@ -16,6 +16,9 @@
 
 #include "chesslib.hpp"
 
+#include "GameScene.hpp"
+#include "MainMenuScene.hpp"
+
 enum class ApplicationState
 {
     UNKNOWN = 0,
@@ -24,13 +27,6 @@ enum class ApplicationState
     PLAYING,
     GAME_OVER,
     QUIT,
-};
-
-struct TimeMode
-{
-    unsigned short time_limit_min;
-    unsigned short time_increment_sec;
-    std::string name;
 };
 
 class Application
@@ -47,11 +43,9 @@ private:
 
     void initializeImGUI();
 
-    void loadResources();
+    void initializeScenes();
 
-    void loadFont();
-
-    void loadPieceTextures();
+    void loadFonts();
 
     void handleSDLEvents();
 
@@ -68,27 +62,23 @@ private:
 
     void handleGame();
 
+    void startQuickMatch(unsigned short time_limit_min, unsigned short time_increment_sec);
+
+    void suggestDraw();
+
+    void resign();
+
 private:
     ApplicationState state;
-
-    std::optional<Board> game;
-
-    std::map<std::tuple<PieceType, PieceColor>, SDL_Texture *> piece_textures;
-
-    bool flipBoard;
-    PieceColor currentPlayer;
-    std::optional<Piece> draggingPiece;
-    std::optional<Piece> selectedPiece;
-    std::vector<std::string> moveHistory;
 
     SDL_Window *window;
     SDL_Renderer *renderer;
 
-    SDL_Texture *white_kingCheckHighlightTexture;
-    SDL_Texture *black_kingCheckHighlightTexture;
+    ImGuiIO *io;
+
+    MainMenuScene *mainMenuScene;
+    GameScene *gameScene;
 
     ImFont *font_opensans_18px;
     ImFont *font_opensans_36px;
-
-    ImGuiIO *io;
 };
