@@ -1,6 +1,6 @@
 #include "MainMenuScene.hpp"
 
-void MainMenuScene::load()
+MainMenuScene::MainMenuScene(SDL_Window *window, SDL_Renderer *renderer, ImGuiIO *imgui_io, std::function<void(unsigned short, unsigned short)> startQuickMatch, ImFont *font_opensans_36px) : Scene(window, renderer, imgui_io), startQuickMatch(startQuickMatch), font_opensans_36px(font_opensans_36px)
 {
 }
 

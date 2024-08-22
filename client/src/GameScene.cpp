@@ -1,6 +1,6 @@
 #include "GameScene.hpp"
 
-void GameScene::load()
+GameScene::GameScene(SDL_Window *window, SDL_Renderer *renderer, ImGuiIO *imgui_io, ImFont *font_opensans_18px, std::function<void()> suggestDraw, std::function<void()> resign) : Scene(window, renderer, imgui_io), font_opensans_18px(font_opensans_18px), suggestDraw(suggestDraw), resign(resign)
 {
     loadTextures();
 }

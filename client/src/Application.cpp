@@ -166,9 +166,6 @@ void Application::initializeScenes()
 {
     mainMenuScene = new MainMenuScene(window, renderer, io, [this](unsigned short a, unsigned short b){ this->startQuickMatch(a, b); }, font_opensans_36px);
     gameScene = new GameScene(window, renderer, io, font_opensans_18px, [this](){ this->suggestDraw(); }, [this](){ this->resign(); });
-
-    mainMenuScene->load();
-    gameScene->load();
 }
 
 void Application::run()

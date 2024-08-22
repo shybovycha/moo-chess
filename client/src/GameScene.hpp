@@ -14,13 +14,11 @@
 class GameScene : public Scene
 {
 public:
-    GameScene(SDL_Window *window, SDL_Renderer *renderer, ImGuiIO *imgui_io, ImFont *font_opensans_18px, std::function<void()> suggestDraw, std::function<void()> resign) : Scene(window, renderer, imgui_io), font_opensans_18px(font_opensans_18px), suggestDraw(suggestDraw), resign(resign) {}
+    GameScene(SDL_Window *window, SDL_Renderer *renderer, ImGuiIO *imgui_io, ImFont *font_opensans_18px, std::function<void()> suggestDraw, std::function<void()> resign);
 
     ~GameScene() = default;
 
     virtual void render();
-
-    virtual void load();
 
     void startNewGame(PieceColor playerColor);
 

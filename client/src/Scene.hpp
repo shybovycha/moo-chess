@@ -18,8 +18,6 @@ public:
 
     virtual void render() = 0;
 
-    virtual void load() = 0;
-
 protected:
     SDL_Window *window;
     SDL_Renderer *renderer;
