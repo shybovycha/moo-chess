@@ -1,4 +1,4 @@
-add_requires("gtest", "tinyxml2")
+add_requires("gtest")
 add_requires("libsdl")
 add_requires("libsdl_image")
 add_requires("imgui", {configs = {sdl2 = true, freetype = true}})
@@ -29,7 +29,6 @@ target("client")
     set_languages("c++23")
     add_files("client/src/main.cpp", "client/src/Application.cpp")
     add_deps("chesslib")
-    add_packages("tinyxml2")
 
     add_packages("libsdl")
     add_defines("SDL_MAIN_HANDLED")
