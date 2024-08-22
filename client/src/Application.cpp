@@ -4,9 +4,9 @@ import GameScene;
 import MainMenuScene;
 
 #include <iostream>
-#include <format>
 #include <string>
-#include <print>
+
+#include <fmt/format.h>
 
 #include <SDL.h>
 
@@ -91,7 +91,7 @@ void Application::initializeSDL()
 {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
     {
-        std::println(stderr, "Error: {0}", SDL_GetError());
+        fmt::println(stderr, "Error: {0}", SDL_GetError());
         return;
     }
 
@@ -102,7 +102,7 @@ void Application::initializeSDL()
 
     if (window == nullptr)
     {
-        std::println(stderr, "Error: SDL_CreateWindow(): {0}", SDL_GetError());
+        fmt::println(stderr, "Error: SDL_CreateWindow(): {0}", SDL_GetError());
         return;
     }
 
@@ -150,7 +150,7 @@ void Application::loadFonts()
 
     if (font_opensans_18px == nullptr)
     {
-        std::println(stderr, "Could not load font");
+        fmt::println(stderr, "Could not load font");
     }
 
     font_opensans_36px = io->Fonts->AddFontFromFileTTF("assets/OpenSans-Light.ttf", 36.0f, &config);

@@ -322,36 +322,36 @@ std::string Board::moveToStr(const Piece piece, const Position to)
         {
             if (piece.type == PieceType::PAWN)
             {
-                return std::format("{0}x{1}", piece.position, to);
+                return fmt::format("{0}x{1}", piece.position, to);
             }
 
-            return std::format("{0}{1}x{2}", piece.type, piece.position, to);
+            return fmt::format("{0}{1}x{2}", piece.type, piece.position, to);
         }
 
         if (piece.type == PieceType::PAWN)
         {
-            return std::format("{0}{1}", piece.position, to);
+            return fmt::format("{0}{1}", piece.position, to);
         }
 
-        return std::format("{0}{1}{2}", piece.type, piece.position, to);
+        return fmt::format("{0}{1}{2}", piece.type, piece.position, to);
     }
 
     if (target != nullptr)
     {
         if (piece.type == PieceType::PAWN)
         {
-            return std::format("{0}x{1}", piece.position, to);
+            return fmt::format("{0}x{1}", piece.position, to);
         }
 
-        return std::format("{0}x{1}", piece.type, to);
+        return fmt::format("{0}x{1}", piece.type, to);
     }
 
     if (piece.type == PieceType::PAWN)
     {
-        return std::format("{0}", to);
+        return fmt::format("{0}", to);
     }
 
-    return std::format("{0}{1}", piece.type, to);
+    return fmt::format("{0}{1}", piece.type, to);
 }
 
 // static Board parseFEN(const std::string& fenString) {
@@ -517,7 +517,7 @@ std::string Board::moveToStr(const Piece piece, const Position to)
 
 //     std::string enPassantString = "-";
 
-//     std::string result = std::format("{0} {1} {2} {3} {4} {5}", boardString, static_cast<char>(currentPlayer), castlingString, enPassantString, 0, (moveHistory.size() / 2) + 1);
+//     std::string result = fmt::format("{0} {1} {2} {3} {4} {5}", boardString, static_cast<char>(currentPlayer), castlingString, enPassantString, 0, (moveHistory.size() / 2) + 1);
 
 //     return result;
 // }

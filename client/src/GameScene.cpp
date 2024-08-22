@@ -1,11 +1,11 @@
 export module GameScene;
 
 #include <string>
-#include <format>
-#include <print>
 #include <optional>
 #include <vector>
 #include <functional>
+
+#include <fmt/format.h>
 
 #include "chesslib.hpp"
 
@@ -119,13 +119,13 @@ void GameScene::renderMoveHistory()
                 ImGui::TableNextColumn();
                 ImGui::Text("%d", i + 1);
 
-                std::string whiteStr = std::format("{0}", move);
+                std::string whiteStr = fmt::format("{0}", move);
                 ImGui::TableNextColumn();
                 ImGui::Button(whiteStr.c_str(), ImVec2(-FLT_MIN, 0.0f));
             }
             else
             {
-                std::string blackStr = std::format("{0}", move);
+                std::string blackStr = fmt::format("{0}", move);
                 ImGui::TableNextColumn();
                 ImGui::Button(blackStr.c_str(), ImVec2(-FLT_MIN, 0.0f));
             }
@@ -171,7 +171,7 @@ void GameScene::renderBoard()
                 ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)labelBackgroundColor);
                 ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)labelBackgroundColor);
                 ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)labelBackgroundColor);
-                ImGui::Button(std::format("{0}", row + 1).c_str(), ImVec2(20, 60));
+                ImGui::Button(fmt::format("{0}", row + 1).c_str(), ImVec2(20, 60));
                 ImGui::PopStyleColor(3);
             }
 
@@ -192,7 +192,7 @@ void GameScene::renderBoard()
         ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)labelBackgroundColor);
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)labelBackgroundColor);
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)labelBackgroundColor);
-        ImGui::Button(std::format("{0:c}", static_cast<char>('A' + col)).c_str(), ImVec2(60, 20));
+        ImGui::Button(fmt::format("{0:c}", static_cast<char>('A' + col)).c_str(), ImVec2(60, 20));
         ImGui::PopStyleColor(3);
     }
 
@@ -208,7 +208,7 @@ void GameScene::renderSquare(int row, int col)
 
     const Piece *piece = game->getPieceAt(square_position);
 
-    auto text = std::format("{0}", square_position);
+    auto text = fmt::format("{0}", square_position);
 
     ImGui::PushID(text.c_str());
 
@@ -360,7 +360,7 @@ void GameScene::renderSquare(int row, int col)
                 }
                 else
                 {
-                    std::println("{0}{1} is invalid", *src_piece, square_position);
+                    fmt::println("{0}{1} is invalid", *src_piece, square_position);
                 }
 
                 selectedPiece = {};

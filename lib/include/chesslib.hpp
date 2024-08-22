@@ -46,7 +46,7 @@ struct Position {
     bool operator==(const Position& other) const = default;
 
     friend std::ostream& operator<<(std::ostream& os, const Position& pos) {
-        return os << std::format("<{1}, {0}>", static_cast<char>(pos.col), pos.row);
+        return os << fmt::format("<{1}, {0}>", static_cast<char>(pos.col), pos.row);
     }
 };
 
@@ -80,7 +80,7 @@ struct std::hash<PieceType> {
 };
 
 template <>
-struct std::formatter<PieceType> {
+struct fmt::formatter<PieceType> {
     template<typename ParseContext>
     constexpr auto parse(ParseContext& ctx) {
         return ctx.begin();
@@ -88,12 +88,12 @@ struct std::formatter<PieceType> {
 
     template<typename FormatContext>
     auto format(const PieceType& piece, FormatContext& ctx) const {
-        return std::format_to(ctx.out(), "{0:c}", static_cast<std::underlying_type<PieceType>::type>(piece));
+        return fmt::format_to(ctx.out(), "{0:c}", static_cast<std::underlying_type<PieceType>::type>(piece));
     }
 };
 
 template <>
-struct std::formatter<Piece> {
+struct fmt::formatter<Piece> {
     template<typename ParseContext>
     constexpr auto parse(ParseContext& ctx) {
         return ctx.begin();
@@ -107,12 +107,12 @@ struct std::formatter<Piece> {
             p = p - 'A' + 'a';
         }
 
-        return std::format_to(ctx.out(), "{0:c}", p);
+        return fmt::format_to(ctx.out(), "{0:c}", p);
     }
 };
 
 template <>
-struct std::formatter<Position> {
+struct fmt::formatter<Position> {
     template<typename ParseContext>
     constexpr auto parse(ParseContext& ctx) {
         return ctx.begin();
@@ -120,7 +120,7 @@ struct std::formatter<Position> {
 
     template<typename FormatContext>
     auto format(const Position& position, FormatContext& ctx) const {
-        return std::format_to(ctx.out(), "{0:c}{1}", position.col, position.row);
+        return fmt::format_to(ctx.out(), "{0:c}{1}", position.col, position.row);
     }
 };
 

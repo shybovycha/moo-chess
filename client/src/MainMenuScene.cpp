@@ -1,8 +1,9 @@
 export module MainMenuScene;
 
-#include <format>
 #include <vector>
 #include <functional>
+
+#include <fmt/format.h>
 
 #include "Scene.hpp"
 
@@ -60,7 +61,7 @@ void MainMenuScene::render()
             {
                 auto time_mode = time_modes[i];
 
-                if (ImGui::Button(std::format("{0}:{1}", time_mode.time_limit_min, time_mode.time_increment_sec).c_str(), ImVec2(90, 90)))
+                if (ImGui::Button(fmt::format("{0}:{1}", time_mode.time_limit_min, time_mode.time_increment_sec).c_str(), ImVec2(90, 90)))
                 {
                     startQuickMatch(time_mode.time_limit_min, time_mode.time_increment_sec);
                 }
