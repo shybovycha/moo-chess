@@ -37,7 +37,7 @@ private:
     std::function<void()> suggestDraw;
     std::function<void()> resign;
 
-    std::optional<Board> game;
+    std::optional<Board> board;
 
     std::map<std::tuple<PieceType, PieceColor>, SDL_Texture *> piece_textures;
 

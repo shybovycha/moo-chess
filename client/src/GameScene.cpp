@@ -10,7 +10,7 @@ void GameScene::startNewGame(PieceColor playerColor)
     currentPlayer = playerColor;
     flipBoard = currentPlayer == PieceColor::BLACK;
 
-    game = Board();
+    board = Board();
 }
 
 void GameScene::loadTextures()
@@ -153,7 +153,7 @@ void GameScene::renderSquare(int row, int col)
 {
     Position square_position{row + 1, static_cast<char>('a' + col)};
 
-    const Piece *piece = game->getPieceAt(square_position);
+    const Piece *piece = board->getPieceAt(square_position);
 
     auto text = std::format("{0}", square_position);
 
@@ -163,7 +163,7 @@ void GameScene::renderSquare(int row, int col)
                             ? ImColor(173 / 255.f, 138 / 255.f, 104 / 255.f)  // dark square
                             : ImColor(237 / 255.f, 219 / 255.f, 185 / 255.f); // light square
 
-    if ((draggingPiece != std::nullopt && game->isValidMove(*draggingPiece, square_position)) || (selectedPiece != std::nullopt && game->isValidMove(*selectedPiece, square_position)))
+    if ((draggingPiece != std::nullopt && board->isValidMove(*draggingPiece, square_position)) || (selectedPiece != std::nullopt && board->isValidMove(*selectedPiece, square_position)))
     {
         if ((row + col) % 2 == 0)
         {
@@ -194,7 +194,7 @@ void GameScene::renderSquare(int row, int col)
 
         auto piece_texture = piece_textures[std::make_tuple(piece->type, piece->color)];
 
-        if (piece->type == PieceType::KING && game->isKingInCheck(*piece))
+        if (piece->type == PieceType::KING && board->isKingInCheck(*piece))
         {
             if (piece->color == PieceColor::WHITE)
             {
@@ -218,10 +218,10 @@ void GameScene::renderSquare(int row, int col)
             {
                 if (selectedPiece->position != square_position)
                 {
-                    if (game->isValidMove(*selectedPiece, square_position))
+                    if (board->isValidMove(*selectedPiece, square_position))
                     {
-                        moveHistory.push_back(game->moveToStr(*selectedPiece, square_position));
-                        game->applyMove(*selectedPiece, square_position);
+                        moveHistory.push_back(board->moveToStr(*selectedPiece, square_position));
+                        board->applyMove(*selectedPiece, square_position);
                     }
                 }
 
@@ -240,10 +240,10 @@ void GameScene::renderSquare(int row, int col)
     {
         if (ImGui::Button("", ImVec2(60, 60)))
         {
-            if (selectedPiece != std::nullopt && game->isValidMove(*selectedPiece, square_position))
+            if (selectedPiece != std::nullopt && board->isValidMove(*selectedPiece, square_position))
             {
-                moveHistory.push_back(game->moveToStr(*selectedPiece, square_position));
-                game->applyMove(*selectedPiece, square_position);
+                moveHistory.push_back(board->moveToStr(*selectedPiece, square_position));
+                board->applyMove(*selectedPiece, square_position);
             }
 
             selectedPiece = {};
@@ -296,14 +296,14 @@ void GameScene::renderSquare(int row, int col)
 
             Position from_pos = *(const Position *)payload->Data;
 
-            const Piece *src_piece = game->getPieceAt(from_pos);
+            const Piece *src_piece = board->getPieceAt(from_pos);
 
             if (src_piece)
             {
-                if (game->isValidMove(*src_piece, square_position))
+                if (board->isValidMove(*src_piece, square_position))
                 {
-                    moveHistory.push_back(game->moveToStr(*src_piece, square_position));
-                    game->applyMove(*src_piece, square_position);
+                    moveHistory.push_back(board->moveToStr(*src_piece, square_position));
+                    board->applyMove(*src_piece, square_position);
                 }
                 else
                 {
@@ -344,32 +344,32 @@ void GameScene::renderSquare(int row, int col)
 
             if (ImGui::ImageButton("promote to rook", piece_textures[std::make_tuple(PieceType::ROOK, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)))
             {
-                game->removePieceAt(square_position);
-                game->setPieceAt(Piece{PieceType::ROOK, piece->color, square_position, false, false}, square_position);
+                board->removePieceAt(square_position);
+                board->setPieceAt(Piece{PieceType::ROOK, piece->color, square_position, false, false}, square_position);
             }
 
             ImGui::SameLine();
 
             if (ImGui::ImageButton("promote to knight", piece_textures[std::make_tuple(PieceType::KNIGHT, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)))
             {
-                game->removePieceAt(square_position);
-                game->setPieceAt(Piece{PieceType::KNIGHT, piece->color, square_position, false, false}, square_position);
+                board->removePieceAt(square_position);
+                board->setPieceAt(Piece{PieceType::KNIGHT, piece->color, square_position, false, false}, square_position);
             }
 
             ImGui::SameLine();
 
             if (ImGui::ImageButton("promote to bishop", piece_textures[std::make_tuple(PieceType::BISHOP, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)))
             {
-                game->removePieceAt(square_position);
-                game->setPieceAt(Piece{PieceType::BISHOP, piece->color, square_position, false, false}, square_position);
+                board->removePieceAt(square_position);
+                board->setPieceAt(Piece{PieceType::BISHOP, piece->color, square_position, false, false}, square_position);
             }
 
             ImGui::SameLine();
 
             if (ImGui::ImageButton("promote to queen", piece_textures[std::make_tuple(PieceType::QUEEN, piece->color)], ImVec2(60, 60), ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f)))
             {
-                game->removePieceAt(square_position);
-                game->setPieceAt(Piece{PieceType::QUEEN, piece->color, square_position, false, false}, square_position);
+                board->removePieceAt(square_position);
+                board->setPieceAt(Piece{PieceType::QUEEN, piece->color, square_position, false, false}, square_position);
             }
 
             ImGui::PopStyleVar();
