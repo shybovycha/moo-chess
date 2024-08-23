@@ -326,6 +326,17 @@ void GameScene::renderSquare(int row, int col)
     {
         if ((piece->color == PieceColor::WHITE && row == 7) || (piece->color == PieceColor::BLACK && row == 0))
         {
+            ImVec2 pos = ImGui::GetItemRectMax();
+
+            if ((row == 0 && flipBoard) || (row == 7 && !flipBoard))
+            {
+                ImGui::SetNextWindowPos(ImVec2(ImGui::GetItemRectMin().x - 90, ImGui::GetItemRectMax().y));
+            }
+            else
+            {
+                ImGui::SetNextWindowPos(ImVec2(ImGui::GetItemRectMin().x - 90, ImGui::GetItemRectMin().y - 70));
+            }
+
             // draw promotion selector
             ImGui::Begin("Promote white pawn", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 
