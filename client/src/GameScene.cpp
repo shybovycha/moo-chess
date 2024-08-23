@@ -274,11 +274,7 @@ void GameScene::renderSquare(int row, int col)
             {
                 if (selectedPiece->position != square_position)
                 {
-                    if (board->isValidMove(*selectedPiece, square_position))
-                    {
-                        moveHistory.push_back(board->moveToStr(*selectedPiece, square_position));
-                        board->applyMove(*selectedPiece, square_position);
-                    }
+                    tryMove(*selectedPiece, square_position);
                 }
 
                 selectedPiece = {};
@@ -296,10 +292,9 @@ void GameScene::renderSquare(int row, int col)
     {
         if (ImGui::Button("", ImVec2(60, 60)))
         {
-            if (selectedPiece != std::nullopt && board->isValidMove(*selectedPiece, square_position))
+            if (selectedPiece != std::nullopt)
             {
-                moveHistory.push_back(board->moveToStr(*selectedPiece, square_position));
-                board->applyMove(*selectedPiece, square_position);
+                tryMove(*selectedPiece, square_position);
             }
 
             selectedPiece = {};
@@ -356,15 +351,7 @@ void GameScene::renderSquare(int row, int col)
 
             if (src_piece)
             {
-                if (board->isValidMove(*src_piece, square_position))
-                {
-                    moveHistory.push_back(board->moveToStr(*src_piece, square_position));
-                    board->applyMove(*src_piece, square_position);
-                }
-                else
-                {
-                    std::println("{0}{1} is invalid", *src_piece, square_position);
-                }
+                tryMove(*src_piece, square_position);
 
                 selectedPiece = {};
                 draggingPiece = {};
@@ -474,4 +461,17 @@ void GameScene::render()
     // renderGameControls();
 
     ImGui::End();
+}
+
+void GameScene::tryMove(Piece piece, Position target_position)
+{
+    if (board->isValidMove(piece, target_position))
+    {
+        moveHistory.push_back(board->moveToStr(piece, target_position));
+        board->applyMove(piece, target_position);
+    }
+    else
+    {
+        std::println("{0}{1} is invalid", piece, target_position);
+    }
 }

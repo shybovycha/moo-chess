@@ -34,6 +34,8 @@ private:
 
     void renderGameControls();
 
+    void tryMove(Piece piece, Position target_position);
+
 private:
     std::function<void()> suggestDraw;
     std::function<void()> resign;
