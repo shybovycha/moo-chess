@@ -80,5 +80,6 @@ private:
     GameScene *gameScene;
 
     ImFont *font_opensans_18px;
+    ImFont *font_opensans_24px;
     ImFont *font_opensans_36px;
 };

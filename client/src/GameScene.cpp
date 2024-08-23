@@ -1,16 +1,19 @@
 #include "GameScene.hpp"
 
-GameScene::GameScene(SDL_Window *window, SDL_Renderer *renderer, ImGuiIO *imgui_io, ImFont *font_opensans_18px, std::function<void()> suggestDraw, std::function<void()> resign) : Scene(window, renderer, imgui_io), font_opensans_18px(font_opensans_18px), suggestDraw(suggestDraw), resign(resign)
+GameScene::GameScene(SDL_Window *window, SDL_Renderer *renderer, ImGuiIO *imgui_io, ImFont *font_opensans_18px, ImFont *font_opensans_24px, std::function<void()> suggestDraw, std::function<void()> resign) : Scene(window, renderer, imgui_io), font_opensans_18px(font_opensans_18px), font_opensans_24px(font_opensans_24px), suggestDraw(suggestDraw), resign(resign)
 {
     loadTextures();
 }
 
-void GameScene::startNewGame(PieceColor playerColor)
+void GameScene::startNewGame(PieceColor playerColor, unsigned short time_limit_min, unsigned short time_increment_sec)
 {
     currentPlayer = playerColor;
     flipBoard = currentPlayer == PieceColor::BLACK;
 
     board = Board();
+
+    time_limit = std::chrono::minutes(time_limit_min);
+    time_increment = std::chrono::seconds(time_increment_sec);
 }
 
 void GameScene::loadTextures()
@@ -53,7 +56,9 @@ void GameScene::renderMoveHistory()
 {
     ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
 
-    ImGui::BeginChild("Move history", ImVec2(150, 260), ImGuiChildFlags_Border, ImGuiWindowFlags_None);
+    ImGui::BeginChild("Side panel", ImVec2(150, 500), ImGuiChildFlags_None, ImGuiWindowFlags_None);
+
+    ImGui::BeginChild("Move history", ImVec2(150, 250), ImGuiChildFlags_Border, ImGuiWindowFlags_None);
 
     if (ImGui::BeginTable("split", 3, ImGuiTableFlags_Resizable | ImGuiTableFlags_NoSavedSettings))
     {
@@ -82,6 +87,57 @@ void GameScene::renderMoveHistory()
     }
 
     ImGui::EndChild();
+
+    ImGui::BeginChild("Current player timer", ImVec2(150, 65), ImGuiChildFlags_Border, ImGuiWindowFlags_None);
+
+    std::string currentPlayerTimer_str;
+
+    auto now = std::chrono::steady_clock::now();
+
+    if (currentPlayerTimer != std::nullopt)
+    {
+        auto currentPlayer_dt = *currentPlayerTimer - now;
+
+        currentPlayerTimer_str = std::format("{0:%M}:{0:%S}", currentPlayer_dt);
+    }
+    else
+    {
+        currentPlayerTimer_str = std::format("{0:%M}:{0:%S}", time_limit);
+    }
+
+    ImGui::Text("Your time");
+    ImGui::PushFont(font_opensans_24px);
+    ImGui::Text("%s", currentPlayerTimer_str.c_str());
+    ImGui::PopFont();
+
+    ImGui::EndChild();
+
+    ImGui::BeginChild("Opponent timer", ImVec2(150, 65), ImGuiChildFlags_Border, ImGuiWindowFlags_None);
+
+    std::string opponentTimer_str = "00:00";
+
+    if (opponentTimer != std::nullopt)
+    {
+        auto opponent_dt = *opponentTimer - now;
+
+        opponentTimer_str = std::format("{0:%M}:{0:%S}", opponent_dt);
+    }
+    else
+    {
+        opponentTimer_str = std::format("{0:%M}:{0:%S}", time_limit);
+    }
+
+    ImGui::Text("Opponent time");
+    ImGui::PushFont(font_opensans_24px);
+    ImGui::Text("%s", opponentTimer_str.c_str());
+    ImGui::PopFont();
+
+    ImGui::EndChild();
+
+    renderGameControls();
+
+    ImGui::EndChild();
+
     ImGui::PopStyleVar();
 }
 
@@ -415,7 +471,7 @@ void GameScene::render()
 
     renderBoard();
 
-    renderGameControls();
+    // renderGameControls();
 
     ImGui::End();
 }

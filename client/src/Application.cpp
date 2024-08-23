@@ -70,6 +70,7 @@ void Application::loadFonts()
         std::println(stderr, "Could not load font");
     }
 
+    font_opensans_24px = io->Fonts->AddFontFromFileTTF("assets/OpenSans-Light.ttf", 24.0f, &config);
     font_opensans_36px = io->Fonts->AddFontFromFileTTF("assets/OpenSans-Light.ttf", 36.0f, &config);
 }
 
@@ -147,7 +148,7 @@ void Application::initialize()
 void Application::startQuickMatch(unsigned short time_limit_min, unsigned short time_increment_sec)
 {
     // TODO: call server
-    gameScene->startNewGame(std::rand() % 2 ? PieceColor::BLACK : PieceColor::WHITE);
+    gameScene->startNewGame(std::rand() % 2 ? PieceColor::BLACK : PieceColor::WHITE, time_limit_min, time_increment_sec);
 
     state = ApplicationState::PLAYING;
 }
@@ -165,7 +166,7 @@ void Application::resign()
 void Application::initializeScenes()
 {
     mainMenuScene = new MainMenuScene(window, renderer, io, [this](unsigned short a, unsigned short b){ this->startQuickMatch(a, b); }, font_opensans_36px);
-    gameScene = new GameScene(window, renderer, io, font_opensans_18px, [this](){ this->suggestDraw(); }, [this](){ this->resign(); });
+    gameScene = new GameScene(window, renderer, io, font_opensans_18px, font_opensans_24px, [this](){ this->suggestDraw(); }, [this](){ this->resign(); });
 }
 
 void Application::run()
