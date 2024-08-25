@@ -12,6 +12,12 @@
 
 #include "Scene.hpp"
 
+struct MoveHistoryEntry
+{
+    std::chrono::time_point<std::chrono::steady_clock> timestamp;
+    std::string move;
+};
+
 class GameScene : public Scene
 {
 public:
@@ -41,10 +47,10 @@ private:
     std::function<void()> resign;
 
     std::optional<Board> board;
-    std::vector<std::string> moveHistory;
+    std::vector<MoveHistoryEntry> moveHistory;
 
-    std::optional<std::chrono::time_point<std::chrono::steady_clock>> currentPlayerTimer;
-    std::optional<std::chrono::time_point<std::chrono::steady_clock>> opponentTimer;
+    std::chrono::duration<float> currentPlayerTimer;
+    std::chrono::duration<float> opponentTimer;
 
     std::chrono::duration<float> time_limit;
     std::chrono::duration<float> time_increment;

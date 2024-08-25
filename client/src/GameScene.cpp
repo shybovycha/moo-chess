@@ -14,6 +14,9 @@ void GameScene::startNewGame(PieceColor playerColor, unsigned short time_limit_m
 
     time_limit = std::chrono::minutes(time_limit_min);
     time_increment = std::chrono::seconds(time_increment_sec);
+
+    currentPlayerTimer = time_limit;
+    opponentTimer = time_limit;
 }
 
 void GameScene::loadTextures()
@@ -64,7 +67,7 @@ void GameScene::renderMoveHistory()
     {
         for (auto i = 0; i < moveHistory.size(); ++i)
         {
-            const auto &move = moveHistory.at(i);
+            const auto &move = moveHistory.at(i).move;
 
             if (i % 2 == 0)
             {
@@ -90,19 +93,29 @@ void GameScene::renderMoveHistory()
 
     ImGui::BeginChild("Current player timer", ImVec2(150, 65), ImGuiChildFlags_Border, ImGuiWindowFlags_None);
 
-    std::string currentPlayerTimer_str;
+    std::string currentPlayerTimer_str = std::format("{0:%M}:{0:%S}", currentPlayerTimer);
+    std::string opponentTimer_str = std::format("{0:%M}:{0:%S}", opponentTimer);
 
     auto now = std::chrono::steady_clock::now();
 
-    if (currentPlayerTimer != std::nullopt)
+    if (!moveHistory.empty())
     {
-        auto currentPlayer_dt = *currentPlayerTimer - now;
+        auto currentMoveDuration = now - moveHistory[moveHistory.size() - 1].timestamp;
 
-        currentPlayerTimer_str = std::format("{0:%M}:{0:%S}", currentPlayer_dt);
-    }
-    else
-    {
-        currentPlayerTimer_str = std::format("{0:%M}:{0:%S}", time_limit);
+        PieceColor waiting_for_player = (moveHistory.size() % 2) ? PieceColor::BLACK : PieceColor::WHITE;
+
+        if (currentPlayer == waiting_for_player)
+        {
+            auto currentPlayer_dt = currentPlayerTimer - currentMoveDuration;
+
+            currentPlayerTimer_str = std::format("{0:%M}:{0:%S}", currentPlayer_dt);
+        }
+        else
+        {
+            auto opponent_dt = opponentTimer - currentMoveDuration;
+
+            opponentTimer_str = std::format("{0:%M}:{0:%S}", opponent_dt);
+        }
     }
 
     ImGui::Text("Your time");
@@ -113,19 +126,6 @@ void GameScene::renderMoveHistory()
     ImGui::EndChild();
 
     ImGui::BeginChild("Opponent timer", ImVec2(150, 65), ImGuiChildFlags_Border, ImGuiWindowFlags_None);
-
-    std::string opponentTimer_str = "00:00";
-
-    if (opponentTimer != std::nullopt)
-    {
-        auto opponent_dt = *opponentTimer - now;
-
-        opponentTimer_str = std::format("{0:%M}:{0:%S}", opponent_dt);
-    }
-    else
-    {
-        opponentTimer_str = std::format("{0:%M}:{0:%S}", time_limit);
-    }
 
     ImGui::Text("Opponent time");
     ImGui::PushFont(font_opensans_24px);
@@ -467,7 +467,27 @@ void GameScene::tryMove(Piece piece, Position target_position)
 {
     if (board->isValidMove(piece, target_position))
     {
-        moveHistory.push_back(board->moveToStr(piece, target_position));
+        if (!moveHistory.empty())
+        {
+            auto now = std::chrono::steady_clock::now();
+            auto currentMoveDuration = now - moveHistory[moveHistory.size() - 1].timestamp;
+
+            PieceColor waiting_for_player = (moveHistory.size() % 2) ? PieceColor::BLACK : PieceColor::WHITE;
+
+            if (currentPlayer == waiting_for_player)
+            {
+                currentPlayerTimer -= currentMoveDuration - time_increment;
+            }
+            else
+            {
+                opponentTimer -= currentMoveDuration - time_increment;
+            }
+        }
+
+        auto move = board->moveToStr(piece, target_position);
+        auto timestamp = std::chrono::steady_clock::now();
+
+        moveHistory.push_back(MoveHistoryEntry{ timestamp, move });
         board->applyMove(piece, target_position);
     }
     else
